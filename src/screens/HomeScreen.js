@@ -5,8 +5,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import useBookStore from '../store/bookStore';
-import useAuthStore from '../store/authStore';
+import { useUserBookLibraryStore } from '../features/library';
+import { useAuthUserSessionStore } from '../features/auth';
 import { trackScreenView, track, EventType, EventCategory } from '../utils/analytics';
 
 function BookCard({ book, onPress }) {
@@ -37,9 +37,9 @@ function BookCard({ book, onPress }) {
 export default function HomeScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const shelves = useBookStore((s) => s.shelves);
-  const getStats = useBookStore((s) => s.getStats);
-  const userEmail = useAuthStore((s) => s.userEmail);
+  const shelves = useUserBookLibraryStore((s) => s.shelves);
+  const getStats = useUserBookLibraryStore((s) => s.getLibraryStatistics);
+  const userEmail = useAuthUserSessionStore((s) => s.userEmail);
 
   const stats = getStats();
   const currentlyReading = shelves.reading || [];

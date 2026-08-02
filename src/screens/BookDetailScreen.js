@@ -8,8 +8,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
-import useBookStore from '../store/bookStore';
-import useReaderStore from '../store/readerStore';
+import { useUserBookLibraryStore } from '../features/library';
+import { useEpubReaderStore } from '../features/reader';
 import { 
   trackScreenView, 
   trackEpubImport, 
@@ -77,17 +77,17 @@ export default function BookDetailScreen() {
   const [showShelfPicker, setShowShelfPicker] = useState(false);
   const [importing, setImporting] = useState(false);
 
-  const addToShelf = useBookStore((s) => s.addToShelf);
-  const removeFromShelf = useBookStore((s) => s.removeFromShelf);
-  const getBookShelf = useBookStore((s) => s.getBookShelf);
-  const getBook = useBookStore((s) => s.getBook);
-  const rateBook = useBookStore((s) => s.rateBook);
-  const updateProgress = useBookStore((s) => s.updateProgress);
+  const addToShelf = useUserBookLibraryStore((s) => s.addBookToShelf);
+  const removeFromShelf = useUserBookLibraryStore((s) => s.removeBookFromLibrary);
+  const getBookShelf = useUserBookLibraryStore((s) => s.getBookCurrentShelf);
+  const getBook = useUserBookLibraryStore((s) => s.getBookById);
+  const rateBook = useUserBookLibraryStore((s) => s.rateBookWithReview);
+  const updateProgress = useUserBookLibraryStore((s) => s.updateBookReadingProgress);
 
   // Reader store
-  const saveUploadedFile = useReaderStore((s) => s.saveUploadedFile);
-  const getUploadedFile = useReaderStore((s) => s.getUploadedFile);
-  const removeUploadedFile = useReaderStore((s) => s.removeUploadedFile);
+  const saveUploadedFile = useEpubReaderStore((s) => s.saveUploadedFile);
+  const getUploadedFile = useEpubReaderStore((s) => s.getUploadedFile);
+  const removeUploadedFile = useEpubReaderStore((s) => s.removeUploadedFile);
 
   const bookId = book?.id;
   const stored = getBook(bookId);

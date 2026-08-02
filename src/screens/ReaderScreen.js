@@ -9,8 +9,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Reader, ReaderProvider, useReader } from '@epubjs-react-native/core';
 import { useFileSystem } from '../utils/useFileSystem';
-import useReaderStore from '../store/readerStore';
-import useBookStore from '../store/bookStore';
+import { useEpubReaderStore } from '../features/reader';
+import { useUserBookLibraryStore } from '../features/library';
 import {
   trackReaderOpen,
   trackReaderClose,
@@ -101,14 +101,14 @@ function ReaderContent({ bookId, fileUri, book }) {
   } = useReader();
 
   // Store
-  const settings    = useReaderStore((s) => s.settings);
-  const updateSettings = useReaderStore((s) => s.updateSettings);
-  const saveLocation   = useReaderStore((s) => s.saveLocation);
-  const getReadingData = useReaderStore((s) => s.getReadingData);
-  const storeAddBookmark    = useReaderStore((s) => s.addBookmark);
-  const storeRemoveBookmark = useReaderStore((s) => s.removeBookmark);
-  const storeAddAnnotation  = useReaderStore((s) => s.addAnnotation);
-  const updateProgress = useBookStore((s) => s.updateProgress);
+  const settings    = useEpubReaderStore((s) => s.settings);
+  const updateSettings = useEpubReaderStore((s) => s.updateSettings);
+  const saveLocation   = useEpubReaderStore((s) => s.saveLocation);
+  const getReadingData = useEpubReaderStore((s) => s.getReadingData);
+  const storeAddBookmark    = useEpubReaderStore((s) => s.addBookmark);
+  const storeRemoveBookmark = useEpubReaderStore((s) => s.removeBookmark);
+  const storeAddAnnotation  = useEpubReaderStore((s) => s.addAnnotation);
+  const updateProgress = useUserBookLibraryStore((s) => s.updateBookReadingProgress);
 
   // UI state
   const [showUI,        setShowUI]        = useState(true);
@@ -540,8 +540,8 @@ export default function ReaderScreen() {
   const insets     = useSafeAreaInsets();
   const { bookId } = route.params ?? {};
 
-  const getBook        = useBookStore((s) => s.getBook);
-  const getUploadedFile = useReaderStore((s) => s.getUploadedFile);
+  const getBook        = useUserBookLibraryStore((s) => s.getBookById);
+  const getUploadedFile = useEpubReaderStore((s) => s.getUploadedFile);
 
   const book     = getBook(bookId);
   const fileInfo = getUploadedFile(bookId);

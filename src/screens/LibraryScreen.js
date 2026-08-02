@@ -6,7 +6,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import useBookStore from '../store/bookStore';
+import { useUserBookLibraryStore } from '../features/library';
 import { trackScreenView, track, EventType, EventCategory } from '../utils/analytics';
 
 const TABS = [
@@ -62,7 +62,7 @@ export default function LibraryScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
-  const shelves = useBookStore((s) => s.shelves);
+  const shelves = useUserBookLibraryStore((s) => s.shelves);
 
   const initShelf = route.params?.shelf ?? 'all';
   const [activeTab, setActiveTab] = useState(initShelf);

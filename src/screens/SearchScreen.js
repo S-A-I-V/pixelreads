@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { searchBooks } from '../api/googleBooks';
-import useBookStore from '../store/bookStore';
+import { useUserBookLibraryStore } from '../features/library';
 import { trackSearch, trackScreenView, track, EventType, EventCategory } from '../utils/analytics';
 
 /**
@@ -95,7 +95,7 @@ function BookRow({ book, shelf, onPress }) {
 export default function SearchScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const getBookShelf = useBookStore((s) => s.getBookShelf);
+  const getBookShelf = useUserBookLibraryStore((s) => s.getBookCurrentShelf);
 
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');

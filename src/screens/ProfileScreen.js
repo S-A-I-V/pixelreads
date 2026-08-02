@@ -6,16 +6,16 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import useBookStore from '../store/bookStore';
-import useAuthStore from '../store/authStore';
+import { useUserBookLibraryStore } from '../features/library';
+import { useAuthUserSessionStore } from '../features/auth';
 import { trackScreenView, track, EventCategory } from '../utils/analytics';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const shelves = useBookStore((s) => s.shelves);
-  const getStats = useBookStore((s) => s.getStats);
-  const userEmail = useAuthStore((s) => s.userEmail);
-  const logout = useAuthStore((s) => s.logout);
+  const shelves = useUserBookLibraryStore((s) => s.shelves);
+  const getStats = useUserBookLibraryStore((s) => s.getLibraryStatistics);
+  const userEmail = useAuthUserSessionStore((s) => s.userEmail);
+  const logout = useAuthUserSessionStore((s) => s.logout);
 
   const stats = getStats();
   const allBooks = Object.values(shelves).flat();

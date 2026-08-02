@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
   TouchableOpacity, Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import useBookStore from '../store/bookStore';
 import useAuthStore from '../store/authStore';
+import { trackScreenView, track, EventCategory } from '../utils/analytics';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -23,10 +25,30 @@ export default function ProfileScreen() {
     : '-';
   const totalPages = allBooks.reduce((s, b) => s + (b.pageCount ?? 0), 0);
 
+  // Track screen view on focus
+  useFocusEffect(
+    useCallback(() => {
+      trackScreenView('Profile', { 
+        totalBooks: stats.total, 
+        avgRating, 
+        totalPages,
+        booksRated: ratedBooks.length 
+      });
+      console.log(`[Screen] Profile viewed - ${stats.total} books, ${avgRating} avg rating, ${totalPages} pages`);
+    }, [stats.total, avgRating, totalPages, ratedBooks.length])
+  );
+
   const handleLogout = () => {
     Alert.alert('Logout?', 'Your library is saved locally.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Logout', style: 'destructive', onPress: logout },
+      { 
+        text: 'Logout', 
+        style: 'destructive', 
+        onPress: () => {
+          console.log('[Profile] User confirmed logout');
+          logout();
+        }
+      },
     ]);
   };
 

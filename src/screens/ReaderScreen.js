@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Modal,
   ScrollView, TextInput, Dimensions, ActivityIndicator,
@@ -11,6 +11,17 @@ import { Reader, ReaderProvider, useReader } from '@epubjs-react-native/core';
 import { useFileSystem } from '../utils/useFileSystem';
 import useReaderStore from '../store/readerStore';
 import useBookStore from '../store/bookStore';
+import {
+  trackReaderOpen,
+  trackReaderClose,
+  trackPageTurn,
+  trackBookmark,
+  trackHighlight,
+  trackThemeChange,
+  track,
+  EventType,
+  EventCategory,
+} from '../utils/analytics';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -110,8 +121,23 @@ function ReaderContent({ bookId, fileUri, book }) {
   const [selectedText,  setSelectedText]  = useState(null);
   const [localLoading,  setLocalLoading]  = useState(true);
   const [tocData,       setTocData]       = useState([]);
+  const readerOpenTime = useRef(Date.now());
 
   const theme = THEMES[settings.theme] || THEMES.light;
+
+  // Track reader open
+  useEffect(() => {
+    readerOpenTime.current = Date.now();
+    trackReaderOpen(bookId, book?.title);
+    console.log(`[Reader] Opened: "${book?.title}"`);
+    
+    // Cleanup: track reader close
+    return () => {
+      const duration = Date.now() - readerOpenTime.current;
+      trackReaderClose(bookId, duration, Math.round(progress));
+      console.log(`[Reader] Closed: "${book?.title}" after ${Math.round(duration/1000)}s at ${Math.round(progress)}%`);
+    };
+  }, [bookId]);
 
   // Dismiss loading when ready
   useEffect(() => { if (!isLoading) setLocalLoading(false); }, [isLoading]);
@@ -135,6 +161,8 @@ function ReaderContent({ bookId, fileUri, book }) {
       const pct = Math.round(progress);
       saveLocation(bookId, loc.start.cfi, pct);
       updateProgress(bookId, pct);
+      // Track page turn (debounced by progress change)
+      trackPageTurn(bookId, pct, 'forward');
     }
   }, [bookId, progress]);
 
@@ -149,6 +177,8 @@ function ReaderContent({ bookId, fileUri, book }) {
     const annotation = { cfiRange: selectedText.cfiRange, data: { color }, styles: { color } };
     addAnnotation('highlight', selectedText.cfiRange, { color }, { color });
     storeAddAnnotation(bookId, { ...selectedText, color, type: 'highlight' });
+    trackHighlight(bookId, color, selectedText.text?.length || 0);
+    console.log(`[Reader] Highlight added (${color}): "${selectedText.text?.slice(0, 30)}..."`);
     setSelectedText(null);
   }, [selectedText, bookId]);
 
@@ -169,6 +199,8 @@ function ReaderContent({ bookId, fileUri, book }) {
       if (bm) {
         removeBookmark(bm);
         storeRemoveBookmark(bookId, bm.id);
+        trackBookmark(bookId, 'remove', currentLocation.start.cfi);
+        console.log(`[Reader] Bookmark removed at ${Math.round(progress)}%`);
       }
     } else {
       // Pass the full location object — library needs start.cfi + end.cfi
@@ -177,8 +209,10 @@ function ReaderContent({ bookId, fileUri, book }) {
         location: currentLocation.start.cfi,
         chapter: section?.label || '',
       });
+      trackBookmark(bookId, 'add', currentLocation.start.cfi);
+      console.log(`[Reader] Bookmark added at ${Math.round(progress)}%`);
     }
-  }, [currentLocation, isBookmarked, bookmarks, section, bookId]);
+  }, [currentLocation, isBookmarked, bookmarks, section, bookId, progress]);
 
   // Search
   const handleSearch = useCallback(() => {
@@ -354,6 +388,8 @@ function ReaderContent({ bookId, fileUri, book }) {
                     const s = FONT_SIZES[idx - 1];
                     updateSettings({ fontSize: s });
                     changeFontSize(`${s}%`);
+                    track(EventType.READER_FONT_SIZE_CHANGE, EventCategory.READER, { bookId, fontSize: s, direction: 'decrease' });
+                    console.log(`[Reader] Font size decreased to ${s}%`);
                   }
                 }}
               >
@@ -368,6 +404,8 @@ function ReaderContent({ bookId, fileUri, book }) {
                     const s = FONT_SIZES[idx + 1];
                     updateSettings({ fontSize: s });
                     changeFontSize(`${s}%`);
+                    track(EventType.READER_FONT_SIZE_CHANGE, EventCategory.READER, { bookId, fontSize: s, direction: 'increase' });
+                    console.log(`[Reader] Font size increased to ${s}%`);
                   }
                 }}
               >
@@ -387,8 +425,11 @@ function ReaderContent({ bookId, fileUri, book }) {
                     settings.theme === t.key && styles.themeChipActive,
                   ]}
                   onPress={() => {
+                    const prevTheme = settings.theme;
                     updateSettings({ theme: t.key });
-                    changeTheme(t.css);   // ← pass only the CSS object
+                    changeTheme(t.css);
+                    trackThemeChange(bookId, t.key, prevTheme);
+                    console.log(`[Reader] Theme changed: ${prevTheme} → ${t.key}`);
                   }}
                 >
                   <MaterialCommunityIcons name={t.icon} size={18} color={t.text} />

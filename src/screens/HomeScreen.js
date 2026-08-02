@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
   StyleSheet, Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import useBookStore from '../store/bookStore';
 import useAuthStore from '../store/authStore';
+import { trackScreenView, track, EventType, EventCategory } from '../utils/analytics';
 
 function BookCard({ book, onPress }) {
   return (
@@ -42,6 +43,14 @@ export default function HomeScreen() {
 
   const stats = getStats();
   const currentlyReading = shelves.reading || [];
+
+  // Track screen view on focus (fires on tab switch too)
+  useFocusEffect(
+    useCallback(() => {
+      trackScreenView('Home', { booksReading: currentlyReading.length, totalBooks: stats.total });
+      console.log(`[Screen] Home viewed - ${currentlyReading.length} books reading, ${stats.total} total`);
+    }, [currentlyReading.length, stats.total])
+  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -91,7 +100,15 @@ export default function HomeScreen() {
             renderItem={({ item }) => (
               <BookCard
                 book={item}
-                onPress={() => navigation.navigate('BookDetail', { book: item })}
+                onPress={() => {
+                  track(EventType.SEARCH_RESULT_TAP, EventCategory.NAVIGATION, { 
+                    bookId: item.id, 
+                    bookTitle: item.title,
+                    source: 'home_currently_reading' 
+                  });
+                  console.log(`[Home] Tapped book: "${item.title}"`);
+                  navigation.navigate('BookDetail', { book: item });
+                }}
               />
             )}
             showsVerticalScrollIndicator={false}

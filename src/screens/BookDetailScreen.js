@@ -10,6 +10,13 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import useBookStore from '../store/bookStore';
 import useReaderStore from '../store/readerStore';
+import { 
+  trackScreenView, 
+  trackEpubImport, 
+  track, 
+  EventType, 
+  EventCategory 
+} from '../utils/analytics';
 
 const SHELVES = [
   { key: 'reading',      label: 'Currently Reading' },
@@ -91,6 +98,19 @@ export default function BookDetailScreen() {
     if (stored?.progress) setProgressText(String(stored.progress));
   }, [stored?.progress]);
 
+  // Track screen view
+  useEffect(() => {
+    if (book) {
+      trackScreenView('BookDetail', { 
+        bookId: book.id, 
+        bookTitle: book.title,
+        shelf,
+        hasEpub: !!uploadedFile 
+      });
+      console.log(`[Screen] BookDetail viewed: "${book.title}" (shelf: ${shelf || 'none'})`);
+    }
+  }, [book?.id]);
+
   if (!book) {
     return (
       <View style={[styles.container, styles.centered]}>
@@ -105,40 +125,65 @@ export default function BookDetailScreen() {
   const handleAddToShelf = (s) => {
     addToShelf(book, s);
     setShowShelfPicker(false);
+    console.log(`[BookDetail] Added to shelf: ${s}`);
   };
 
   const handleRemove = () => {
     Alert.alert('Remove book?', 'This will remove the book from your library.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => removeFromShelf(bookId) },
+      { 
+        text: 'Remove', 
+        style: 'destructive', 
+        onPress: () => {
+          console.log(`[BookDetail] Removed from library: "${book.title}"`);
+          removeFromShelf(bookId);
+        }
+      },
     ]);
   };
 
   const handleRate = (stars) => {
     rateBook(bookId, stars, stored?.review ?? '');
+    console.log(`[BookDetail] Rated ${stars} stars`);
   };
 
   const handleSaveProgress = () => {
     const val = Math.min(100, Math.max(0, parseInt(progressText, 10) || 0));
     updateProgress(bookId, val);
     setProgressText(String(val));
+    console.log(`[BookDetail] Progress saved: ${val}%`);
   };
 
   const openLink = (url) => {
-    if (url) Linking.openURL(url);
+    if (url) {
+      track(EventType.MODAL_OPEN, EventCategory.NAVIGATION, { 
+        type: 'external_link', 
+        url,
+        bookId 
+      });
+      console.log(`[BookDetail] Opening external link`);
+      Linking.openURL(url);
+    }
   };
 
   // Import EPUB file
   const handleImportEpub = async () => {
     try {
       setImporting(true);
+      console.log(`[BookDetail] Starting EPUB import for "${book.title}"`);
+      track(EventType.EPUB_IMPORT_START, EventCategory.LIBRARY, { bookId, bookTitle: book.title });
+      
       const result = await DocumentPicker.getDocumentAsync({
         type: 'application/epub+zip',
         copyToCacheDirectory: true,
         multiple: false,
       });
 
-      if (result.canceled) { setImporting(false); return; }
+      if (result.canceled) { 
+        console.log('[BookDetail] EPUB import cancelled');
+        setImporting(false); 
+        return; 
+      }
 
       const file = result.assets?.[0] || result;
       if (!file?.uri) { setImporting(false); return; }
@@ -169,8 +214,12 @@ export default function BookDetailScreen() {
 
       if (!shelf) addToShelf(book, 'reading');
 
+      trackEpubImport(bookId, true, file.size || 0);
+      console.log(`[BookDetail] EPUB imported successfully: ${file.name} (${(file.size/1024/1024).toFixed(2)}MB)`);
       Alert.alert('Success', 'EPUB imported! Tap "Read Now" to start reading.');
     } catch (error) {
+      trackEpubImport(bookId, false, 0, error);
+      console.log(`[BookDetail] EPUB import failed: ${error.message}`);
       Alert.alert('Error', `Failed to import: ${error.message}`);
     } finally {
       setImporting(false);
@@ -196,9 +245,11 @@ export default function BookDetailScreen() {
                 }
               }
               removeUploadedFile(bookId);
+              track(EventType.EPUB_DELETE, EventCategory.LIBRARY, { bookId, bookTitle: book.title });
+              console.log(`[BookDetail] EPUB file deleted: "${book.title}"`);
             } catch (e) {
               // Even if file delete fails, clear the store reference
-              console.warn('Delete file error (clearing store anyway):', e.message);
+              console.warn('[BookDetail] Delete file error (clearing store anyway):', e.message);
               removeUploadedFile(bookId);
             }
           },

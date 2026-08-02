@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { trackBookAddToShelf, trackBookRemoveFromShelf, trackBookRate, trackProgressUpdate } from '../utils/analytics';
 
 /**
  * Book shape:
@@ -25,6 +26,8 @@ const useBookStore = create(
 
       addToShelf(book, shelf) {
         const { shelves } = get();
+        const previousShelf = get().getBookShelf(book.id);
+        
         // Remove from every shelf first (move semantics)
         const cleaned = {
           reading:      shelves.reading.filter((b) => b.id !== book.id),
@@ -41,10 +44,17 @@ const useBookStore = create(
           review: book.review ?? '',
         };
         set({ shelves: { ...cleaned, [shelf]: [...cleaned[shelf], entry] } });
+        
+        // Analytics
+        trackBookAddToShelf(book.id, book.title, shelf);
+        console.log(`[Library] Added "${book.title}" to ${shelf}${previousShelf ? ` (moved from ${previousShelf})` : ''}`);
       },
 
       removeFromShelf(bookId) {
         const { shelves } = get();
+        const book = get().getBook(bookId);
+        const previousShelf = get().getBookShelf(bookId);
+        
         set({
           shelves: {
             reading:      shelves.reading.filter((b) => b.id !== bookId),
@@ -53,10 +63,19 @@ const useBookStore = create(
             dnf:          shelves.dnf.filter((b) => b.id !== bookId),
           },
         });
+        
+        // Analytics
+        if (book) {
+          trackBookRemoveFromShelf(bookId, book.title, previousShelf);
+          console.log(`[Library] Removed "${book.title}" from ${previousShelf}`);
+        }
       },
 
       updateProgress(bookId, progress) {
         const { shelves } = get();
+        const book = get().getBook(bookId);
+        const previousProgress = book?.progress ?? 0;
+        
         const update = (list) =>
           list.map((b) => (b.id === bookId ? { ...b, progress } : b));
         set({
@@ -67,10 +86,19 @@ const useBookStore = create(
             dnf:          update(shelves.dnf),
           },
         });
+        
+        // Analytics (only if meaningful change)
+        if (Math.abs(progress - previousProgress) >= 1) {
+          trackProgressUpdate(bookId, progress, previousProgress);
+          console.log(`[Library] Progress "${book?.title}": ${previousProgress}% → ${progress}%`);
+        }
       },
 
       rateBook(bookId, rating, review) {
         const { shelves } = get();
+        const book = get().getBook(bookId);
+        const previousRating = book?.rating ?? 0;
+        
         const update = (list) =>
           list.map((b) =>
             b.id === bookId
@@ -85,6 +113,10 @@ const useBookStore = create(
             dnf:          update(shelves.dnf),
           },
         });
+        
+        // Analytics
+        trackBookRate(bookId, book?.title, rating, previousRating);
+        console.log(`[Library] Rated "${book?.title}": ${previousRating}★ → ${rating}★`);
       },
 
       getBookShelf(bookId) {

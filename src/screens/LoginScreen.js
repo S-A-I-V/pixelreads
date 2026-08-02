@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useAuthStore from '../store/authStore';
+import { trackScreenView, trackError, EventType, EventCategory } from '../utils/analytics';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -12,11 +13,20 @@ export default function LoginScreen() {
   const login = useAuthStore((s) => s.login);
   const insets = useSafeAreaInsets();
 
+  // Track screen view on mount
+  useEffect(() => {
+    trackScreenView('Login');
+    console.log('[Screen] Login viewed');
+  }, []);
+
   const handleLogin = () => {
     setError('');
+    console.log(`[Login] Attempting login with: ${email}`);
     const success = login(email);
     if (!success) {
       setError('Please enter a valid email');
+      trackError(EventType.ERROR_API, 'Login failed - invalid email', { email });
+      console.log(`[Login] Failed - invalid email: ${email}`);
     }
   };
 

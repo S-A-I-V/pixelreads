@@ -5,10 +5,11 @@ import {
   ScrollView, Keyboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { searchBooks } from '../api/googleBooks';
 import useBookStore from '../store/bookStore';
+import { trackSearch, trackScreenView, track, EventType, EventCategory } from '../utils/analytics';
 
 /**
  * Search Screen User Stories:
@@ -107,6 +108,14 @@ export default function SearchScreen() {
 
   const abortRef = useRef(null);
 
+  // Track screen view on focus
+  useFocusEffect(
+    useCallback(() => {
+      trackScreenView('Search', { resultsCount: results.length });
+      console.log(`[Screen] Search viewed - ${results.length} results`);
+    }, [results.length])
+  );
+
   const doSearch = useCallback(async (q, searchFilter, startIndex = 0, append = false) => {
     if (!q.trim()) return;
     abortRef.current?.abort();
@@ -117,6 +126,9 @@ export default function SearchScreen() {
     setLoading(true);
     setError(null);
     if (!append) setSearched(true);
+
+    const startTime = Date.now();
+    console.log(`[Search] Starting search: "${q}" (filter: ${searchFilter}, page: ${startIndex / 20 + 1})`);
 
     try {
       const filterObj = SEARCH_FILTERS.find(f => f.key === searchFilter);
@@ -134,9 +146,15 @@ export default function SearchScreen() {
       });
       setTotalItems(total);
       setOffset(startIndex);
+
+      // Analytics
+      const duration = Date.now() - startTime;
+      trackSearch(q, searchFilter, items.length, duration);
+      console.log(`[Search] Complete: ${items.length}/${total} results in ${duration}ms`);
     } catch (e) {
       if (e.name !== 'AbortError') {
         setError(e.message || 'Search failed');
+        console.log(`[Search] Error: ${e.message}`);
       }
     } finally {
       setLoading(false);

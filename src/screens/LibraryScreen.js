@@ -1,12 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
   TextInput, StyleSheet, Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import useBookStore from '../store/bookStore';
+import { trackScreenView, track, EventType, EventCategory } from '../utils/analytics';
 
 const TABS = [
   { key: 'all',          label: 'All'     },
@@ -86,7 +87,44 @@ export default function LibraryScreen() {
     );
   }, [activeTab, allBooks, shelves, filter]);
 
-  const goBook = (book) => navigation.navigate('BookDetail', { book });
+  // Track screen view on focus
+  useFocusEffect(
+    useCallback(() => {
+      trackScreenView('Library', { totalBooks: allBooks.length, activeTab });
+      console.log(`[Screen] Library viewed - ${allBooks.length} books, tab: ${activeTab}`);
+    }, [allBooks.length, activeTab])
+  );
+
+  // Track tab changes
+  const handleTabChange = (tabKey) => {
+    setActiveTab(tabKey);
+    track(EventType.TAB_CHANGE, EventCategory.NAVIGATION, { 
+      screen: 'Library', 
+      tab: tabKey, 
+      bookCount: counts[tabKey] 
+    });
+    console.log(`[Library] Tab changed to "${tabKey}" (${counts[tabKey]} books)`);
+  };
+
+  // Track filter usage
+  const handleFilterChange = (text) => {
+    setFilter(text);
+    if (text.length === 3) { // Log when user starts meaningful filter
+      track(EventType.SEARCH_FILTER, EventCategory.LIBRARY, { filterText: text, screen: 'Library' });
+      console.log(`[Library] Filter started: "${text}"`);
+    }
+  };
+
+  const goBook = (book) => {
+    track(EventType.SEARCH_RESULT_TAP, EventCategory.NAVIGATION, { 
+      bookId: book.id, 
+      bookTitle: book.title,
+      source: 'library',
+      shelf: book.shelf 
+    });
+    console.log(`[Library] Tapped book: "${book.title}" (${book.shelf})`);
+    navigation.navigate('BookDetail', { book });
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -102,7 +140,7 @@ export default function LibraryScreen() {
         <TextInput
           style={styles.filterInput}
           value={filter}
-          onChangeText={setFilter}
+          onChangeText={handleFilterChange}
           placeholder="Filter library..."
           placeholderTextColor="#888"
           autoCapitalize="none"
@@ -120,7 +158,7 @@ export default function LibraryScreen() {
         keyExtractor={(t) => t.key}
         renderItem={({ item }) => (
           <TouchableOpacity
-            onPress={() => setActiveTab(item.key)}
+            onPress={() => handleTabChange(item.key)}
             style={[styles.tab, activeTab === item.key && styles.tabActive]}
           >
             <Text style={[styles.tabLabel, activeTab === item.key && styles.tabLabelActive]}>

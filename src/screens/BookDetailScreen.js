@@ -8,8 +8,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
-import { useUserBookLibraryStore } from '../features/library';
-import { useEpubReaderStore } from '../features/reader';
+import { useUserBookLibraryStore } from '../features/library/store/userBookLibraryStore';
+import { useEpubReaderStore } from '../features/reader/store/epubReaderStore';
 import { 
   trackScreenView, 
   trackEpubImport, 

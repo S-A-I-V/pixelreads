@@ -9,8 +9,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Reader, ReaderProvider, useReader } from '@epubjs-react-native/core';
 import { useFileSystem } from '../utils/useFileSystem';
-import { useEpubReaderStore } from '../features/reader';
-import { useUserBookLibraryStore } from '../features/library';
+import { useEpubReaderStore } from '../features/reader/store/epubReaderStore';
+import { useUserBookLibraryStore } from '../features/library/store/userBookLibraryStore';
 import {
   trackReaderOpen,
   trackReaderClose,

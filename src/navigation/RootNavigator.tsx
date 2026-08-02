@@ -13,9 +13,9 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import { useAuthUserSessionStore } from '../features/auth';
+import { useAuthUserSessionStore } from '../features/auth/store/authUserSessionStore';
 import { MainTabNavigator } from './TabNavigator';
-import { AuthLoginScreen } from '../features/auth';
+import { AuthLoginScreen } from '../features/auth/screens/AuthLoginScreen';
 import BookDetailScreen from '../screens/BookDetailScreen';
 import ReaderScreen from '../screens/ReaderScreen';
 import {

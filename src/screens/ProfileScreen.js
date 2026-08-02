@@ -6,8 +6,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useUserBookLibraryStore } from '../features/library';
-import { useAuthUserSessionStore } from '../features/auth';
+import { useUserBookLibraryStore } from '../features/library/store/userBookLibraryStore';
+import { useAuthUserSessionStore } from '../features/auth/store/authUserSessionStore';
 import { trackScreenView, track, EventCategory } from '../utils/analytics';
 
 export default function ProfileScreen() {

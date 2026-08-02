@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { searchBooks } from '../api/googleBooks';
-import { useUserBookLibraryStore } from '../features/library';
+import { useUserBookLibraryStore } from '../features/library/store/userBookLibraryStore';
 import { trackSearch, trackScreenView, track, EventType, EventCategory } from '../utils/analytics';
 
 /**

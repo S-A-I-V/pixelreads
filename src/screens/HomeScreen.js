@@ -5,8 +5,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { useUserBookLibraryStore } from '../features/library';
-import { useAuthUserSessionStore } from '../features/auth';
+import { useUserBookLibraryStore } from '../features/library/store/userBookLibraryStore';
+import { useAuthUserSessionStore } from '../features/auth/store/authUserSessionStore';
 import { trackScreenView, track, EventType, EventCategory } from '../utils/analytics';
 
 function BookCard({ book, onPress }) {

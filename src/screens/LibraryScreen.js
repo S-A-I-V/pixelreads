@@ -6,7 +6,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useUserBookLibraryStore } from '../features/library';
+import { useUserBookLibraryStore } from '../features/library/store/userBookLibraryStore';
 import { trackScreenView, track, EventType, EventCategory } from '../utils/analytics';
 
 const TABS = [

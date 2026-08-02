@@ -1,0 +1,78 @@
+{
+  "name": "pixelreads",
+  "version": "1.0.0",
+  "description": "A retro 8-bit book tracking app built with React Native & Expo",
+  "author": "PixelReads Team",
+  "license": "MIT",
+  "homepage": "https://github.com/yourusername/pixelreads#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/pixelreads.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/pixelreads/issues"
+  },
+  "keywords": [
+    "react-native",
+    "expo",
+    "books",
+    "reading-tracker",
+    "8-bit",
+    "retro",
+    "pixel-art",
+    "google-books-api",
+    "mobile-app"
+  ],
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "start:clear": "expo start -c",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "build:android": "eas build --platform android --profile preview",
+    "build:ios": "eas build --platform ios --profile preview",
+    "build:all": "eas build --platform all --profile preview",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
+    "test": "jest",
+    "prebuild": "expo prebuild",
+    "clean": "rm -rf node_modules .expo dist && npm install"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.3",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-navigation/bottom-tabs": "^6.6.1",
+    "@react-navigation/native": "^6.1.18",
+    "@react-navigation/native-stack": "^6.11.0",
+    "expo": "~54.0.36",
+    "expo-document-picker": "~14.0.8",
+    "expo-file-system": "~19.0.23",
+    "expo-font": "~14.0.12",
+    "expo-haptics": "~15.0.8",
+    "expo-linear-gradient": "~15.0.8",
+    "expo-sharing": "~14.0.8",
+    "expo-splash-screen": "~31.0.13",
+    "expo-status-bar": "~3.0.9",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-gesture-handler": "~2.28.0",
+    "react-native-reanimated": "~4.1.1",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
+    "react-native-svg": "15.12.1",
+    "react-native-worklets": "~0.5.1",
+    "zustand": "^5.0.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "babel-preset-expo": "~13.0.0",
+    "react-native-dotenv": "^4.1.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "private": true
+}

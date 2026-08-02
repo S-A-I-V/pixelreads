@@ -1,0 +1,47 @@
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import useAuthStore from '../store/authStore';
+import TabNavigator      from './TabNavigator';
+import LoginScreen       from '../screens/LoginScreen';
+import BookDetailScreen  from '../screens/BookDetailScreen';
+import ReaderScreen      from '../screens/ReaderScreen';
+import { colors } from '../theme';
+
+const Stack = createNativeStackNavigator();
+
+export default function RootNavigator() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  return (
+    <NavigationContainer
+      theme={{
+        dark: true,
+        colors: {
+          primary:    colors.pinkHot,
+          background: colors.bgDark,
+          card:       colors.bgMid,
+          text:       colors.textMain,
+          border:     colors.pinkHot,
+          notification: colors.pinkHot,
+        },
+      }}
+    >
+      <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+        {!isAuthenticated ? (
+          <Stack.Screen name="Login" component={LoginScreen} />
+        ) : (
+          <>
+            <Stack.Screen name="Tabs"       component={TabNavigator}     />
+            <Stack.Screen name="BookDetail" component={BookDetailScreen} />
+            <Stack.Screen
+              name="Reader"
+              component={ReaderScreen}
+              options={{ animation: 'fade' }}
+            />
+          </>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}

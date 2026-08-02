@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "PixelReads",
+    "slug": "pixelreads",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a0020"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.pixelreads.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1a0020"
+      },
+      "package": "com.pixelreads.app"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-document-picker"
+    ]
+  }
+}

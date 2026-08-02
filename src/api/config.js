@@ -18,7 +18,7 @@
 // =========================================================================
 
 // In production, replace with process.env or Constants.expoConfig.extra
-export const GOOGLE_BOOKS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_BOOKS_API_KEY || 'AIzaSyACdk1dy8_9nCu1uGcHhvWxAO8LnevrcPU';
+export const GOOGLE_BOOKS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_BOOKS_API_KEY || '';
 
 export const GOOGLE_BOOKS_BASE_URL = 'https://www.googleapis.com/books/v1';
 

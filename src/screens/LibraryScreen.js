@@ -1,15 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
-  TextInput, StyleSheet,
+  TextInput, StyleSheet, Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import useBookStore from '../store/bookStore';
-import {
-  BookCover, ShelfBadge, PixelProgress, EmptyState,
-} from '../components';
-import { colors, fonts, textSizes, spacing, borderWidth } from '../theme';
 
 const TABS = [
   { key: 'all',          label: 'All'     },
@@ -19,109 +16,95 @@ const TABS = [
   { key: 'dnf',          label: 'DNF'     },
 ];
 
-const SORT_OPTIONS = ['ADDED', 'TITLE', 'AUTHOR', 'RATING'];
-
-function sortBooks(books, sort) {
-  const copy = [...books];
-  switch (sort) {
-    case 'TITLE':  return copy.sort((a, b) => a.title.localeCompare(b.title));
-    case 'AUTHOR': return copy.sort((a, b) => (a.authors?.[0]||'').localeCompare(b.authors?.[0]||''));
-    case 'RATING': return copy.sort((a, b) => (b.rating||0) - (a.rating||0));
-    default:       return copy.sort((a, b) => new Date(b.addedAt) - new Date(a.addedAt));
-  }
-}
-
-// ── List item ────────────────────────────────────────────────────
 function BookListItem({ book, onPress }) {
   return (
-    <TouchableOpacity onPress={onPress} style={styles.listItem} activeOpacity={0.8}>
-      <BookCover uri={book.thumbnail} title={book.title} width={56} />
+    <TouchableOpacity onPress={onPress} style={styles.listItem} activeOpacity={0.7}>
+      {book.thumbnail ? (
+        <Image source={{ uri: book.thumbnail }} style={styles.bookCover} />
+      ) : (
+        <View style={[styles.bookCover, styles.noCover]}>
+          <Text style={styles.noCoverText}>No Cover</Text>
+        </View>
+      )}
       <View style={styles.listInfo}>
         <Text style={styles.listTitle} numberOfLines={2}>{book.title}</Text>
         <Text style={styles.listAuthor} numberOfLines={1}>
-          {book.authors?.join(', ')}
+          {book.authors?.join(', ') || 'Unknown'}
         </Text>
         <View style={styles.listMeta}>
-          <ShelfBadge shelf={book.shelf} />
+          <Text style={styles.shelfTag}>{book.shelf}</Text>
           {book.rating > 0 && (
-            <Text style={styles.rating}>{'★'.repeat(book.rating)}</Text>
+            <View style={styles.ratingRow}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <MaterialCommunityIcons 
+                  key={i} 
+                  name={i <= book.rating ? 'star' : 'star-outline'} 
+                  size={14} 
+                  color="#FFD700" 
+                />
+              ))}
+            </View>
           )}
         </View>
-        {book.shelf === 'reading' && (
-          <PixelProgress value={book.progress ?? 0} showPct={false} height={6} />
+        {book.shelf === 'reading' && book.progress > 0 && (
+          <View style={styles.progressBar}>
+            <View style={[styles.progressFill, { width: `${book.progress}%` }]} />
+          </View>
         )}
       </View>
+      <MaterialCommunityIcons name="chevron-right" size={24} color="#888" />
     </TouchableOpacity>
   );
 }
 
-// ── Grid item ────────────────────────────────────────────────────
-function BookGridItem({ book, onPress }) {
-  return (
-    <TouchableOpacity onPress={onPress} style={styles.gridItem} activeOpacity={0.85}>
-      <BookCover uri={book.thumbnail} title={book.title} width="100%" />
-      <Text style={styles.gridTitle} numberOfLines={2}>{book.title}</Text>
-      {book.rating > 0 && (
-        <Text style={styles.rating}>{'★'.repeat(book.rating)}</Text>
-      )}
-    </TouchableOpacity>
-  );
-}
-
-// ── Screen ───────────────────────────────────────────────────────
 export default function LibraryScreen() {
   const navigation = useNavigation();
-  const route      = useRoute();
-  const insets     = useSafeAreaInsets();
-  const shelves    = useBookStore((s) => s.shelves);
+  const route = useRoute();
+  const insets = useSafeAreaInsets();
+  const shelves = useBookStore((s) => s.shelves);
 
   const initShelf = route.params?.shelf ?? 'all';
   const [activeTab, setActiveTab] = useState(initShelf);
-  const [viewMode,  setViewMode]  = useState('list');
-  const [sortBy,    setSortBy]    = useState('ADDED');
-  const [filter,    setFilter]    = useState('');
+  const [filter, setFilter] = useState('');
 
   const allBooks = useMemo(() => Object.values(shelves).flat(), [shelves]);
 
   const counts = {
     all:          allBooks.length,
-    reading:      shelves.reading.length,
-    want_to_read: shelves.want_to_read.length,
-    finished:     shelves.finished.length,
-    dnf:          shelves.dnf.length,
+    reading:      shelves.reading?.length || 0,
+    want_to_read: shelves.want_to_read?.length || 0,
+    finished:     shelves.finished?.length || 0,
+    dnf:          shelves.dnf?.length || 0,
   };
 
   const displayBooks = useMemo(() => {
     const base = activeTab === 'all' ? allBooks : (shelves[activeTab] ?? []);
-    const searched = filter
-      ? base.filter((b) =>
-          b.title.toLowerCase().includes(filter.toLowerCase()) ||
-          b.authors?.join(' ').toLowerCase().includes(filter.toLowerCase())
-        )
-      : base;
-    return sortBooks(searched, sortBy);
-  }, [activeTab, allBooks, shelves, filter, sortBy]);
+    if (!filter) return base;
+    return base.filter((b) =>
+      b.title.toLowerCase().includes(filter.toLowerCase()) ||
+      b.authors?.join(' ').toLowerCase().includes(filter.toLowerCase())
+    );
+  }, [activeTab, allBooks, shelves, filter]);
 
   const goBook = (book) => navigation.navigate('BookDetail', { book });
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>LIBRARY</Text>
-        <TouchableOpacity onPress={() => setViewMode((v) => v === 'list' ? 'grid' : 'list')}>
-          <Text style={styles.viewToggle}>{viewMode === 'list' ? '▦' : '☰'}</Text>
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Library</Text>
+        <Text style={styles.headerCount}>{allBooks.length} books</Text>
       </View>
 
       {/* Filter input */}
       <View style={styles.filterWrap}>
+        <MaterialCommunityIcons name="magnify" size={20} color="#888" />
         <TextInput
           style={styles.filterInput}
           value={filter}
           onChangeText={setFilter}
           placeholder="Filter library..."
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor="#888"
           autoCapitalize="none"
           autoCorrect={false}
         />
@@ -133,6 +116,7 @@ export default function LibraryScreen() {
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.tabBar}
+        contentContainerStyle={styles.tabBarContent}
         keyExtractor={(t) => t.key}
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -140,53 +124,36 @@ export default function LibraryScreen() {
             style={[styles.tab, activeTab === item.key && styles.tabActive]}
           >
             <Text style={[styles.tabLabel, activeTab === item.key && styles.tabLabelActive]}>
-              {item.label} ({counts[item.key] ?? 0})
+              {item.label} ({counts[item.key]})
             </Text>
           </TouchableOpacity>
         )}
       />
 
-      {/* Sort row */}
-      <View style={styles.sortRow}>
-        <Text style={styles.sortLabel}>SORT:</Text>
-        {SORT_OPTIONS.map((s) => (
-          <TouchableOpacity
-            key={s}
-            onPress={() => setSortBy(s)}
-            style={[styles.sortChip, sortBy === s && styles.sortChipActive]}
-          >
-            <Text style={[styles.sortChipText, sortBy === s && styles.sortChipTextActive]}>{s}</Text>
-          </TouchableOpacity>
-        ))}
-        <Text style={styles.bookCount}>{displayBooks.length}</Text>
-      </View>
-
-      {/* Book list or grid */}
+      {/* Book list */}
       {displayBooks.length === 0 ? (
-        <EmptyState
-          icon={activeTab === 'all' ? '📚' : '🔖'}
-          title={filter ? 'NO MATCHES' : 'SHELF EMPTY'}
-          sub={filter ? 'Try different keywords' : 'Add books via Search'}
-        />
-      ) : viewMode === 'list' ? (
+        <View style={styles.emptyState}>
+          <MaterialCommunityIcons 
+            name={filter ? 'book-search' : 'bookshelf'} 
+            size={48} 
+            color="#888" 
+          />
+          <Text style={styles.emptyText}>
+            {filter ? 'No matches found' : 'Shelf is empty'}
+          </Text>
+          <Text style={styles.emptySubtext}>
+            {filter ? 'Try different keywords' : 'Add books from Search'}
+          </Text>
+        </View>
+      ) : (
         <FlatList
           data={displayBooks}
           keyExtractor={(b) => b.id}
           renderItem={({ item }) => (
             <BookListItem book={item} onPress={() => goBook(item)} />
           )}
-          ItemSeparatorComponent={() => <View style={styles.sep} />}
-          contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxxl }}
-        />
-      ) : (
-        <FlatList
-          data={displayBooks}
-          keyExtractor={(b) => b.id}
-          numColumns={3}
-          renderItem={({ item }) => (
-            <BookGridItem book={item} onPress={() => goBook(item)} />
-          )}
-          contentContainerStyle={styles.grid}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          contentContainerStyle={{ paddingBottom: 24 }}
         />
       )}
     </View>
@@ -194,88 +161,148 @@ export default function LibraryScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bgDark },
-
+  container: {
+    flex: 1,
+    backgroundColor: '#1a1a2e',
+  },
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg, paddingVertical: spacing.sm,
-    backgroundColor: colors.bgMid,
-    borderBottomWidth: borderWidth.thick, borderBottomColor: colors.pinkHot,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
   },
   headerTitle: {
-    fontFamily: fonts.pixel, fontSize: textSizes.md, color: colors.pinkHot,
-    textShadowColor: colors.pinkDark, textShadowOffset: { width: 2, height: 2 }, textShadowRadius: 0,
-    letterSpacing: 2,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
   },
-  viewToggle: { fontFamily: fonts.pixel, fontSize: 20, color: colors.pinkHot },
-
+  headerCount: {
+    fontSize: 14,
+    color: '#888',
+  },
   filterWrap: {
-    padding: spacing.sm, paddingHorizontal: spacing.md,
-    backgroundColor: colors.bgMid, borderBottomWidth: 1, borderBottomColor: colors.bgPanel,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    margin: 16,
+    paddingHorizontal: 12,
+    backgroundColor: '#2a2a4e',
+    borderWidth: 1,
+    borderColor: '#444',
+    borderRadius: 8,
   },
   filterInput: {
-    fontFamily: fonts.pixel, fontSize: textSizes.xxs,
-    color: colors.textMain, backgroundColor: colors.bgDark,
-    borderWidth: borderWidth.normal, borderColor: colors.pinkHot,
-    paddingHorizontal: spacing.md, paddingVertical: spacing.xs,
+    flex: 1,
+    fontSize: 16,
+    color: '#fff',
+    paddingVertical: 12,
   },
-
   tabBar: {
     flexGrow: 0,
-    backgroundColor: colors.bgMid,
-    borderBottomWidth: borderWidth.thick, borderBottomColor: colors.pinkHot,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
   },
-  tab: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
-  tabActive: { backgroundColor: colors.pinkHot },
+  tabBarContent: {
+    paddingHorizontal: 12,
+    gap: 8,
+  },
+  tab: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  tabActive: {
+    backgroundColor: '#e94560',
+  },
   tabLabel: {
-    fontFamily: fonts.pixel, fontSize: textSizes.xxs - 1,
-    color: colors.textDim, letterSpacing: 0.5,
+    fontSize: 14,
+    color: '#888',
+    fontWeight: '500',
   },
-  tabLabelActive: { color: colors.white },
-
-  sortRow: {
-    flexDirection: 'row', alignItems: 'center',
-    gap: spacing.xs, padding: spacing.sm, paddingHorizontal: spacing.md,
-    borderBottomWidth: 1, borderBottomColor: colors.bgPanel,
+  tabLabelActive: {
+    color: '#fff',
   },
-  sortLabel: {
-    fontFamily: fonts.pixel, fontSize: textSizes.xxs - 1,
-    color: colors.textDim,
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
   },
-  sortChip: {
-    paddingHorizontal: spacing.sm, paddingVertical: spacing.xxs,
-    backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.bgPanel,
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
   },
-  sortChipActive: { backgroundColor: colors.pinkHot, borderColor: colors.pinkDark },
-  sortChipText: {
-    fontFamily: fonts.pixel, fontSize: textSizes.xxs - 1, color: colors.textDim,
+  emptySubtext: {
+    fontSize: 14,
+    color: '#888',
   },
-  sortChipTextActive: { color: colors.white },
-  bookCount: {
-    marginLeft: 'auto', fontFamily: fonts.pixel,
-    fontSize: textSizes.xxs - 1, color: colors.textDim,
-  },
-
   listItem: {
-    flexDirection: 'row', gap: spacing.md,
-    paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  listInfo: { flex: 1, gap: spacing.xs },
+  bookCover: {
+    width: 50,
+    height: 75,
+    borderRadius: 4,
+    backgroundColor: '#444',
+  },
+  noCover: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noCoverText: {
+    fontSize: 8,
+    color: '#888',
+    textAlign: 'center',
+  },
+  listInfo: {
+    flex: 1,
+    gap: 4,
+  },
   listTitle: {
-    fontFamily: fonts.pixel, fontSize: textSizes.xxs,
-    color: colors.textMain, lineHeight: textSizes.xxs * 2,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
   listAuthor: {
-    fontFamily: fonts.pixel, fontSize: textSizes.xxs - 1, color: colors.textDim,
+    fontSize: 14,
+    color: '#888',
   },
-  listMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  rating: { fontFamily: fonts.pixel, fontSize: textSizes.xxs, color: colors.yellow },
-  sep:    { height: 1, backgroundColor: colors.bgPanel },
-
-  grid:     { padding: spacing.md, gap: spacing.md },
-  gridItem: { flex: 1, margin: spacing.xs, gap: spacing.xs },
-  gridTitle: {
-    fontFamily: fonts.pixel, fontSize: textSizes.xxs - 1,
-    color: colors.textMain, lineHeight: (textSizes.xxs - 1) * 2,
+  listMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 4,
+  },
+  shelfTag: {
+    fontSize: 12,
+    color: '#e94560',
+    textTransform: 'capitalize',
+  },
+  ratingRow: {
+    flexDirection: 'row',
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: '#444',
+    borderRadius: 2,
+    marginTop: 8,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#e94560',
+    borderRadius: 2,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#333',
+    marginLeft: 78,
   },
 });

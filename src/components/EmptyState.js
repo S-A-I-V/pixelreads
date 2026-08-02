@@ -1,20 +1,21 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, fonts, textSizes, spacing } from '../theme';
 
 /**
  * Empty state placeholder.
  *
  * Props:
- *   icon     string  emoji icon
+ *   icon     string  MaterialCommunityIcons name
  *   title    string  main message
  *   sub      string  secondary message
  *   action   ReactNode  optional action button
  */
-export default function EmptyState({ icon = '📚', title, sub, action }) {
+export default function EmptyState({ icon = 'bookshelf', title, sub, action }) {
   return (
     <View style={styles.container}>
-      <Text style={styles.icon}>{icon}</Text>
+      <MaterialCommunityIcons name={icon} size={56} color={colors.pinkHot} />
       {title ? <Text style={styles.title}>{title}</Text> : null}
       {sub   ? <Text style={styles.sub}>{sub}</Text>     : null}
       {action ? <View style={styles.actionWrap}>{action}</View> : null}
@@ -29,9 +30,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing.xxxl,
     gap: spacing.lg,
-  },
-  icon: {
-    fontSize: 48,
   },
   title: {
     fontFamily: fonts.pixel,

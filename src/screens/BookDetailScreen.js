@@ -1,242 +1,327 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  TextInput, StyleSheet, Alert,
+  TextInput, StyleSheet, Alert, Image, Linking, ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
-import { fetchBookById } from '../api/googleBooks';
+import * as FileSystem from 'expo-file-system/legacy';
 import useBookStore from '../store/bookStore';
-import {
-  BookCover, ShelfBadge, PixelButton, PixelProgress,
-  StarRating, PixelDivider, PixelModal, LoadingSpinner,
-  ScreenHeader, BackButton, Toast,
-} from '../components';
-import useToast from '../hooks/useToast';
-import { colors, fonts, textSizes, spacing, borderWidth } from '../theme';
+import useReaderStore from '../store/readerStore';
 
 const SHELVES = [
-  { key: 'reading',      label: '▶ Currently Reading', icon: '📖' },
-  { key: 'want_to_read', label: '⭐ Want to Read',      icon: '🔖' },
-  { key: 'finished',     label: '✓  Finished',          icon: '🏆' },
-  { key: 'dnf',          label: '✕  Did Not Finish',    icon: '💔' },
+  { key: 'reading',      label: 'Currently Reading' },
+  { key: 'want_to_read', label: 'Want to Read'      },
+  { key: 'finished',     label: 'Finished'          },
+  { key: 'dnf',          label: 'Did Not Finish'    },
 ];
 
-// ── Metadata row ─────────────────────────────────────────────────
-function MetaItem({ label, value }) {
+function StarRating({ value, onChange, readonly = false }) {
   return (
-    <View style={styles.metaItem}>
-      <Text style={styles.metaLabel}>{label}</Text>
-      <Text style={styles.metaValue}>{value || '—'}</Text>
+    <View style={styles.starRow}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <TouchableOpacity 
+          key={i} 
+          onPress={() => !readonly && onChange?.(i)} 
+          style={styles.starBtn}
+          disabled={readonly}
+        >
+          <MaterialCommunityIcons
+            name={i <= value ? 'star' : 'star-outline'}
+            size={readonly ? 18 : 32}
+            color="#FFD700"
+          />
+        </TouchableOpacity>
+      ))}
     </View>
   );
 }
 
-// ── Screen ───────────────────────────────────────────────────────
+function MetaRow({ label, value, icon }) {
+  if (!value) return null;
+  return (
+    <View style={styles.metaRow}>
+      {icon && <MaterialCommunityIcons name={icon} size={16} color="#888" />}
+      <Text style={styles.metaLabel}>{label}</Text>
+      <Text style={styles.metaValue}>{value}</Text>
+    </View>
+  );
+}
+
+function Badge({ label, color, icon }) {
+  return (
+    <View style={[styles.badge, { backgroundColor: color }]}>
+      {icon && <MaterialCommunityIcons name={icon} size={12} color="#fff" />}
+      <Text style={styles.badgeText}>{label}</Text>
+    </View>
+  );
+}
+
 export default function BookDetailScreen() {
   const navigation = useNavigation();
-  const route      = useRoute();
-  const insets     = useSafeAreaInsets();
+  const route = useRoute();
+  const insets = useSafeAreaInsets();
 
-  const { book: passedBook } = route.params ?? {};
+  const { book } = route.params ?? {};
 
-  const [book,          setBook]          = useState(passedBook ?? null);
-  const [loading,       setLoading]       = useState(!passedBook);
-  const [shelfModal,    setShelfModal]    = useState(false);
-  const [reviewMode,    setReviewMode]    = useState(false);
-  const [reviewText,    setReviewText]    = useState('');
-  const [progressText,  setProgressText]  = useState('');
-  const [descExpanded,  setDescExpanded]  = useState(false);
+  const [progressText, setProgressText] = useState('');
+  const [showShelfPicker, setShowShelfPicker] = useState(false);
+  const [importing, setImporting] = useState(false);
 
-  const { toastMsg, toastVisible, showToast, hideToast } = useToast();
+  const addToShelf = useBookStore((s) => s.addToShelf);
+  const removeFromShelf = useBookStore((s) => s.removeFromShelf);
+  const getBookShelf = useBookStore((s) => s.getBookShelf);
+  const getBook = useBookStore((s) => s.getBook);
+  const rateBook = useBookStore((s) => s.rateBook);
+  const updateProgress = useBookStore((s) => s.updateProgress);
 
-  const addToShelf       = useBookStore((s) => s.addToShelf);
-  const removeFromShelf  = useBookStore((s) => s.removeFromShelf);
-  const getBookShelf     = useBookStore((s) => s.getBookShelf);
-  const getBook          = useBookStore((s) => s.getBook);
-  const rateBook         = useBookStore((s) => s.rateBook);
-  const updateProgress   = useBookStore((s) => s.updateProgress);
-  const saveUploadedFile = useBookStore((s) => s.saveUploadedFile);
-  const getUploadedFile  = useBookStore((s) => s.getUploadedFile);
-  const removeUploadedFile = useBookStore((s) => s.removeUploadedFile);
+  // Reader store
+  const saveUploadedFile = useReaderStore((s) => s.saveUploadedFile);
+  const getUploadedFile = useReaderStore((s) => s.getUploadedFile);
+  const removeUploadedFile = useReaderStore((s) => s.removeUploadedFile);
 
-  const bookId  = book?.id;
-  const stored  = getBook(bookId);
-  const shelf   = getBookShelf(bookId);
-  const hasFile = !!getUploadedFile(bookId);
-
-  // Fetch full book if we only have partial data
-  useEffect(() => {
-    if (!passedBook && bookId) {
-      fetchBookById(bookId)
-        .then(setBook)
-        .catch(() => showToast('Failed to load book'))
-        .finally(() => setLoading(false));
-    }
-  }, [bookId]);
+  const bookId = book?.id;
+  const stored = getBook(bookId);
+  const shelf = getBookShelf(bookId);
+  const uploadedFile = getUploadedFile(bookId);
 
   useEffect(() => {
-    if (stored?.review)   setReviewText(String(stored.review));
     if (stored?.progress) setProgressText(String(stored.progress));
-  }, [stored?.review, stored?.progress]);
+  }, [stored?.progress]);
+
+  if (!book) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.errorText}>Book not found</Text>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Text style={styles.backBtnText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   const handleAddToShelf = (s) => {
-    if (!book) return;
     addToShelf(book, s);
-    setShelfModal(false);
-    showToast(`Added to ${s.replace('_', ' ').toUpperCase()} ♥`);
+    setShowShelfPicker(false);
   };
 
   const handleRemove = () => {
     Alert.alert('Remove book?', 'This will remove the book from your library.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => {
-        removeFromShelf(bookId);
-        showToast('Removed from library');
-      }},
+      { text: 'Remove', style: 'destructive', onPress: () => removeFromShelf(bookId) },
     ]);
   };
 
   const handleRate = (stars) => {
-    rateBook(bookId, stars, reviewText);
-    showToast(`Rated ${stars} ★`);
-  };
-
-  const handleSaveReview = () => {
-    rateBook(bookId, stored?.rating ?? 0, reviewText);
-    setReviewMode(false);
-    showToast('Review saved ♥');
+    rateBook(bookId, stars, stored?.review ?? '');
   };
 
   const handleSaveProgress = () => {
     const val = Math.min(100, Math.max(0, parseInt(progressText, 10) || 0));
     updateProgress(bookId, val);
     setProgressText(String(val));
-    showToast(`Progress: ${val}%`);
   };
 
-  const handleUpload = async () => {
+  const openLink = (url) => {
+    if (url) Linking.openURL(url);
+  };
+
+  // Import EPUB file
+  const handleImportEpub = async () => {
     try {
+      setImporting(true);
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/epub+zip', 'application/pdf', '*/*'],
+        type: 'application/epub+zip',
         copyToCacheDirectory: true,
+        multiple: false,
       });
-      if (result.canceled) return;
-      const asset = result.assets[0];
-      const ext   = asset.name.split('.').pop().toLowerCase();
-      if (!['epub', 'pdf'].includes(ext)) {
-        showToast('Only EPUB or PDF allowed');
+
+      if (result.canceled) { setImporting(false); return; }
+
+      const file = result.assets?.[0] || result;
+      if (!file?.uri) { setImporting(false); return; }
+
+      const ext = file.name?.split('.').pop()?.toLowerCase();
+      if (ext !== 'epub') {
+        Alert.alert('Invalid File', 'Please select an EPUB (.epub) file.');
+        setImporting(false);
         return;
       }
-      // Copy to permanent app directory
-      const destDir  = FileSystem.documentDirectory + 'books/';
-      await FileSystem.makeDirectoryAsync(destDir, { intermediates: true });
-      const destPath = destDir + bookId + '.' + ext;
-      await FileSystem.copyAsync({ from: asset.uri, to: destPath });
+
+      // Ensure books directory exists
+      const booksDir = FileSystem.documentDirectory + 'books/';
+      const dirInfo = await FileSystem.getInfoAsync(booksDir);
+      if (!dirInfo.exists) {
+        await FileSystem.makeDirectoryAsync(booksDir, { intermediates: true });
+      }
+
+      // Copy to permanent storage
+      const destPath = booksDir + bookId + '.epub';
+      await FileSystem.copyAsync({ from: file.uri, to: destPath });
 
       saveUploadedFile(bookId, {
-        uri:  destPath,
-        name: asset.name,
-        ext,
-        type: asset.mimeType ?? (ext === 'epub' ? 'application/epub+zip' : 'application/pdf'),
+        uri: destPath,
+        fileName: file.name,
+        fileSize: file.size || 0,
       });
-      showToast('E-book uploaded ♥');
-    } catch {
-      showToast('Upload failed ✕');
+
+      if (!shelf) addToShelf(book, 'reading');
+
+      Alert.alert('Success', 'EPUB imported! Tap "Read Now" to start reading.');
+    } catch (error) {
+      Alert.alert('Error', `Failed to import: ${error.message}`);
+    } finally {
+      setImporting(false);
     }
   };
 
-  if (loading) return <LoadingSpinner message="LOADING BOOK..." />;
-  if (!book)   return (
-    <View style={styles.screen}>
-      <Text style={styles.errText}>Book not found</Text>
-      <PixelButton label="◀ BACK" onPress={() => navigation.goBack()} />
-    </View>
-  );
+  // Remove imported file
+  const handleRemoveFile = () => {
+    Alert.alert(
+      'Remove E-Book?',
+      'This will delete the imported file. You can import it again later.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (uploadedFile?.uri) {
+                const info = await FileSystem.getInfoAsync(uploadedFile.uri);
+                if (info.exists) {
+                  await FileSystem.deleteAsync(uploadedFile.uri, { idempotent: true });
+                }
+              }
+              removeUploadedFile(bookId);
+            } catch (e) {
+              // Even if file delete fails, clear the store reference
+              console.warn('Delete file error (clearing store anyway):', e.message);
+              removeUploadedFile(bookId);
+            }
+          },
+        },
+      ]
+    );
+  };
 
-  const rawDesc    = book.description?.replace(/<[^>]+>/g, '') ?? '';
-  const shortDesc  = rawDesc.slice(0, 220);
+  const rawDesc = book.description?.replace(/<[^>]+>/g, '') ?? '';
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
-      <Toast message={toastMsg} visible={toastVisible} onHide={hideToast} />
-
-      <ScreenHeader
-        title="BOOK INFO"
-        left={<BackButton onPress={() => navigation.goBack()} />}
-        right={
-          shelf ? (
-            <TouchableOpacity onPress={handleRemove}>
-              <Text style={{ fontSize: 18 }}>🗑</Text>
-            </TouchableOpacity>
-          ) : null
-        }
-      />
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Book Details</Text>
+        {shelf && (
+          <TouchableOpacity onPress={handleRemove}>
+            <MaterialCommunityIcons name="delete-outline" size={24} color="#888" />
+          </TouchableOpacity>
+        )}
+      </View>
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxxl }]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Hero */}
+        {/* Hero section */}
         <View style={styles.hero}>
-          <BookCover uri={book.thumbnail} title={book.title} width={100} />
+          {book.thumbnail ? (
+            <Image source={{ uri: book.thumbnail }} style={styles.cover} />
+          ) : (
+            <View style={[styles.cover, styles.noCover]}>
+              <Text style={styles.noCoverText}>No Cover</Text>
+            </View>
+          )}
           <View style={styles.heroInfo}>
             <Text style={styles.bookTitle}>{book.title}</Text>
+            {book.subtitle && (
+              <Text style={styles.bookSubtitle}>{book.subtitle}</Text>
+            )}
             {book.authors?.length > 0 && (
               <Text style={styles.bookAuthor}>{book.authors.join(', ')}</Text>
             )}
-            <Text style={styles.bookMeta}>
-              {[book.publishedDate?.slice(0,4), book.publisher].filter(Boolean).join(' · ')}
-            </Text>
-            {book.pageCount > 0 && (
-              <Text style={styles.bookMeta}>{book.pageCount} pages</Text>
+            
+            {/* Quick stats row */}
+            <View style={styles.quickStats}>
+              {book.publishedDate && (
+                <Text style={styles.quickStatText}>{book.publishedDate.slice(0, 4)}</Text>
+              )}
+              {book.pageCount > 0 && (
+                <Text style={styles.quickStatText}>{book.pageCount} pages</Text>
+              )}
+              {book.language && (
+                <Text style={styles.quickStatText}>{book.language.toUpperCase()}</Text>
+              )}
+            </View>
+
+            {/* Google rating */}
+            {book.averageRating > 0 && (
+              <View style={styles.googleRating}>
+                <StarRating value={Math.round(book.averageRating)} readonly />
+                <Text style={styles.ratingText}>
+                  {book.averageRating.toFixed(1)} ({book.ratingsCount} reviews)
+                </Text>
+              </View>
             )}
-            {shelf && <ShelfBadge shelf={shelf} style={{ marginTop: spacing.xs }} />}
+
+            {/* Badges */}
+            <View style={styles.badgesRow}>
+              {book.isEbook && <Badge label="EBOOK" color="#2563eb" icon="book-open-variant" />}
+              {book.isFree && <Badge label="FREE" color="#16a34a" icon="gift" />}
+              {book.publicDomain && <Badge label="PUBLIC DOMAIN" color="#7c3aed" />}
+              {shelf && <Badge label={shelf.replace('_', ' ').toUpperCase()} color="#e94560" />}
+            </View>
           </View>
         </View>
 
-        {/* Action buttons */}
-        <View style={styles.actions}>
-          <PixelButton
-            label={shelf ? '✏ EDIT SHELF' : '+ ADD TO SHELF'}
-            onPress={() => setShelfModal(true)}
-            style={styles.btnFull}
+        {/* Add to shelf button */}
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => setShowShelfPicker(!showShelfPicker)}
+        >
+          <MaterialCommunityIcons
+            name={shelf ? 'bookshelf' : 'plus'}
+            size={20}
+            color="#fff"
           />
-          {hasFile ? (
-            <PixelButton
-              label="📖 READ NOW"
-              variant="secondary"
-              onPress={() => navigation.navigate('Reader', { bookId })}
-              style={styles.btnFull}
-            />
-          ) : (
-            <PixelButton
-              label="📤 UPLOAD EPUB/PDF"
-              variant="secondary"
-              onPress={handleUpload}
-              style={styles.btnFull}
-            />
-          )}
-        </View>
+          <Text style={styles.addButtonText}>
+            {shelf ? 'Change Shelf' : 'Add to Library'}
+          </Text>
+        </TouchableOpacity>
 
-        {/* Uploaded file status */}
-        {hasFile && (
-          <View style={styles.fileStatus}>
-            <Text style={styles.fileStatusText}>✓ E-BOOK ATTACHED</Text>
-            <TouchableOpacity onPress={handleUpload}>
-              <Text style={styles.replaceBtn}>REPLACE</Text>
-            </TouchableOpacity>
+        {/* Shelf picker */}
+        {showShelfPicker && (
+          <View style={styles.shelfPicker}>
+            {SHELVES.map(({ key, label }) => (
+              <TouchableOpacity
+                key={key}
+                style={[styles.shelfOption, shelf === key && styles.shelfOptionActive]}
+                onPress={() => handleAddToShelf(key)}
+              >
+                <Text style={[styles.shelfOptionText, shelf === key && styles.shelfOptionTextActive]}>
+                  {label}
+                </Text>
+                {shelf === key && (
+                  <MaterialCommunityIcons name="check" size={18} color="#e94560" />
+                )}
+              </TouchableOpacity>
+            ))}
           </View>
         )}
 
         {/* Progress (reading shelf only) */}
         {shelf === 'reading' && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>PROGRESS</Text>
-            <PixelProgress value={stored?.progress ?? 0} />
+            <Text style={styles.sectionTitle}>Reading Progress</Text>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: `${stored?.progress ?? 0}%` }]} />
+            </View>
             <View style={styles.progressRow}>
               <TextInput
                 style={styles.progressInput}
@@ -245,230 +330,529 @@ export default function BookDetailScreen() {
                 keyboardType="number-pad"
                 maxLength={3}
                 placeholder="0"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor="#888"
               />
               <Text style={styles.pctSign}>%</Text>
-              <PixelButton label="SAVE" size="sm" onPress={handleSaveProgress} />
+              <TouchableOpacity style={styles.saveBtn} onPress={handleSaveProgress}>
+                <Text style={styles.saveBtnText}>Save</Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
 
-        {/* Rating */}
+        {/* My Rating (when in library) */}
         {shelf && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>RATING</Text>
+            <Text style={styles.sectionTitle}>My Rating</Text>
             <StarRating value={stored?.rating ?? 0} onChange={handleRate} />
           </View>
         )}
 
-        <PixelDivider />
-
         {/* Description */}
         {rawDesc.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>DESCRIPTION</Text>
-            <Text style={styles.descText}>
-              {descExpanded ? rawDesc : shortDesc}
-            </Text>
-            {rawDesc.length > 220 && (
-              <TouchableOpacity onPress={() => setDescExpanded(!descExpanded)}>
-                <Text style={styles.moreBtn}>{descExpanded ? '...LESS' : '...MORE'}</Text>
-              </TouchableOpacity>
-            )}
+            <Text style={styles.sectionTitle}>Description</Text>
+            <Text style={styles.descText}>{rawDesc}</Text>
           </View>
         )}
 
-        {/* Review */}
-        {shelf && (
+        {/* Categories */}
+        {book.categories?.length > 0 && (
           <View style={styles.section}>
-            <View style={styles.sectionRow}>
-              <Text style={styles.sectionTitle}>MY REVIEW</Text>
-              <TouchableOpacity onPress={() => setReviewMode(!reviewMode)}>
-                <Text style={styles.editBtn}>{reviewMode ? 'CANCEL' : 'EDIT'}</Text>
-              </TouchableOpacity>
+            <Text style={styles.sectionTitle}>Categories</Text>
+            <View style={styles.categoriesRow}>
+              {book.categories.map((cat, i) => (
+                <View key={i} style={styles.categoryChip}>
+                  <Text style={styles.categoryText}>{cat}</Text>
+                </View>
+              ))}
             </View>
-            {reviewMode ? (
-              <View style={{ gap: spacing.sm }}>
-                <TextInput
-                  style={styles.reviewInput}
-                  value={reviewText}
-                  onChangeText={setReviewText}
-                  placeholder="Write your thoughts..."
-                  placeholderTextColor={colors.textMuted}
-                  multiline
-                  textAlignVertical="top"
-                />
-                <PixelButton label="SAVE REVIEW" size="sm" onPress={handleSaveReview} />
-              </View>
-            ) : stored?.review ? (
-              <Text style={styles.reviewText}>"{stored.review}"</Text>
-            ) : (
-              <Text style={styles.noReview}>No review yet. Tap EDIT to add one.</Text>
-            )}
           </View>
         )}
 
-        <PixelDivider />
+        {/* Publication Details */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Publication Details</Text>
+          <View style={styles.detailsCard}>
+            <MetaRow icon="domain" label="Publisher" value={book.publisher} />
+            <MetaRow icon="calendar" label="Published" value={book.publishedDate} />
+            <MetaRow icon="book-open-page-variant" label="Pages" value={book.pageCount > 0 ? String(book.pageCount) : null} />
+            <MetaRow icon="translate" label="Language" value={book.language?.toUpperCase()} />
+            <MetaRow icon="barcode" label="ISBN" value={book.isbn} />
+            <MetaRow icon="shield-check" label="Maturity" value={book.maturityRating} />
+          </View>
+        </View>
 
-        {/* Metadata grid */}
-        <View style={styles.metaGrid}>
-          <MetaItem label="ISBN"     value={book.isbn} />
-          <MetaItem label="LANGUAGE" value={book.language?.toUpperCase()} />
-          <MetaItem label="PAGES"    value={book.pageCount ? String(book.pageCount) : null} />
-          <MetaItem label="YEAR"     value={book.publishedDate?.slice(0, 4)} />
+        {/* Availability */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Availability</Text>
+          <View style={styles.detailsCard}>
+            <MetaRow icon="cart" label="Saleability" value={book.saleability} />
+            <MetaRow icon="currency-usd" label="Price" value={book.price} />
+            <MetaRow icon="eye" label="Viewability" value={book.viewability} />
+            <MetaRow icon="file-pdf-box" label="PDF Available" value={book.pdfAvailable ? 'Yes' : 'No'} />
+            <MetaRow icon="file-document" label="EPUB Available" value={book.epubAvailable ? 'Yes' : 'No'} />
+          </View>
+        </View>
+
+        {/* Links */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Links</Text>
+          <View style={styles.linksRow}>
+            {book.previewLink && (
+              <TouchableOpacity style={styles.linkBtn} onPress={() => openLink(book.previewLink)}>
+                <MaterialCommunityIcons name="book-open-variant" size={18} color="#fff" />
+                <Text style={styles.linkBtnText}>Preview</Text>
+              </TouchableOpacity>
+            )}
+            {book.infoLink && (
+              <TouchableOpacity style={styles.linkBtn} onPress={() => openLink(book.infoLink)}>
+                <MaterialCommunityIcons name="information" size={18} color="#fff" />
+                <Text style={styles.linkBtnText}>More Info</Text>
+              </TouchableOpacity>
+            )}
+            {book.buyLink && (
+              <TouchableOpacity style={[styles.linkBtn, styles.buyBtn]} onPress={() => openLink(book.buyLink)}>
+                <MaterialCommunityIcons name="cart" size={18} color="#fff" />
+                <Text style={styles.linkBtnText}>Buy</Text>
+              </TouchableOpacity>
+            )}
+            {book.webReaderLink && (
+              <TouchableOpacity style={styles.linkBtn} onPress={() => openLink(book.webReaderLink)}>
+                <MaterialCommunityIcons name="web" size={18} color="#fff" />
+                <Text style={styles.linkBtnText}>Read Online</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* E-Book Reader Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>E-Book Reader</Text>
+          <View style={styles.detailsCard}>
+            {uploadedFile ? (
+              <>
+                <View style={styles.fileInfo}>
+                  <MaterialCommunityIcons name="file-document" size={20} color="#e94560" />
+                  <View style={styles.fileInfoText}>
+                    <Text style={styles.fileName} numberOfLines={1}>{uploadedFile.fileName}</Text>
+                    <Text style={styles.fileSize}>
+                      {(uploadedFile.fileSize / 1024 / 1024).toFixed(2)} MB
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.readerButtons}>
+                  <TouchableOpacity
+                    style={styles.readNowBtn}
+                    onPress={() => navigation.navigate('Reader', { bookId })}
+                  >
+                    <MaterialCommunityIcons name="book-open-page-variant" size={20} color="#fff" />
+                    <Text style={styles.readNowBtnText}>Read Now</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.removeFileBtn} onPress={handleRemoveFile}>
+                    <MaterialCommunityIcons name="delete-outline" size={20} color="#ff6b6b" />
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <TouchableOpacity
+                style={styles.importBtn}
+                onPress={handleImportEpub}
+                disabled={importing}
+              >
+                {importing ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <MaterialCommunityIcons name="file-upload" size={20} color="#fff" />
+                    <Text style={styles.importBtnText}>Import EPUB File</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
+            <Text style={styles.readerHint}>
+              Import your own EPUB file to read within the app with bookmarks, highlights, and reading progress.
+            </Text>
+          </View>
+        </View>
+
+        {/* Book ID (for debugging) */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Identifiers</Text>
+          <View style={styles.detailsCard}>
+            <MetaRow icon="identifier" label="Google Books ID" value={book.id} />
+            {book.isbn && <MetaRow icon="barcode" label="ISBN" value={book.isbn} />}
+          </View>
         </View>
       </ScrollView>
-
-      {/* Shelf picker modal */}
-      <PixelModal
-        visible={shelfModal}
-        onClose={() => setShelfModal(false)}
-        title="ADD TO SHELF"
-      >
-        <View style={{ gap: spacing.sm }}>
-          {SHELVES.map(({ key, label, icon }) => (
-            <TouchableOpacity
-              key={key}
-              onPress={() => handleAddToShelf(key)}
-              style={[styles.shelfOption, shelf === key && styles.shelfOptionActive]}
-            >
-              <Text style={styles.shelfOptionIcon}>{icon}</Text>
-              <Text style={styles.shelfOptionLabel}>{label}</Text>
-              {shelf === key && <Text style={styles.shelfCheck}>✓</Text>}
-            </TouchableOpacity>
-          ))}
-          {shelf && (
-            <TouchableOpacity
-              onPress={() => { handleRemove(); setShelfModal(false); }}
-              style={styles.removeOption}
-            >
-              <Text style={styles.removeOptionText}>✕ REMOVE FROM LIBRARY</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </PixelModal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bgDark },
-  scroll: { flex: 1 },
-  content: { padding: spacing.lg, gap: spacing.lg },
-  errText: { fontFamily: fonts.pixel, fontSize: textSizes.xs, color: '#FF4444', padding: spacing.xl },
-
-  hero: {
-    flexDirection: 'row',
-    gap: spacing.lg,
-    paddingBottom: spacing.lg,
-    borderBottomWidth: borderWidth.normal,
-    borderBottomColor: colors.pinkHot,
+  container: {
+    flex: 1,
+    backgroundColor: '#1a1a2e',
   },
-  heroInfo: { flex: 1, gap: spacing.xs },
-  bookTitle: {
-    fontFamily: fonts.pixel, fontSize: textSizes.xs,
-    color: colors.textMain, lineHeight: textSizes.xs * 2,
-  },
-  bookAuthor: {
-    fontFamily: fonts.pixel, fontSize: textSizes.xxs,
-    color: colors.pinkLight,
-  },
-  bookMeta: {
-    fontFamily: fonts.pixel, fontSize: textSizes.xxs - 1,
-    color: colors.textDim,
-  },
-
-  actions: { gap: spacing.sm },
-  btnFull: { alignSelf: 'stretch' },
-
-  fileStatus: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    padding: spacing.sm, borderWidth: borderWidth.normal,
-    borderColor: colors.green, backgroundColor: 'rgba(0,170,68,0.1)',
-  },
-  fileStatusText: { fontFamily: fonts.pixel, fontSize: textSizes.xxs, color: colors.green },
-  replaceBtn:     { fontFamily: fonts.pixel, fontSize: textSizes.xxs, color: colors.textDim },
-
-  section:     { gap: spacing.sm },
-  sectionTitle: {
-    fontFamily: fonts.pixel, fontSize: textSizes.xxs,
-    color: colors.pinkHot, letterSpacing: 1,
-  },
-  sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  editBtn:    { fontFamily: fonts.pixel, fontSize: textSizes.xxs - 1, color: colors.textDim },
-  moreBtn:    { fontFamily: fonts.pixel, fontSize: textSizes.xxs - 1, color: colors.pinkHot, marginTop: spacing.xs },
-
-  progressRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
-  progressInput: {
-    width: 56, fontFamily: fonts.pixel, fontSize: textSizes.xs,
-    color: colors.textMain, backgroundColor: colors.bgMid,
-    borderWidth: borderWidth.thick, borderColor: colors.pinkHot,
-    padding: spacing.xs, textAlign: 'center',
-  },
-  pctSign: { fontFamily: fonts.pixel, fontSize: textSizes.xs, color: colors.textDim },
-
-  descText: {
-    fontFamily: fonts.pixel, fontSize: textSizes.xxs,
-    color: colors.textDim, lineHeight: textSizes.xxs * 2.2,
-  },
-
-  reviewInput: {
-    fontFamily: fonts.pixel, fontSize: textSizes.xxs,
-    color: colors.textMain, backgroundColor: colors.bgMid,
-    borderWidth: borderWidth.thick, borderColor: colors.pinkHot,
-    padding: spacing.md, minHeight: 100,
-    lineHeight: textSizes.xxs * 2,
-  },
-  reviewText: {
-    fontFamily: fonts.pixel, fontSize: textSizes.xxs,
-    color: colors.textDim, fontStyle: 'italic',
-    lineHeight: textSizes.xxs * 2.2,
-  },
-  noReview: {
-    fontFamily: fonts.pixel, fontSize: textSizes.xxs - 1,
-    color: colors.textMuted,
-  },
-
-  metaGrid: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm,
-  },
-  metaItem: {
-    width: '47%', backgroundColor: colors.bgCard,
-    borderWidth: 1, borderColor: colors.bgPanel,
-    padding: spacing.sm, gap: spacing.xs,
-  },
-  metaLabel: {
-    fontFamily: fonts.pixel, fontSize: textSizes.xxs - 1,
-    color: colors.textDim, letterSpacing: 0.5,
-  },
-  metaValue: {
-    fontFamily: fonts.pixel, fontSize: textSizes.xxs,
-    color: colors.textMain,
-  },
-
-  shelfOption: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-    padding: spacing.md, backgroundColor: colors.bgCard,
-    borderWidth: borderWidth.normal, borderColor: colors.bgPanel,
-  },
-  shelfOptionActive: {
-    borderColor: colors.pinkHot,
-    backgroundColor: 'rgba(255,0,153,0.12)',
-  },
-  shelfOptionIcon:  { fontSize: 20 },
-  shelfOptionLabel: {
-    flex: 1, fontFamily: fonts.pixel, fontSize: textSizes.xxs,
-    color: colors.textMain, letterSpacing: 0.5,
-  },
-  shelfCheck: { fontFamily: fonts.pixel, fontSize: textSizes.xs, color: colors.pinkHot },
-
-  removeOption: {
-    padding: spacing.md, marginTop: spacing.sm,
-    borderWidth: 1, borderStyle: 'dashed', borderColor: '#AA2200',
+  centered: {
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  removeOptionText: {
-    fontFamily: fonts.pixel, fontSize: textSizes.xxs,
-    color: '#FF4444', letterSpacing: 0.5,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+    gap: 12,
+  },
+  backButton: {
+    padding: 4,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    padding: 16,
+    gap: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#ff6b6b',
+    marginBottom: 16,
+  },
+  backBtn: {
+    backgroundColor: '#e94560',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  backBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  hero: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  cover: {
+    width: 120,
+    height: 180,
+    borderRadius: 8,
+    backgroundColor: '#444',
+  },
+  noCover: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noCoverText: {
+    fontSize: 12,
+    color: '#888',
+    textAlign: 'center',
+  },
+  heroInfo: {
+    flex: 1,
+    gap: 6,
+  },
+  bookTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    lineHeight: 24,
+  },
+  bookSubtitle: {
+    fontSize: 14,
+    color: '#aaa',
+    fontStyle: 'italic',
+  },
+  bookAuthor: {
+    fontSize: 15,
+    color: '#e94560',
+    marginTop: 2,
+  },
+  quickStats: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 4,
+  },
+  quickStatText: {
+    fontSize: 12,
+    color: '#888',
+  },
+  googleRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+  },
+  ratingText: {
+    fontSize: 12,
+    color: '#888',
+  },
+  badgesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 6,
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#e94560',
+    paddingVertical: 14,
+    borderRadius: 8,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  shelfPicker: {
+    backgroundColor: '#2a2a4e',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#444',
+    overflow: 'hidden',
+  },
+  shelfOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  shelfOptionActive: {
+    backgroundColor: 'rgba(233, 69, 96, 0.1)',
+  },
+  shelfOptionText: {
+    fontSize: 16,
+    color: '#fff',
+  },
+  shelfOptionTextActive: {
+    color: '#e94560',
+    fontWeight: '600',
+  },
+  section: {
+    gap: 12,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: '#444',
+    borderRadius: 4,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#e94560',
+    borderRadius: 4,
+  },
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  progressInput: {
+    width: 60,
+    fontSize: 16,
+    color: '#fff',
+    backgroundColor: '#2a2a4e',
+    borderWidth: 1,
+    borderColor: '#444',
+    borderRadius: 8,
+    padding: 10,
+    textAlign: 'center',
+  },
+  pctSign: {
+    fontSize: 16,
+    color: '#888',
+  },
+  saveBtn: {
+    backgroundColor: '#2a2a4e',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#444',
+  },
+  saveBtnText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  starRow: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  starBtn: {
+    padding: 2,
+  },
+  descText: {
+    fontSize: 14,
+    color: '#ccc',
+    lineHeight: 22,
+  },
+  categoriesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  categoryChip: {
+    backgroundColor: '#2a2a4e',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#444',
+  },
+  categoryText: {
+    fontSize: 12,
+    color: '#ccc',
+  },
+  detailsCard: {
+    backgroundColor: '#2a2a4e',
+    borderRadius: 8,
+    padding: 12,
+    gap: 10,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  metaLabel: {
+    fontSize: 13,
+    color: '#888',
+    width: 90,
+  },
+  metaValue: {
+    flex: 1,
+    fontSize: 13,
+    color: '#fff',
+  },
+  linksRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  linkBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#2a2a4e',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#444',
+  },
+  buyBtn: {
+    backgroundColor: '#16a34a',
+    borderColor: '#16a34a',
+  },
+  linkBtnText: {
+    fontSize: 13,
+    color: '#fff',
+    fontWeight: '500',
+  },
+  // E-Book Reader section
+  fileInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  fileInfoText: {
+    flex: 1,
+  },
+  fileName: {
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: '500',
+  },
+  fileSize: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 2,
+  },
+  readerButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  readNowBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#16a34a',
+    paddingVertical: 14,
+    borderRadius: 8,
+  },
+  readNowBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  removeFileBtn: {
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 107, 0.3)',
+  },
+  importBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#e94560',
+    paddingVertical: 14,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+
+  importBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  readerHint: {
+    fontSize: 12,
+    color: '#888',
+    lineHeight: 18,
+    textAlign: 'center',
   },
 });

@@ -2,11 +2,10 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import useAuthStore from '../store/authStore';
-import TabNavigator      from './TabNavigator';
-import LoginScreen       from '../screens/LoginScreen';
-import BookDetailScreen  from '../screens/BookDetailScreen';
-import ReaderScreen      from '../screens/ReaderScreen';
-import { colors } from '../theme';
+import TabNavigator from './TabNavigator';
+import LoginScreen from '../screens/LoginScreen';
+import BookDetailScreen from '../screens/BookDetailScreen';
+import ReaderScreen from '../screens/ReaderScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -18,12 +17,12 @@ export default function RootNavigator() {
       theme={{
         dark: true,
         colors: {
-          primary:    colors.pinkHot,
-          background: colors.bgDark,
-          card:       colors.bgMid,
-          text:       colors.textMain,
-          border:     colors.pinkHot,
-          notification: colors.pinkHot,
+          primary: '#e94560',
+          background: '#1a1a2e',
+          card: '#2a2a4e',
+          text: '#ffffff',
+          border: '#333',
+          notification: '#e94560',
         },
       }}
     >
@@ -32,7 +31,7 @@ export default function RootNavigator() {
           <Stack.Screen name="Login" component={LoginScreen} />
         ) : (
           <>
-            <Stack.Screen name="Tabs"       component={TabNavigator}     />
+            <Stack.Screen name="Tabs" component={TabNavigator} />
             <Stack.Screen name="BookDetail" component={BookDetailScreen} />
             <Stack.Screen
               name="Reader"

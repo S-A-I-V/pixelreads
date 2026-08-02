@@ -69,6 +69,7 @@ export function normalizeBook(item) {
     // Sale
     saleability:    si.saleability ?? '',
     isEbook:        si.isEbook ?? false,
+    isFree:         si.saleability === 'FREE' || ai.publicDomain === true,
     buyLink:        si.buyLink ?? '',
     price:          si.retailPrice ? `${si.retailPrice.amount} ${si.retailPrice.currencyCode}` : null,
     

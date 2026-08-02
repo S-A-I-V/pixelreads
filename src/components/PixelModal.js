@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, fonts, textSizes, spacing, borderWidth } from '../theme';
 
 /**
@@ -31,7 +32,7 @@ export default function PixelModal({ visible, onClose, title, children }) {
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Text style={styles.close}>✕</Text>
+              <MaterialCommunityIcons name="close" size={24} color={colors.textDim} />
             </TouchableOpacity>
           </View>
 

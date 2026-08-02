@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Image, Text, StyleSheet } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, fonts, textSizes, spacing, borderWidth } from '../theme';
 
 /**
@@ -18,7 +19,7 @@ export default function BookCover({ uri, title, width = 80, style }) {
   if (!uri || hasError) {
     return (
       <View style={[styles.placeholder, { width, height }, style]}>
-        <Text style={styles.placeholderIcon}>📚</Text>
+        <MaterialCommunityIcons name="book" size={24} color={colors.pinkHot} />
         <Text style={styles.placeholderText} numberOfLines={3}>
           {title?.slice(0, 24) || 'No Cover'}
         </Text>
@@ -49,9 +50,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.xs,
     padding: spacing.xs,
-  },
-  placeholderIcon: {
-    fontSize: 24,
   },
   placeholderText: {
     fontFamily: fonts.pixel,

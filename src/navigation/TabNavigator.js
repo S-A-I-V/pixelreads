@@ -1,19 +1,19 @@
 import React from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import HomeScreen    from '../screens/HomeScreen';
-import SearchScreen  from '../screens/SearchScreen';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import HomeScreen from '../screens/HomeScreen';
+import SearchScreen from '../screens/SearchScreen';
 import LibraryScreen from '../screens/LibraryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
-import { colors, fonts, textSizes, spacing, borderWidth } from '../theme';
 
 const Tab = createBottomTabNavigator();
 
 const TABS = [
-  { name: 'Home',    component: HomeScreen,    icon: '🏠' },
-  { name: 'Search',  component: SearchScreen,  icon: '🔍' },
-  { name: 'Library', component: LibraryScreen, icon: '📚' },
-  { name: 'Profile', component: ProfileScreen, icon: '👾' },
+  { name: 'Home', component: HomeScreen, icon: 'home' },
+  { name: 'Search', component: SearchScreen, icon: 'magnify' },
+  { name: 'Library', component: LibraryScreen, icon: 'bookshelf' },
+  { name: 'Profile', component: ProfileScreen, icon: 'account' },
 ];
 
 export default function TabNavigator() {
@@ -22,25 +22,17 @@ export default function TabNavigator() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor:   colors.pinkHot,
-        tabBarInactiveTintColor: colors.textMuted,
+        tabBarActiveTintColor: '#e94560',
+        tabBarInactiveTintColor: '#888',
         tabBarLabelStyle: styles.tabLabel,
-        tabBarIcon: ({ focused }) => {
+        tabBarIcon: ({ color }) => {
           const tab = TABS.find((t) => t.name === route.name);
-          return (
-            <Text style={[styles.tabIcon, focused && styles.tabIconActive]}>
-              {tab?.icon}
-            </Text>
-          );
+          return <MaterialCommunityIcons name={tab?.icon} size={24} color={color} />;
         },
       })}
     >
       {TABS.map((tab) => (
-        <Tab.Screen
-          key={tab.name}
-          name={tab.name}
-          component={tab.component}
-        />
+        <Tab.Screen key={tab.name} name={tab.name} component={tab.component} />
       ))}
     </Tab.Navigator>
   );
@@ -48,24 +40,15 @@ export default function TabNavigator() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: colors.bgMid,
-    borderTopWidth: borderWidth.thick,
-    borderTopColor: colors.pinkHot,
-    height: 64,
-    paddingBottom: spacing.xs,
-    paddingTop: spacing.xs,
+    backgroundColor: '#1a1a2e',
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+    height: 60,
+    paddingBottom: 8,
+    paddingTop: 8,
   },
   tabLabel: {
-    fontFamily: fonts.pixel,
-    fontSize: textSizes.xxs - 1,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  tabIcon: {
-    fontSize: 20,
-    opacity: 0.5,
-  },
-  tabIconActive: {
-    opacity: 1,
+    fontSize: 12,
+    fontWeight: '500',
   },
 });

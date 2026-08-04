@@ -108,7 +108,13 @@ function ReaderContent({ bookId, fileUri, book }) {
   const storeAddBookmark    = useEpubReaderStore((s) => s.addBookmark);
   const storeRemoveBookmark = useEpubReaderStore((s) => s.removeBookmark);
   const storeAddAnnotation  = useEpubReaderStore((s) => s.addAnnotation);
-  const updateProgress = useUserBookLibraryStore((s) => s.updateBookReadingProgress);
+  const updateBookPageInfo = useUserBookLibraryStore((s) => s.updateBookPageInfo);
+  const saveBookReadingPosition = useUserBookLibraryStore((s) => s.saveBookReadingPosition);
+
+  // Track total pages for progress calculation
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const lastSavedProgress = useRef(0);
 
   // UI state
   const [showUI,        setShowUI]        = useState(true);
@@ -155,16 +161,34 @@ function ReaderContent({ bookId, fileUri, book }) {
     }
   }, [bookId]);
 
-  // Persist location + progress on every page turn
+  // Persist location + progress on every page turn (automatic saving)
   const handleLocationChange = useCallback((total, loc) => {
     if (loc?.start?.cfi) {
       const pct = Math.round(progress);
+      
+      // Save location to reader store
       saveLocation(bookId, loc.start.cfi, pct);
-      updateProgress(bookId, pct);
-      // Track page turn (debounced by progress change)
+      
+      // Calculate page numbers if total is available
+      const estimatedCurrentPage = total?.start?.displayed?.page || Math.ceil((pct / 100) * (totalPages || 100));
+      const estimatedTotalPages = total?.start?.displayed?.total || totalPages || 100;
+      
+      // Update local state
+      if (estimatedTotalPages !== totalPages) setTotalPages(estimatedTotalPages);
+      setCurrentPage(estimatedCurrentPage);
+      
+      // Auto-save to library store (debounced - only if progress changed by 1% or more)
+      if (Math.abs(pct - lastSavedProgress.current) >= 1) {
+        updateBookPageInfo(bookId, estimatedCurrentPage, estimatedTotalPages);
+        saveBookReadingPosition(bookId, estimatedCurrentPage);
+        lastSavedProgress.current = pct;
+        console.log(`[Reader] Auto-saved: page ${estimatedCurrentPage}/${estimatedTotalPages} (${pct}%)`);
+      }
+      
+      // Track page turn
       trackPageTurn(bookId, pct, 'forward');
     }
-  }, [bookId, progress]);
+  }, [bookId, progress, totalPages]);
 
   // Text selection → highlight menu
   const handleSelected = useCallback((cfiRange, text) => {
@@ -297,9 +321,17 @@ function ReaderContent({ bookId, fileUri, book }) {
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { width: `${Math.round(progress)}%` }]} />
           </View>
-          <Text style={[styles.progressPct, { color: theme.text }]}>
-            {Math.round(progress)}%
-          </Text>
+          <View style={styles.progressInfo}>
+            {currentPage > 0 && totalPages > 0 ? (
+              <Text style={[styles.progressPct, { color: theme.text }]}>
+                {currentPage}/{totalPages}
+              </Text>
+            ) : (
+              <Text style={[styles.progressPct, { color: theme.text }]}>
+                {Math.round(progress)}%
+              </Text>
+            )}
+          </View>
         </View>
 
         <TouchableOpacity onPress={() => setShowBookmarks(true)} style={styles.iconBtn} hitSlop={8}>
@@ -601,7 +633,8 @@ const styles = StyleSheet.create({
   progressRow:  { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
   progressTrack:{ flex: 1, height: 3, backgroundColor: 'rgba(128,128,128,0.3)', borderRadius: 2 },
   progressFill: { height: '100%', backgroundColor: '#e94560', borderRadius: 2 },
-  progressPct:  { fontSize: 11, minWidth: 32, textAlign: 'right' },
+  progressInfo: { alignItems: 'flex-end' },
+  progressPct:  { fontSize: 11, minWidth: 40, textAlign: 'right' },
 
   // Loading
   loadingOverlay: {

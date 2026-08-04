@@ -4,12 +4,12 @@
  * =========================================================================
  *
  *  Constants for the book library feature including shelf configuration,
- *  UI labels, and filter options.
+ *  UI labels, filter options, tags, and custom shelves.
  *
  * =========================================================================
  */
 
-import type { BookShelfKeyWithAll } from '../../../shared/types/bookTypes';
+import type { BookShelfKeyWithAll, BuiltInShelfKey } from '../../../shared/types/bookTypes';
 
 /**
  * Tab filter configuration for library screen
@@ -33,6 +33,16 @@ export const LIBRARY_SHELF_TAB_CONFIGURATIONS: ReadonlyArray<LibraryShelfTabConf
 ] as const;
 
 /**
+ * Built-in shelf keys (cannot be deleted)
+ */
+export const BUILT_IN_SHELF_KEYS: ReadonlyArray<BuiltInShelfKey> = [
+  'reading',
+  'want_to_read', 
+  'finished',
+  'dnf',
+] as const;
+
+/**
  * Shelf options for book detail shelf picker
  */
 export interface LibraryShelfPickerOption {
@@ -51,6 +61,194 @@ export const LIBRARY_SHELF_PICKER_OPTIONS: ReadonlyArray<LibraryShelfPickerOptio
   { key: 'finished', label: 'Finished' },
   { key: 'dnf', label: 'Did Not Finish' },
 ] as const;
+
+// ─── Filter Options ───────────────────────────────────────────────────────────
+/**
+ * eReader filter option values
+ */
+export const LIBRARY_EREADER_FILTER_OPTIONS = {
+  /** Show all books regardless of eReader status */
+  ALL: null,
+  /** Show only books with uploaded EPUB */
+  HAS_EPUB: true,
+  /** Show only books without uploaded EPUB */
+  NO_EPUB: false,
+} as const;
+
+/**
+ * eReader filter option labels
+ */
+export const LIBRARY_EREADER_FILTER_LABELS = {
+  ALL: 'All Books',
+  HAS_EPUB: 'Has eReader',
+  NO_EPUB: 'No eReader',
+} as const;
+
+/**
+ * Filter section labels
+ */
+export const LIBRARY_FILTER_SECTION_LABELS = {
+  SHELVES: 'Shelves',
+  TAGS: 'Tags',
+  EREADER: 'eReader',
+  CUSTOM_SHELVES: 'Custom Shelves',
+} as const;
+
+// ─── Tag Management ───────────────────────────────────────────────────────────
+/**
+ * Default colors for new tags
+ */
+export const TAG_DEFAULT_COLORS: ReadonlyArray<string> = [
+  '#e94560', // Pink/Red
+  '#16a34a', // Green
+  '#2563eb', // Blue
+  '#7c3aed', // Purple
+  '#f59e0b', // Amber
+  '#ec4899', // Pink
+  '#06b6d4', // Cyan
+  '#84cc16', // Lime
+  '#f97316', // Orange
+  '#8b5cf6', // Violet
+] as const;
+
+/**
+ * Maximum number of tags per book
+ */
+export const TAG_MAX_PER_BOOK = 10;
+
+/**
+ * Maximum length for tag label
+ */
+export const TAG_LABEL_MAX_LENGTH = 30;
+
+/**
+ * Minimum length for tag label
+ */
+export const TAG_LABEL_MIN_LENGTH = 1;
+
+/**
+ * Placeholder text for tag input
+ */
+export const TAG_INPUT_PLACEHOLDER = 'Enter tag name...';
+
+/**
+ * Button label to add new tag
+ */
+export const TAG_BUTTON_ADD = 'Add Tag';
+
+/**
+ * Button label to create new tag
+ */
+export const TAG_BUTTON_CREATE = 'Create Tag';
+
+/**
+ * Section title for tags on book detail
+ */
+export const BOOK_DETAIL_SECTION_TAGS = 'Tags';
+
+/**
+ * Empty state text when no tags exist
+ */
+export const TAG_EMPTY_STATE_TEXT = 'No tags yet';
+
+/**
+ * Empty state subtext when no tags exist
+ */
+export const TAG_EMPTY_STATE_SUBTEXT = 'Tap + to create your first tag';
+
+/**
+ * Confirmation dialog title for deleting tag
+ */
+export const TAG_DELETE_DIALOG_TITLE = 'Delete Tag?';
+
+/**
+ * Confirmation dialog message for deleting tag
+ */
+export const TAG_DELETE_DIALOG_MESSAGE = 'This tag will be removed from all books.';
+
+// ─── Custom Shelf Management ──────────────────────────────────────────────────
+/**
+ * Default colors for new custom shelves
+ */
+export const CUSTOM_SHELF_DEFAULT_COLORS: ReadonlyArray<string> = [
+  '#6366f1', // Indigo
+  '#14b8a6', // Teal
+  '#f43f5e', // Rose
+  '#a855f7', // Purple
+  '#eab308', // Yellow
+] as const;
+
+/**
+ * Maximum number of custom shelves
+ */
+export const CUSTOM_SHELF_MAX_COUNT = 20;
+
+/**
+ * Maximum length for custom shelf label
+ */
+export const CUSTOM_SHELF_LABEL_MAX_LENGTH = 25;
+
+/**
+ * Minimum length for custom shelf label
+ */
+export const CUSTOM_SHELF_LABEL_MIN_LENGTH = 1;
+
+/**
+ * Placeholder text for custom shelf name input
+ */
+export const CUSTOM_SHELF_INPUT_PLACEHOLDER = 'Enter shelf name...';
+
+/**
+ * Button label to create new shelf
+ */
+export const CUSTOM_SHELF_BUTTON_CREATE = 'Create Shelf';
+
+/**
+ * Button label to add custom shelf
+ */
+export const CUSTOM_SHELF_BUTTON_ADD = 'New Shelf';
+
+/**
+ * Empty state text when no custom shelves exist
+ */
+export const CUSTOM_SHELF_EMPTY_STATE_TEXT = 'No custom shelves';
+
+/**
+ * Empty state subtext when no custom shelves exist
+ */
+export const CUSTOM_SHELF_EMPTY_STATE_SUBTEXT = 'Create shelves to organize your books';
+
+/**
+ * Confirmation dialog title for deleting custom shelf
+ */
+export const CUSTOM_SHELF_DELETE_DIALOG_TITLE = 'Delete Shelf?';
+
+/**
+ * Confirmation dialog message for deleting custom shelf
+ */
+export const CUSTOM_SHELF_DELETE_DIALOG_MESSAGE = 
+  'Books on this shelf will be moved to "Want to Read".';
+
+// ─── Filter Chip Labels ───────────────────────────────────────────────────────
+/**
+ * Label for filter chip showing active tag filter
+ */
+export const FILTER_CHIP_TAG_PREFIX = 'Tag:';
+
+/**
+ * Label for filter chip showing active eReader filter
+ */
+export const FILTER_CHIP_EREADER_PREFIX = 'eReader:';
+
+/**
+ * Label for clear all filters button
+ */
+export const FILTER_BUTTON_CLEAR_ALL = 'Clear Filters';
+
+/**
+ * Label for filter button/icon
+ */
+export const FILTER_BUTTON_LABEL = 'Filters';
 
 // ─── Screen Headers ───────────────────────────────────────────────────────────
 /**

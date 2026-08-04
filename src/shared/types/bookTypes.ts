@@ -9,14 +9,67 @@
  */
 
 /**
- * Shelf identifier for library organization
+ * Built-in shelf identifiers for library organization
  */
-export type BookShelfKey = 'reading' | 'want_to_read' | 'finished' | 'dnf';
+export type BuiltInShelfKey = 'reading' | 'want_to_read' | 'finished' | 'dnf';
+
+/**
+ * Shelf identifier - either built-in or custom shelf ID
+ */
+export type BookShelfKey = BuiltInShelfKey | string;
 
 /**
  * Extended shelf key including virtual "all" shelf
  */
 export type BookShelfKeyWithAll = BookShelfKey | 'all';
+
+/**
+ * Custom shelf created by user
+ */
+export interface CustomShelfDefinition {
+  /** Unique identifier for the shelf (lowercase, no spaces) */
+  readonly id: string;
+  
+  /** User-facing display name */
+  readonly label: string;
+  
+  /** Hex color for shelf badge */
+  readonly color: string;
+  
+  /** ISO timestamp when shelf was created */
+  readonly createdAt: string;
+}
+
+/**
+ * User-defined tag for categorizing books
+ */
+export interface BookTag {
+  /** Unique identifier for the tag (lowercase, no spaces) */
+  readonly id: string;
+  
+  /** User-facing display name */
+  readonly label: string;
+  
+  /** Hex color for tag badge */
+  readonly color: string;
+}
+
+/**
+ * Filter options for library view
+ */
+export interface LibraryFilterOptions {
+  /** Filter by shelf (built-in or custom) */
+  shelf: BookShelfKeyWithAll;
+  
+  /** Filter by tags (show books with ANY of these tags) */
+  tags: string[];
+  
+  /** Filter by eReader availability */
+  hasEpub: boolean | null;
+  
+  /** Text search filter */
+  searchQuery: string;
+}
 
 /**
  * Core book data normalized from Google Books API
@@ -108,7 +161,7 @@ export interface GoogleBooksNormalizedBookData {
  * Book stored in user's library with tracking metadata
  */
 export interface UserLibraryBookEntry extends GoogleBooksNormalizedBookData {
-  /** Current shelf assignment */
+  /** Current shelf assignment (built-in or custom shelf ID) */
   shelf: BookShelfKey;
   
   /** ISO timestamp when book was added to library */
@@ -122,6 +175,18 @@ export interface UserLibraryBookEntry extends GoogleBooksNormalizedBookData {
   
   /** Reading progress percentage (0-100) */
   progress: number;
+  
+  /** User-assigned tag IDs */
+  tags: string[];
+  
+  /** Whether user has uploaded an EPUB for this book */
+  hasUploadedEpub: boolean;
+  
+  /** Current reading page (for EPUB reader) */
+  currentPage: number;
+  
+  /** Total pages in EPUB (if available) */
+  totalPages: number;
 }
 
 /**
@@ -164,6 +229,12 @@ export interface UserLibraryReadingStatistics {
   
   /** Did-not-finish books */
   readonly dnf: number;
+  
+  /** Books with uploaded EPUBs */
+  readonly withEpub: number;
+  
+  /** Books per custom shelf */
+  readonly customShelves: Record<string, number>;
 }
 
 /**

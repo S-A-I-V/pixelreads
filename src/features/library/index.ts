@@ -22,3 +22,12 @@ export {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 export * from './constants/libraryFeatureConstants';
+
+// ─── Types (re-exported for convenience) ────────────────────────────────────
+export type {
+  BookTag,
+  CustomShelfDefinition,
+  LibraryFilterOptions,
+  BookShelfKey,
+  BuiltInShelfKey,
+} from '../../shared/types/bookTypes';

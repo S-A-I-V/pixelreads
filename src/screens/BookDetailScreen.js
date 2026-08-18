@@ -11,7 +11,6 @@ import { trackScreenView, trackEpubImport, track, EventType, EventCategory } fro
 import { ScreenHeader } from '../components/ui';
 import { colors, spacing } from '../theme';
 
-// Sub-components
 import { HeroSection } from './book-detail/HeroSection';
 import { ShelfPicker } from './book-detail/ShelfPicker';
 import { EbookSection } from './book-detail/EbookSection';
@@ -23,7 +22,6 @@ import {
   CategoriesSection,
   PublicationDetails,
   LinksSection,
-  RatingSection,
 } from './book-detail/BookInfoSections';
 
 const BUILT_IN_SHELVES = [
@@ -43,12 +41,11 @@ export default function BookDetailScreen() {
   const [showTagsModal, setShowTagsModal] = useState(false);
   const [importing, setImporting] = useState(false);
 
-  // Library store
   const addToShelf = useUserBookLibraryStore((s) => s.addBookToShelf);
   const removeFromShelf = useUserBookLibraryStore((s) => s.removeBookFromLibrary);
   const getBookShelf = useUserBookLibraryStore((s) => s.getBookCurrentShelf);
   const getBook = useUserBookLibraryStore((s) => s.getBookById);
-  const rateBook = useUserBookLibraryStore((s) => s.rateBookWithReview);
+
   const allTags = useUserBookLibraryStore((s) => s.tags);
   const customShelves = useUserBookLibraryStore((s) => s.customShelves);
   const createTag = useUserBookLibraryStore((s) => s.createTag);
@@ -58,7 +55,6 @@ export default function BookDetailScreen() {
   const saveBookUploadedFile = useUserBookLibraryStore((s) => s.saveBookUploadedFile);
   const removeBookUploadedFile = useUserBookLibraryStore((s) => s.removeBookUploadedFile);
 
-  // Reader store
   const saveUploadedFile = useEpubReaderStore((s) => s.saveUploadedFile);
   const getUploadedFile = useEpubReaderStore((s) => s.getUploadedFile);
   const removeUploadedFile = useEpubReaderStore((s) => s.removeUploadedFile);
@@ -101,10 +97,6 @@ export default function BookDetailScreen() {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Remove', style: 'destructive', onPress: () => removeFromShelf(bookId) },
     ]);
-  };
-
-  const handleRate = (stars) => {
-    rateBook(bookId, stars, stored?.review ?? '');
   };
 
   const handleToggleTag = (tagId) => {
@@ -186,8 +178,6 @@ export default function BookDetailScreen() {
 
   const rawDesc = book.description?.replace(/<[^>]+>/g, '') ?? '';
 
-  // ─── Render ────────────────────────────────────────────────────────────────
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScreenHeader
@@ -226,8 +216,6 @@ export default function BookDetailScreen() {
             totalPages={stored?.totalPages}
           />
         )}
-
-        {shelf && <RatingSection rating={stored?.rating ?? 0} onRate={handleRate} />}
 
         <DescriptionSection description={rawDesc.length > 0 ? rawDesc : null} />
         <CategoriesSection categories={book.categories} />

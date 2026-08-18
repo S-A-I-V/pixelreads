@@ -77,7 +77,6 @@ export default function SearchScreen() {
 
   const hasActiveSearch = query.trim() || filter !== 'all' || searched;
 
-  // ─── Render ────────────────────────────────────────────────────────────────
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <SearchHeader

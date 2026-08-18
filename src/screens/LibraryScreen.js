@@ -22,7 +22,6 @@ export default function LibraryScreen() {
   const route = useRoute();
   const insets = useSafeAreaInsets();
 
-  // Store
   const shelves = useUserBookLibraryStore((s) => s.shelves);
   const tags = useUserBookLibraryStore((s) => s.tags);
   const customShelves = useUserBookLibraryStore((s) => s.customShelves);
@@ -30,7 +29,6 @@ export default function LibraryScreen() {
   const createCustomShelf = useUserBookLibraryStore((s) => s.createCustomShelf);
   const deleteCustomShelf = useUserBookLibraryStore((s) => s.deleteCustomShelf);
 
-  // State
   const initShelf = route.params?.shelf ?? 'all';
   const [activeTab, setActiveTab] = useState(initShelf);
   const [filter, setFilter] = useState('');
@@ -38,7 +36,6 @@ export default function LibraryScreen() {
   const [eReaderFilter, setEReaderFilter] = useState(null);
   const [showFilterModal, setShowFilterModal] = useState(false);
 
-  // Derived data
   const allTabs = useMemo(() => {
     const customTabs = customShelves.map(s => ({ key: s.id, label: s.label, color: s.color }));
     return [...BUILT_IN_TABS, ...customTabs];
@@ -70,7 +67,6 @@ export default function LibraryScreen() {
 
   useFocusEffect(useCallback(() => { trackScreenView('Library', { totalBooks: allBooks.length, activeTab }); }, [allBooks.length, activeTab]));
 
-  // Handlers
   const handleTabChange = (tabKey) => { setActiveTab(tabKey); track(EventType.TAB_CHANGE, EventCategory.NAVIGATION, { screen: 'Library', tab: tabKey }); };
   const handleFilterChange = (text) => { setFilter(text); if (text.length === 3) track(EventType.SEARCH_FILTER, EventCategory.LIBRARY, { filterText: text, screen: 'Library' }); };
   const handleToggleTag = (tagId) => { setSelectedTags(prev => prev.includes(tagId) ? prev.filter(t => t !== tagId) : [...prev, tagId]); };
@@ -80,7 +76,6 @@ export default function LibraryScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Library</Text>
         <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilterModal(!showFilterModal)} accessibilityLabel="Toggle filters" accessibilityRole="button">
@@ -91,7 +86,6 @@ export default function LibraryScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Filter Dropdown */}
       <FilterDropdown
         visible={showFilterModal} onClose={() => setShowFilterModal(false)} tags={tags}
         selectedTags={selectedTags} onToggleTag={handleToggleTag} eReaderFilter={eReaderFilter}
@@ -99,7 +93,6 @@ export default function LibraryScreen() {
         onCreateShelf={handleCreateShelf} onDeleteShelf={handleDeleteShelf}
       />
 
-      {/* Search input */}
       <View style={styles.filterWrap}>
         <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} />
         <TextInput style={styles.filterInput} value={filter} onChangeText={handleFilterChange} placeholder="Filter library..." placeholderTextColor={colors.textMuted} autoCapitalize="none" autoCorrect={false} />
@@ -110,7 +103,6 @@ export default function LibraryScreen() {
         )}
       </View>
 
-      {/* Active filter chips */}
       {activeFiltersCount > 0 && (
         <View style={styles.activeFiltersRow}>
           {selectedTags.map(tagId => {
@@ -132,7 +124,6 @@ export default function LibraryScreen() {
         </View>
       )}
 
-      {/* Tab bar */}
       <FlatList
         data={allTabs} horizontal showsHorizontalScrollIndicator={false}
         style={styles.tabBar} contentContainerStyle={styles.tabBarContent} keyExtractor={(t) => t.key}
@@ -143,7 +134,6 @@ export default function LibraryScreen() {
         )}
       />
 
-      {/* Book list */}
       {displayBooks.length === 0 ? (
         <EmptyState
           icon={filter || activeFiltersCount > 0 ? 'book-search' : 'bookshelf'}

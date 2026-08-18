@@ -40,32 +40,40 @@ export function BookListItem({ book, onPress, variant = 'standard', shelf, tags,
           {book.authors?.join(', ') || 'Unknown'}
         </Text>
 
-        {/* Meta row */}
+        {/* Meta row - always show all fields for consistent layout */}
         {variant === 'detailed' && (
           <View style={styles.metaRow}>
-            {year && <Text style={styles.metaText}>{year}</Text>}
-            {book.pageCount > 0 && <Text style={styles.metaText}>{book.pageCount}p</Text>}
-            {book.language && <Text style={styles.metaText}>{book.language.toUpperCase()}</Text>}
+            <Text style={year ? styles.metaText : styles.metaTextDim}>
+              {year || '----'}
+            </Text>
+            <Text style={book.pageCount > 0 ? styles.metaText : styles.metaTextDim}>
+              {book.pageCount > 0 ? `${book.pageCount}p` : '--p'}
+            </Text>
+            <Text style={book.language ? styles.metaText : styles.metaTextDim}>
+              {book.language ? book.language.toUpperCase() : '--'}
+            </Text>
           </View>
         )}
 
-        {variant === 'detailed' && book.publisher && (
-          <Text style={styles.publisher} numberOfLines={1}>{book.publisher}</Text>
+        {variant === 'detailed' && (
+          <Text style={book.publisher ? styles.publisher : styles.publisherDim} numberOfLines={1}>
+            {book.publisher || 'Publisher unknown'}
+          </Text>
         )}
 
-        {/* Badges row */}
+        {/* Rating + badges row - always show rating slot */}
         <View style={styles.badgeRow}>
+          <View style={styles.ratingBadge}>
+            <MaterialCommunityIcons name="star" size={12} color={book.averageRating > 0 ? colors.warning : colors.textDim} />
+            <Text style={book.averageRating > 0 ? styles.ratingText : styles.ratingTextDim}>
+              {book.averageRating > 0 ? book.averageRating.toFixed(1) : '--'}
+            </Text>
+          </View>
           {shelf && (
             <StatusBadge label={shelf.replace('_', ' ').toUpperCase()} color={colors.accent} />
           )}
           {hasEpub && (
             <StatusBadge label="EREADER" color={colors.success} icon="book-open-page-variant" />
-          )}
-          {book.averageRating > 0 && (
-            <View style={styles.ratingBadge}>
-              <MaterialCommunityIcons name="star" size={12} color={colors.warning} />
-              <Text style={styles.ratingText}>{book.averageRating.toFixed(1)}</Text>
-            </View>
           )}
           {book.isEbook && <StatusBadge label="EBOOK" color={colors.info} />}
           {book.isFree && <StatusBadge label="FREE" color={colors.purple} />}
@@ -176,9 +184,19 @@ const styles = StyleSheet.create({
     fontSize: textSizes.sm,
     color: colors.textMuted,
   },
+  metaTextDim: {
+    fontSize: textSizes.sm,
+    color: colors.textDim,
+    fontStyle: 'italic',
+  },
   publisher: {
     fontSize: textSizes.sm,
     color: colors.textDim,
+  },
+  publisherDim: {
+    fontSize: textSizes.sm,
+    color: colors.textDim,
+    fontStyle: 'italic',
   },
   badgeRow: {
     flexDirection: 'row',
@@ -195,6 +213,11 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: textSizes.sm,
     color: colors.textMuted,
+  },
+  ratingTextDim: {
+    fontSize: textSizes.sm,
+    color: colors.textDim,
+    fontStyle: 'italic',
   },
   tagRow: {
     flexDirection: 'row',

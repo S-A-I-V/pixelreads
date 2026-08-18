@@ -5,16 +5,16 @@ import { colors, spacing, textSizes } from '../../theme';
 
 /**
  * Icon + label + value row for metadata display.
- * Used in BookDetail publication details card.
+ * Shows "Not available" in dimmed text when value is null/empty.
  */
 export function MetaRow({ icon, label, value }) {
-  if (!value) return null;
-
   return (
     <View style={styles.row}>
       {icon && <MaterialCommunityIcons name={icon} size={16} color={colors.textMuted} />}
       <Text style={styles.label}>{label}</Text>
-      <Text style={styles.value}>{value}</Text>
+      <Text style={value ? styles.value : styles.emptyValue}>
+        {value || 'Not available'}
+      </Text>
     </View>
   );
 }
@@ -34,5 +34,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: textSizes.sm,
     color: colors.textPrimary,
+  },
+  emptyValue: {
+    flex: 1,
+    fontSize: textSizes.sm,
+    color: colors.textDim,
+    fontStyle: 'italic',
   },
 });

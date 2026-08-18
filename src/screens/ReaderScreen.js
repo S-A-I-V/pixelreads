@@ -13,7 +13,6 @@ import {
 } from '../utils/analytics';
 import { colors } from '../theme';
 
-// Sub-components
 import { READER_THEMES, FONT_SIZE_STEPS } from './reader/readerConstants';
 import { ReaderHeader } from './reader/ReaderHeader';
 import { ReaderFooter } from './reader/ReaderFooter';
@@ -22,7 +21,6 @@ import { TOCModal, SettingsModal, BookmarksModal, SearchModal } from './reader/R
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// ─── ReaderContent ────────────────────────────────────────────────────────────
 function ReaderContent({ bookId, fileUri, book }) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -33,7 +31,6 @@ function ReaderContent({ bookId, fileUri, book }) {
     addBookmark, removeBookmark, bookmarks, isBookmarked, search, clearSearchResults, toc,
   } = useReader();
 
-  // Store
   const settings = useEpubReaderStore((s) => s.settings);
   const updateSettings = useEpubReaderStore((s) => s.updateSettings);
   const saveLocation = useEpubReaderStore((s) => s.saveLocation);
@@ -44,12 +41,10 @@ function ReaderContent({ bookId, fileUri, book }) {
   const updateBookPageInfo = useUserBookLibraryStore((s) => s.updateBookPageInfo);
   const saveBookReadingPosition = useUserBookLibraryStore((s) => s.saveBookReadingPosition);
 
-  // Page tracking
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
   const lastSavedProgress = useRef(0);
 
-  // UI state
   const [showUI, setShowUI] = useState(true);
   const [showTOC, setShowTOC] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -64,7 +59,6 @@ function ReaderContent({ bookId, fileUri, book }) {
 
   const theme = READER_THEMES[settings.theme] || READER_THEMES.light;
 
-  // ─── Effects ─────────────────────────────────────────────────────────────
   useEffect(() => {
     readerOpenTime.current = Date.now();
     trackReaderOpen(bookId, book?.title);
@@ -82,7 +76,6 @@ function ReaderContent({ bookId, fileUri, book }) {
     if (data?.location) { const t = setTimeout(() => goToLocation(data.location), 1500); return () => clearTimeout(t); }
   }, [bookId]);
 
-  // ─── Handlers ────────────────────────────────────────────────────────────
   const handleLocationChange = useCallback((total, loc) => {
     if (!loc?.start?.cfi) return;
     const pct = Math.round(progress);
@@ -140,7 +133,6 @@ function ReaderContent({ bookId, fileUri, book }) {
 
   const handleSearch = useCallback(() => { if (searchQuery.trim()) search(searchQuery); }, [searchQuery]);
 
-  // ─── Layout ──────────────────────────────────────────────────────────────
   const headerH = insets.top + 52;
   const footerH = insets.bottom + 52;
   const readerH = SCREEN_HEIGHT - headerH - footerH;
@@ -195,7 +187,6 @@ function ReaderContent({ bookId, fileUri, book }) {
         onBookmarks={() => setShowBookmarks(true)}
       />
 
-      {/* Loading overlay */}
       {localLoading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color={colors.accent} />
@@ -205,7 +196,6 @@ function ReaderContent({ bookId, fileUri, book }) {
 
       <HighlightMenu selectedText={selectedText} onHighlight={handleHighlight} onDismiss={() => setSelectedText(null)} />
 
-      {/* Modals */}
       <TOCModal visible={showTOC} onClose={() => setShowTOC(false)} theme={theme} tocData={tocData} toc={toc} onGoTo={goToLocation} />
       <SettingsModal visible={showSettings} onClose={() => setShowSettings(false)} theme={theme} settings={settings} onDecreaseFontSize={handleDecreaseFontSize} onIncreaseFontSize={handleIncreaseFontSize} onChangeTheme={handleChangeTheme} />
       <BookmarksModal visible={showBookmarks} onClose={() => setShowBookmarks(false)} theme={theme} bookmarks={bookmarks} onGoTo={goToLocation} />
@@ -214,7 +204,6 @@ function ReaderContent({ bookId, fileUri, book }) {
   );
 }
 
-// ─── ReaderScreen (shell) ─────────────────────────────────────────────────────
 export default function ReaderScreen() {
   const route = useRoute();
   const navigation = useNavigation();

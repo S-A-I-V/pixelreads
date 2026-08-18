@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Section, ProgressBar, StarRating, MetaRow } from '../../components/ui';
+import { Section, ProgressBar, MetaRow } from '../../components/ui';
 import { colors, spacing, radius, textSizes, fontWeights, borderWidth } from '../../theme';
 
 /**
@@ -55,31 +55,35 @@ export function ReadingProgressSection({ progress, currentPage, totalPages }) {
 }
 
 /**
- * Description section.
+ * Description section. Shows fallback if no description.
  */
 export function DescriptionSection({ description }) {
-  if (!description) return null;
   return (
     <Section title="Description">
-      <Text style={styles.descText}>{description}</Text>
+      <Text style={description ? styles.descText : styles.emptyText}>
+        {description || 'No description available'}
+      </Text>
     </Section>
   );
 }
 
 /**
- * Categories chip list.
+ * Categories chip list. Shows fallback if none.
  */
 export function CategoriesSection({ categories }) {
-  if (!categories?.length) return null;
   return (
     <Section title="Categories">
-      <View style={styles.chipsRow}>
-        {categories.map((cat, i) => (
-          <View key={i} style={styles.chip}>
-            <Text style={styles.chipText}>{cat}</Text>
-          </View>
-        ))}
-      </View>
+      {categories?.length > 0 ? (
+        <View style={styles.chipsRow}>
+          {categories.map((cat, i) => (
+            <View key={i} style={styles.chip}>
+              <Text style={styles.chipText}>{cat}</Text>
+            </View>
+          ))}
+        </View>
+      ) : (
+        <Text style={styles.emptyText}>No categories listed</Text>
+      )}
     </Section>
   );
 }
@@ -134,17 +138,6 @@ export function LinksSection({ book, onOpenLink }) {
   );
 }
 
-/**
- * My Rating section.
- */
-export function RatingSection({ rating, onRate }) {
-  return (
-    <Section title="My Rating">
-      <StarRating value={rating} onChange={onRate} />
-    </Section>
-  );
-}
-
 const styles = StyleSheet.create({
   // Tags
   noTagsText: {
@@ -194,6 +187,11 @@ const styles = StyleSheet.create({
     fontSize: textSizes.md,
     color: colors.textSecondary,
     lineHeight: 22,
+  },
+  emptyText: {
+    fontSize: textSizes.md,
+    color: colors.textDim,
+    fontStyle: 'italic',
   },
 
   // Categories

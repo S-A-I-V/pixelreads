@@ -20,7 +20,6 @@ export { SEARCH_FILTERS };
 export function SearchHeader({ query, filter, hasActiveSearch, onQueryChange, onSearch, onFilterChange, onReset }) {
   return (
     <View style={styles.fixedHeader}>
-      {/* Title row */}
       <View style={styles.titleRow}>
         <Text style={styles.title}>Search</Text>
         {hasActiveSearch && (
@@ -31,7 +30,6 @@ export function SearchHeader({ query, filter, hasActiveSearch, onQueryChange, on
         )}
       </View>
 
-      {/* Search bar */}
       <View style={styles.searchBar}>
         <View style={styles.inputContainer}>
           <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} style={styles.inputIcon} />
@@ -57,7 +55,6 @@ export function SearchHeader({ query, filter, hasActiveSearch, onQueryChange, on
         </TouchableOpacity>
       </View>
 
-      {/* Filter chips */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterBar} contentContainerStyle={styles.filterBarContent}>
         {SEARCH_FILTERS.map((f) => (
           <TouchableOpacity

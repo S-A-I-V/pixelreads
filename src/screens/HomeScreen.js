@@ -31,13 +31,11 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Home</Text>
         <Text style={styles.headerEmail}>{userEmail}</Text>
       </View>
 
-      {/* Stats */}
       <View style={styles.stats}>
         <StatItem value={stats.total} label="Total" />
         <StatItem value={stats.reading} label="Reading" />
@@ -45,7 +43,6 @@ export default function HomeScreen() {
         <StatItem value={stats.wantToRead} label="Want" />
       </View>
 
-      {/* Currently Reading */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Currently Reading</Text>
         {currentlyReading.length === 0 ? (

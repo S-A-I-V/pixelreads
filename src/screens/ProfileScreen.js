@@ -41,14 +41,12 @@ export default function ProfileScreen() {
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]} showsVerticalScrollIndicator={false}>
-        {/* User info */}
         <View style={styles.userSection}>
           <MaterialCommunityIcons name="account-circle" size={64} color={colors.accent} />
           <Text style={styles.userName}>{userEmail?.split('@')[0] || 'Reader'}</Text>
           <Text style={styles.userEmail}>{userEmail}</Text>
         </View>
 
-        {/* Stats grid */}
         <View style={styles.statsSection}>
           <Text style={styles.sectionTitle}>Reading Stats</Text>
           <View style={styles.statsGrid}>
@@ -61,7 +59,6 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Logout */}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} accessibilityLabel="Logout" accessibilityRole="button">
           <MaterialCommunityIcons name="logout" size={20} color={colors.textPrimary} />
           <Text style={styles.logoutText}>Logout</Text>

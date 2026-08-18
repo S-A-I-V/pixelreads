@@ -65,7 +65,6 @@ export function FilterDropdown({ visible, onClose, tags, selectedTags, onToggleT
         </View>
 
         <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} nestedScrollEnabled>
-          {/* eReader Filter */}
           <Text style={styles.sectionTitle}>eReader Status</Text>
           <View style={styles.chipsRow}>
             {EREADER_FILTER_OPTIONS.map(opt => (
@@ -81,7 +80,6 @@ export function FilterDropdown({ visible, onClose, tags, selectedTags, onToggleT
             ))}
           </View>
 
-          {/* Tags Filter */}
           <Text style={styles.sectionTitle}>Tags</Text>
           {tags.length === 0 ? (
             <Text style={styles.emptyText}>No tags created yet</Text>
@@ -99,7 +97,6 @@ export function FilterDropdown({ visible, onClose, tags, selectedTags, onToggleT
             </View>
           )}
 
-          {/* Custom Shelves */}
           <Text style={styles.sectionTitle}>Custom Shelves</Text>
           <View style={styles.createRow}>
             <TextInput

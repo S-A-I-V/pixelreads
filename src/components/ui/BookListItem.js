@@ -109,7 +109,7 @@ export function BookListItem({ book, onPress, variant = 'standard', shelf, tags,
 function BookCoverImage({ uri, size = 'medium' }) {
   const dimensions = size === 'small' 
     ? { width: 60, height: 90 } 
-    : { width: 50, height: 75 };
+    : { width: 70, height: 105 };
 
   if (uri) {
     return <Image source={{ uri }} style={[styles.cover, dimensions]} />;

@@ -1,51 +1,47 @@
 /**
  * Typography tokens.
- * 
- * Two systems:
- * - Modern: system font stack used by screens
- * - Pixel: PressStart2P for retro components
  */
 
 export const fonts = {
   pixel: 'PressStart2P',
-  system: undefined, // uses RN default system font
+  system: undefined,
+  serif: 'serif',
 };
 
 export const textSizes = {
-  xxs:  10,
-  xs:   11,
-  sm:   12,
-  md:   14,
-  lg:   16,
-  xl:   18,
-  xxl:  20,
-  h3:   22,
-  h2:   24,
-  h1:   28,
+  xxs: 10,
+  xs: 11,
+  sm: 12,
+  md: 14,
+  lg: 16,
+  xl: 18,
+  xxl: 20,
+  h3: 22,
+  h2: 24,
+  h1: 28,
 };
 
-/** Pixel font needs smaller sizes due to thick strokes */
 export const pixelTextSizes = {
-  xxs:  7,
-  xs:   8,
-  sm:   9,
-  md:   10,
-  lg:   12,
-  xl:   14,
-  xxl:  18,
+  xxs: 7,
+  xs: 8,
+  sm: 9,
+  md: 10,
+  lg: 12,
+  xl: 14,
+  xxl: 18,
   hero: 24,
 };
 
 export const lineHeights = {
-  tight:  1.2,
+  tight: 1.2,
   normal: 1.5,
   relaxed: 1.6,
-  loose:  2.0,
+  loose: 2.0,
 };
 
 export const fontWeights = {
-  normal:   '400',
-  medium:   '500',
+  normal: '400',
+  medium: '500',
   semibold: '600',
-  bold:     '700',
+  bold: '700',
 };

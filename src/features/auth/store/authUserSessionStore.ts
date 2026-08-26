@@ -14,7 +14,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { STORAGE_KEY_AUTH_STATE } from '../../../constants/storageConstants';
-import { AUTH_ALLOWED_USER_EMAIL } from '../constants/authFeatureConstants';
+import { AUTH_ALLOWED_USER_EMAILS } from '../constants/authFeatureConstants';
 import type { AuthenticationState, AuthenticationStoreActions } from '../../../shared/types/authTypes';
 
 // Import analytics functions (will be converted to TypeScript later)
@@ -61,7 +61,7 @@ export const useAuthUserSessionStore = create<AuthUserSessionStoreType>()(
       login(emailInput: string): boolean {
         const normalizedEmail = emailInput.trim().toLowerCase();
 
-        if (normalizedEmail === AUTH_ALLOWED_USER_EMAIL) {
+        if (AUTH_ALLOWED_USER_EMAILS.includes(normalizedEmail)) {
           set({
             isAuthenticated: true,
             userEmail: normalizedEmail,

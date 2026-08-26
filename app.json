@@ -4,7 +4,7 @@
     "slug": "pixelreads",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/categories/pixel-reads-icon.png",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#00A896",
     "splash": {
@@ -19,7 +19,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/images/categories/pixel-reads-icon.png",
         "backgroundColor": "#00A896"
       },
       "package": "com.pixelreads.app",

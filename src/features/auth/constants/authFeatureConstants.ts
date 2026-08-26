@@ -10,10 +10,16 @@
  */
 
 /**
- * Allowed email for demo/development authentication
- * In production, this would be replaced with proper authentication
+ * Allowed emails for demo/development authentication
  */
-export const AUTH_ALLOWED_USER_EMAIL = 'saideep.verma01@gmail.com';
+export const AUTH_ALLOWED_USER_EMAILS = [
+  'saideep.verma01@gmail.com',
+  'menacecetsociety@gmail.com',
+  // 'another@example.com',
+];
+
+/** @deprecated Use AUTH_ALLOWED_USER_EMAILS instead */
+export const AUTH_ALLOWED_USER_EMAIL = AUTH_ALLOWED_USER_EMAILS[0];
 
 /**
  * Regex pattern for basic email validation

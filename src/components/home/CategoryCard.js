@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { homeColors, spacing, radius, fontWeights, fonts } from '../../theme';
+import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { homeColors, spacing, radius } from '../../theme';
 
 const CATEGORY_IMAGES = {
   'Personal development': require('../../../assets/images/categories/personal-development.png'),
@@ -15,7 +15,6 @@ const CARD_WIDTH = 220;
 const CARD_HEIGHT = 140;
 const CARD_COMPACT_WIDTH = 180;
 const CARD_COMPACT_HEIGHT = 120;
-const LABEL_FONT_SIZE = 15;
 
 export function CategoryCard({ name, onPress, size = 'standard' }) {
   const isCompact = size === 'compact';
@@ -43,9 +42,6 @@ export function CategoryCard({ name, onPress, size = 'standard' }) {
         )}
       </View>
 
-      <Text style={styles.categoryName} numberOfLines={1}>
-        {name}
-      </Text>
     </TouchableOpacity>
   );
 }
@@ -70,13 +66,7 @@ const styles = StyleSheet.create({
   placeholder: {
     backgroundColor: homeColors.border,
   },
-  categoryName: {
-    fontSize: LABEL_FONT_SIZE,
-    fontWeight: fontWeights.semibold,
-    fontFamily: fonts.serif,
-    color: homeColors.textDark,
-    textAlign: 'center',
-  },
+
 });
 
 export default CategoryCard;

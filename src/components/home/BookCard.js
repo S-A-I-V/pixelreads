@@ -3,8 +3,8 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { homeColors, spacing, radius, textSizes, fontWeights, fonts } from '../../theme';
 
-const COVER_WIDTH = 108;
-const COVER_HEIGHT = 160;
+const COVER_WIDTH = 120;
+const COVER_HEIGHT = 180;
 
 export function BookCard({ book, onPress }) {
   return (

@@ -36,6 +36,8 @@ const BUILT_IN_SHELVES = [
 // set to true to always show skeleton (no real content)
 const DEV_SHOW_SKELETON_ONLY = false;
 
+const EMPTY_TAGS = [];
+
 export default function BookDetailScreen() {
   const navigation = useNavigation();
   const route = useRoute();
@@ -50,6 +52,7 @@ export default function BookDetailScreen() {
   const removeFromShelf = useUserBookLibraryStore((s) => s.removeBookFromLibrary);
   const getBookShelf = useUserBookLibraryStore((s) => s.getBookCurrentShelf);
   const getBook = useUserBookLibraryStore((s) => s.getBookById);
+  const shelves = useUserBookLibraryStore((s) => s.shelves);
 
   const allTags = useUserBookLibraryStore((s) => s.tags);
   const customShelves = useUserBookLibraryStore((s) => s.customShelves);
@@ -69,7 +72,7 @@ export default function BookDetailScreen() {
   const shelf = getBookShelf(bookId);
   const uploadedFile = getUploadedFile(bookId);
   const hasEpub = !!uploadedFile || !!uploadedFiles[bookId];
-  const bookTags = useUserBookLibraryStore((s) => s.getBookById(bookId)?.tags || []);
+  const bookTags = stored?.tags || EMPTY_TAGS;
   const allShelves = [...BUILT_IN_SHELVES, ...customShelves.map(s => ({ key: s.id, label: s.label }))];
 
   useEffect(() => {

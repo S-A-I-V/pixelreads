@@ -134,38 +134,45 @@ export default function LibraryScreen() {
 
   const renderHeader = () => (
     <View>
-      {/* Active filter chips */}
       {activeFiltersCount > 0 && (
-        <View style={styles.activeFiltersRow}>
-          {selectedTags.map((tagId) => {
-            const tag = tags.find((t) => t.id === tagId);
-            if (!tag) return null;
-            return (
+        <View style={styles.filtersBox}>
+          <View style={styles.filtersStripes}>
+            {Array.from({ length: 80 }, (_, i) => (
+              <View key={i} style={[styles.filterStripe, { left: i * 7 - 60 }]} />
+            ))}
+          </View>
+          <Text style={styles.filtersBoxLabel}>{'# Active Filters'}</Text>
+          <View style={styles.activeFiltersRow}>
+            {selectedTags.map((tagId) => {
+              const tag = tags.find((t) => t.id === tagId);
+              if (!tag) return null;
+              return (
+                <TouchableOpacity
+                  key={tagId}
+                  style={[styles.activeChip, { backgroundColor: tag.color }]}
+                  onPress={() => handleToggleTag(tagId)}
+                  accessibilityLabel={`Remove ${tag.label} filter`}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.activeChipText}>{tag.label}</Text>
+                  <Text style={styles.activeChipClose}>x</Text>
+                </TouchableOpacity>
+              );
+            })}
+            {eReaderFilter !== null && (
               <TouchableOpacity
-                key={tagId}
-                style={[styles.activeChip, { backgroundColor: tag.color }]}
-                onPress={() => handleToggleTag(tagId)}
-                accessibilityLabel={`Remove ${tag.label} filter`}
+                style={[styles.activeChip, { backgroundColor: homeColors.accentPurple }]}
+                onPress={() => setEReaderFilter(null)}
+                accessibilityLabel="Remove eReader filter"
                 accessibilityRole="button"
               >
-                <Text style={styles.activeChipText}>{tag.label}</Text>
+                <Text style={styles.activeChipText}>
+                  {eReaderFilter ? 'Has eBook' : 'No eBook'}
+                </Text>
                 <Text style={styles.activeChipClose}>x</Text>
               </TouchableOpacity>
-            );
-          })}
-          {eReaderFilter !== null && (
-            <TouchableOpacity
-              style={[styles.activeChip, { backgroundColor: homeColors.accentPurple }]}
-              onPress={() => setEReaderFilter(null)}
-              accessibilityLabel="Remove eReader filter"
-              accessibilityRole="button"
-            >
-              <Text style={styles.activeChipText}>
-                {eReaderFilter ? 'Has eBook' : 'No eBook'}
-              </Text>
-              <Text style={styles.activeChipClose}>x</Text>
-            </TouchableOpacity>
-          )}
+            )}
+          </View>
         </View>
       )}
     </View>
@@ -377,12 +384,13 @@ const styles = StyleSheet.create({
     flexGrow: 0,
     flexShrink: 0,
     marginBottom: spacing.xs,
-    height: 38,
+    height: 44,
   },
   tabBarContent: {
     paddingHorizontal: spacing.md,
     gap: spacing.xs,
     alignItems: 'center',
+    paddingVertical: spacing.xs,
   },
   tab: {
     flexDirection: 'row',
@@ -392,12 +400,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 2,
     borderColor: '#000000',
+    borderRightWidth: 3,
+    borderBottomWidth: 3,
     height: 30,
   },
   tabActive: {
     backgroundColor: '#FBCA1F',
-    borderRightWidth: 3,
-    borderBottomWidth: 3,
   },
   tabLabel: {
     fontFamily: 'SpaceMono-Bold',
@@ -419,8 +427,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.xs,
+    paddingVertical: spacing.xs,
+  },
+  filtersBox: {
+    marginHorizontal: 0,
+    marginBottom: spacing.sm,
+    borderWidth: 2,
+    borderColor: '#000000',
+    padding: spacing.sm,
+    backgroundColor: '#80D4C8',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  filtersStripes: {
+    ...StyleSheet.absoluteFillObject,
+    flexDirection: 'row',
+    overflow: 'hidden',
+  },
+  filterStripe: {
+    position: 'absolute',
+    top: -40,
+    width: 1.5,
+    height: 200,
+    backgroundColor: '#006D5B',
+    transform: [{ rotate: '-45deg' }],
+  },
+  filtersBoxLabel: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: 10,
+    color: '#000000',
+    marginBottom: spacing.xs,
+    backgroundColor: '#FFFFFF',
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: '#000000',
   },
   activeChip: {
     flexDirection: 'row',

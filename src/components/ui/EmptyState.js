@@ -1,23 +1,29 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { homeColors, spacing, textSizes, fontWeights } from '../../theme';
+import { homeColors, spacing, borderWidth, textSizes, fonts } from '../../theme';
+import { NeuShadow } from './NeuShadow';
 
-/**
- * Reusable empty state with icon, title, and optional subtitle/action.
- * Used across Library (empty shelf), Search (no results), Home (no books).
- */
 export function EmptyState({ icon, title, subtitle, children, style }) {
   return (
     <View style={[styles.container, style]}>
-      {icon && (
-        <View style={styles.iconCircle}>
-          <MaterialCommunityIcons name={icon} size={40} color={homeColors.accent} />
+      <NeuShadow offset={3}>
+        <View style={styles.window}>
+          <View style={styles.titleBar}>
+            <Text style={styles.titleBarText}>empty_state.exe</Text>
+          </View>
+          <View style={styles.content}>
+            {icon && (
+              <View style={styles.iconBox}>
+                <MaterialCommunityIcons name={icon} size={32} color="#000000" />
+              </View>
+            )}
+            <Text style={styles.title}>{title}</Text>
+            {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+            {children}
+          </View>
         </View>
-      )}
-      <Text style={styles.title}>{title}</Text>
-      {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
-      {children}
+      </NeuShadow>
     </View>
   );
 }
@@ -27,28 +33,52 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: spacing.md,
-    padding: spacing.xxl,
+    padding: spacing.xl,
   },
-  iconCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: homeColors.accentLight,
+  window: {
+    borderWidth: borderWidth.pixel,
+    borderColor: '#000000',
+    backgroundColor: homeColors.bgCard,
+    minWidth: 220,
+  },
+  titleBar: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+    borderBottomWidth: borderWidth.normal,
+    borderBottomColor: '#000000',
+  },
+  titleBarText: {
+    fontFamily: fonts.body,
+    fontSize: textSizes.xxs,
+    color: '#000000',
+  },
+  content: {
+    padding: spacing.lg,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  iconBox: {
+    width: 56,
+    height: 56,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.sm,
+    borderWidth: 2,
+    borderColor: '#000000',
+    backgroundColor: '#FBCA1F',
+    marginBottom: spacing.xs,
   },
   title: {
-    fontSize: textSizes.xl,
-    fontWeight: fontWeights.bold,
-    color: homeColors.textDark,
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.md,
+    color: '#000000',
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: textSizes.md,
+    fontFamily: fonts.body,
+    fontSize: textSizes.xs,
     color: homeColors.textCaption,
     textAlign: 'center',
-    lineHeight: textSizes.md * 1.4,
+    lineHeight: textSizes.xs * 1.5,
   },
 });

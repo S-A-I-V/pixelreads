@@ -6,21 +6,24 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
+    "backgroundColor": "#00A896",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1a0020"
+      "backgroundColor": "#00A896"
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.pixelreads.app"
+      "bundleIdentifier": "com.pixelreads.app",
+      "backgroundColor": "#00A896"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1a0020"
+        "backgroundColor": "#00A896"
       },
-      "package": "com.pixelreads.app"
+      "package": "com.pixelreads.app",
+      "backgroundColor": "#00A896"
     },
     "plugins": [
       "expo-font",

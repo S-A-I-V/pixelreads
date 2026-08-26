@@ -184,8 +184,8 @@ export default function BookDetailScreen() {
   const rawDesc = book.description?.replace(/<[^>]+>/g, '') ?? '';
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.safeAreaTop} />
+    <View style={styles.container}>
+      <View style={[styles.safeArea, { height: insets.top }]} />
       <ScreenHeader
         title="Book Details"
         onBack={() => navigation.goBack()}
@@ -272,7 +272,7 @@ export default function BookDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: homeColors.bgMain },
-  safeAreaTop: { backgroundColor: homeColors.navBg, position: 'absolute', top: 0, left: 0, right: 0, height: 60 },
+  safeArea: { backgroundColor: homeColors.navBg },
   centered: { justifyContent: 'center', alignItems: 'center' },
   scroll: { flex: 1 },
   content: { padding: spacing.md, gap: spacing.md },

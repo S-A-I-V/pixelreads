@@ -36,12 +36,12 @@ const RootStack = createNativeStackNavigator<RootStackNavigatorParamList>();
 const navigationThemeConfiguration = {
   dark: false,
   colors: {
-    primary: '#e94560',
-    background: '#F8F6FF',
-    card: '#F8F6FF',
-    text: '#1a1a2e',
+    primary: '#FF9F1C',
+    background: '#00A896',
+    card: '#00A896',
+    text: '#000000',
     border: 'transparent',
-    notification: '#e94560',
+    notification: '#F15BB5',
   },
 };
 
@@ -62,6 +62,7 @@ export function RootNavigator(): React.JSX.Element {
         screenOptions={{
           headerShown: false,
           animation: SCREEN_TRANSITION_DEFAULT,
+          contentStyle: { backgroundColor: '#00A896' },
         }}
       >
         {!isUserAuthenticated ? (
@@ -78,6 +79,7 @@ export function RootNavigator(): React.JSX.Element {
             <RootStack.Screen
               name={ROUTE_NAME_BOOK_DETAIL_SCREEN}
               component={BookDetailScreen}
+              options={{ contentStyle: { backgroundColor: '#00A896' } }}
             />
             <RootStack.Screen
               name={ROUTE_NAME_READER_SCREEN}

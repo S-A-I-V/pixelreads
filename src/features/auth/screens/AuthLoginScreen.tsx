@@ -1,14 +1,3 @@
-/**
- * =========================================================================
- *  Auth Login Screen
- * =========================================================================
- *
- *  Login screen for user authentication with email input.
- *  Features 8-bit retro pixel art styling consistent with app theme.
- *
- * =========================================================================
- */
-
 import React, { useEffect } from 'react';
 import {
   View,
@@ -18,8 +7,8 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  ImageBackground,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuthLoginFormState } from '../hooks/useAuthLoginFormState';
 import {
@@ -29,26 +18,15 @@ import {
   AUTH_INPUT_PLACEHOLDER_EMAIL,
   AUTH_BUTTON_LABEL_LOGIN,
 } from '../constants/authFeatureConstants';
-import { colors } from '../../../theme';
-import {
-  TOUCH_TARGET_MIN_SIZE_IOS_PT,
-  BODY_TEXT_MIN_SIZE_PX,
-} from '../../../constants/uiConstants';
 
-// Analytics (will be converted to TypeScript)
+// Analytics
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const analytics = require('../../../utils/analytics');
 
-/**
- * Auth Login Screen Component
- *
- * Displays the login form with email input and submit button.
- * Uses pixel art styling consistent with the PixelReads 8-bit theme.
- */
-export function AuthLoginScreen(): React.JSX.Element {
-  const safeAreaInsets = useSafeAreaInsets();
+// Background wallpaper
+const BG_IMAGE = require('../../../../assets/images/categories/app-bg.png');
 
-  // ─── Form State Hook ──────────────────────────────────────────────────
+export function AuthLoginScreen(): React.JSX.Element {
   const {
     emailInputValue,
     setEmailInputValue,
@@ -56,151 +34,235 @@ export function AuthLoginScreen(): React.JSX.Element {
     handleLoginFormSubmit,
   } = useAuthLoginFormState();
 
-  // ─── Track Screen View ────────────────────────────────────────────────
   useEffect(() => {
     analytics.trackScreenView('Login');
-    console.log('[AuthLoginScreen] Screen viewed');
   }, []);
 
-  // ─── Render ───────────────────────────────────────────────────────────
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[
-        authLoginScreenStyles.screenContainer,
-        {
-          paddingTop: safeAreaInsets.top,
-          paddingBottom: safeAreaInsets.bottom,
-        },
-      ]}
-    >
-      <View style={authLoginScreenStyles.contentWrapper}>
-        {/* App Logo & Tagline */}
-        <Text style={authLoginScreenStyles.appLogoText}>
-          {AUTH_SCREEN_TITLE_APP_NAME}
-        </Text>
-        <Text style={authLoginScreenStyles.appTaglineText}>
-          {AUTH_SCREEN_TAGLINE}
-        </Text>
+    <ImageBackground source={BG_IMAGE} style={styles.bgImage} resizeMode="cover">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.screen}
+      >
+        <View style={styles.contentWrapper}>
+          {/* Logo window */}
+          <View style={styles.logoWindow}>
+            <View style={styles.logoTitleBar}>
+              <Text style={styles.logoTitleBarText}>pixelreads.exe</Text>
+              <View style={styles.titleBarBtns}>
+                <View style={styles.titleBtn}><Text style={styles.titleBtnText}>_</Text></View>
+                <View style={[styles.titleBtn, styles.closeBtn]}><Text style={styles.titleBtnText}>x</Text></View>
+              </View>
+            </View>
+            <View style={styles.logoContent}>
+              <Text style={styles.appName}>{AUTH_SCREEN_TITLE_APP_NAME}</Text>
+              <Text style={styles.tagline}>{AUTH_SCREEN_TAGLINE}</Text>
+              <Text style={styles.divider}>{'≻──────── ⋆✩⋆ ────────≺'}</Text>
+            </View>
+          </View>
 
-        {/* Login Form */}
-        <View style={authLoginScreenStyles.formContainer}>
-          <Text style={authLoginScreenStyles.inputLabelText}>
-            {AUTH_INPUT_LABEL_EMAIL}
-          </Text>
+          {/* Login form window */}
+          <View style={styles.formWindow}>
+            <View style={styles.formTitleBar}>
+              <Text style={styles.formTitleBarText}>login.exe</Text>
+            </View>
+            <View style={styles.formContent}>
+              <Text style={styles.inputLabel}>{AUTH_INPUT_LABEL_EMAIL}</Text>
 
-          <TextInput
-            style={authLoginScreenStyles.emailTextInput}
-            value={emailInputValue}
-            onChangeText={setEmailInputValue}
-            placeholder={AUTH_INPUT_PLACEHOLDER_EMAIL}
-            placeholderTextColor={authLoginScreenColors.placeholderText}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="go"
-            onSubmitEditing={handleLoginFormSubmit}
-            accessibilityLabel={AUTH_INPUT_LABEL_EMAIL}
-            accessibilityHint="Enter your email address to login"
-          />
+              <TextInput
+                style={styles.emailInput}
+                value={emailInputValue}
+                onChangeText={setEmailInputValue}
+                placeholder={AUTH_INPUT_PLACEHOLDER_EMAIL}
+                placeholderTextColor="#999999"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="go"
+                onSubmitEditing={handleLoginFormSubmit}
+                accessibilityLabel={AUTH_INPUT_LABEL_EMAIL}
+                accessibilityHint="Enter your email address to login"
+              />
 
-          {/* Error Message */}
-          {formErrorMessage ? (
-            <Text style={authLoginScreenStyles.errorMessageText}>
-              {formErrorMessage}
-            </Text>
-          ) : null}
+              {formErrorMessage ? (
+                <Text style={styles.errorText}>{formErrorMessage}</Text>
+              ) : null}
 
-          {/* Submit Button */}
-          <TouchableOpacity
-            style={authLoginScreenStyles.loginSubmitButton}
-            onPress={handleLoginFormSubmit}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel={AUTH_BUTTON_LABEL_LOGIN}
-          >
-            <Text style={authLoginScreenStyles.loginSubmitButtonText}>
-              {AUTH_BUTTON_LABEL_LOGIN}
-            </Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.loginButton}
+                onPress={handleLoginFormSubmit}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={AUTH_BUTTON_LABEL_LOGIN}
+              >
+                <Text style={styles.loginButtonText}>{AUTH_BUTTON_LABEL_LOGIN}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
 
-// ─── Color Constants (extracted for readability) ────────────────────────────
-const authLoginScreenColors = {
-  background: '#1a1a2e',
-  cardBackground: '#2a2a4e',
-  inputBorder: '#444',
-  primaryAccent: '#e94560',
-  textPrimary: '#fff',
-  textSecondary: '#888',
-  textMuted: '#ccc',
-  placeholderText: '#888',
-  errorText: '#ff6b6b',
-} as const;
-
-// ─── Styles ─────────────────────────────────────────────────────────────────
-const authLoginScreenStyles = StyleSheet.create({
-  screenContainer: {
+const styles = StyleSheet.create({
+  screen: {
     flex: 1,
-    backgroundColor: authLoginScreenColors.background,
+  },
+  bgImage: {
+    flex: 1,
   },
   contentWrapper: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  appLogoText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: authLoginScreenColors.textPrimary,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  appTaglineText: {
-    fontSize: BODY_TEXT_MIN_SIZE_PX,
-    color: authLoginScreenColors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 48,
-  },
-  formContainer: {
+    paddingHorizontal: 32,
     gap: 16,
   },
-  inputLabelText: {
-    fontSize: 14,
-    color: authLoginScreenColors.textMuted,
-    marginBottom: 4,
+
+  // Logo window
+  logoWindow: {
+    borderWidth: 3,
+    borderColor: '#000000',
+    backgroundColor: 'transparent',
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 0,
+    borderRightWidth: 6,
+    borderBottomWidth: 6,
   },
-  emailTextInput: {
-    backgroundColor: authLoginScreenColors.cardBackground,
-    borderWidth: 1,
-    borderColor: authLoginScreenColors.inputBorder,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: BODY_TEXT_MIN_SIZE_PX,
-    color: authLoginScreenColors.textPrimary,
-    minHeight: TOUCH_TARGET_MIN_SIZE_IOS_PT,
-  },
-  errorMessageText: {
-    color: authLoginScreenColors.errorText,
-    fontSize: 14,
-  },
-  loginSubmitButton: {
-    backgroundColor: authLoginScreenColors.primaryAccent,
-    borderRadius: 8,
-    paddingVertical: 16,
+  logoTitleBar: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
-    minHeight: TOUCH_TARGET_MIN_SIZE_IOS_PT,
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderBottomWidth: 2,
+    borderBottomColor: '#000000',
+    backgroundColor: 'rgba(200, 182, 255, 0.6)',
   },
-  loginSubmitButtonText: {
-    color: authLoginScreenColors.textPrimary,
-    fontSize: BODY_TEXT_MIN_SIZE_PX,
-    fontWeight: '600',
+  logoTitleBarText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 10,
+    color: '#000000',
+  },
+  titleBarBtns: {
+    flexDirection: 'row',
+    gap: 3,
+  },
+  titleBtn: {
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#000000',
+    backgroundColor: '#FFFFFF',
+  },
+  closeBtn: {
+    backgroundColor: '#EF4444',
+  },
+  titleBtnText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 8,
+    color: '#000000',
+    lineHeight: 10,
+  },
+  logoContent: {
+    padding: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    alignItems: 'center',
+    gap: 6,
+  },
+  appName: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: 22,
+    color: '#000000',
+  },
+  tagline: {
+    fontFamily: 'SpaceMono',
+    fontSize: 11,
+    color: '#4A4A4A',
+  },
+  divider: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: 11,
+    color: '#000000',
+    marginTop: 4,
+  },
+
+  // Form window
+  formWindow: {
+    borderWidth: 3,
+    borderColor: '#000000',
+    backgroundColor: 'transparent',
+    borderRightWidth: 6,
+    borderBottomWidth: 6,
+  },
+  formTitleBar: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderBottomWidth: 2,
+    borderBottomColor: '#000000',
+    backgroundColor: 'rgba(200, 182, 255, 0.6)',
+  },
+  formTitleBarText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 10,
+    color: '#000000',
+  },
+  formContent: {
+    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    gap: 10,
+  },
+  inputLabel: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: 11,
+    color: '#000000',
+  },
+  emailInput: {
+    fontFamily: 'SpaceMono',
+    fontSize: 13,
+    color: '#000000',
+    borderWidth: 2,
+    borderColor: '#000000',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: '#FFFFFF',
+    minHeight: 40,
+  },
+  errorText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 11,
+    color: '#EF4444',
+  },
+  loginButton: {
+    backgroundColor: '#FBCA1F',
+    borderWidth: 3,
+    borderColor: '#000000',
+    borderRightWidth: 6,
+    borderBottomWidth: 6,
+    paddingVertical: 12,
+    alignItems: 'center',
+    minHeight: 48,
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  loginButtonText: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: 16,
+    color: '#000000',
+  },
+
+  // Footer
+  footer: {
+    fontFamily: 'SpaceMono',
+    fontSize: 10,
+    color: '#4A4A4A',
+    textAlign: 'center',
+    marginTop: 4,
   },
 });
 

@@ -51,8 +51,9 @@ const HOME_CATEGORIES = [
   'Fantasy',
 ];
 
-const POPULAR_BOOKS_QUERY = 'bestseller 2024';
-const RECOMMENDED_BOOKS_QUERY = 'award winning fiction';
+const POPULAR_BOOKS_QUERY = 'new york times best sellers 2024';
+const RECOMMENDED_MYSTERY_QUERY = 'subject:mystery';
+const RECOMMENDED_FICTION_QUERY = 'subject:fiction';
 const SKELETON_CARD_COUNT = 4;
 const SKELETON_PLACEHOLDERS = Array.from({ length: SKELETON_CARD_COUNT }, (_, i) => i);
 
@@ -77,12 +78,29 @@ export default function HomeScreen() {
     async function fetchHomeData() {
       setIsLoading(true);
       try {
-        const [popular, recommended] = await Promise.all([
-          searchBooks(POPULAR_BOOKS_QUERY, 0, 10, false),
-          searchBooks(RECOMMENDED_BOOKS_QUERY, 0, 10, false),
+        const [popular, mysteryRecs, fictionRecs] = await Promise.all([
+          searchBooks(POPULAR_BOOKS_QUERY, 0, 20, false),
+          searchBooks(RECOMMENDED_MYSTERY_QUERY, 0, 10, false),
+          searchBooks(RECOMMENDED_FICTION_QUERY, 0, 10, false),
         ]);
-        setPopularBooks(popular.items || []);
-        setRecommendedBooks(recommended.items || []);
+
+        // Sort popular books by average rating (highest first), unrated at end
+        const popularItems = (popular.items || [])
+          .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0))
+          .slice(0, 10);
+
+        setPopularBooks(popularItems);
+
+        // Merge mystery + fiction bestsellers, dedupe, take top 10
+        const allRecs = [...(mysteryRecs.items || []), ...(fictionRecs.items || [])];
+        const seen = new Set();
+        const dedupedRecs = allRecs.filter((book) => {
+          if (seen.has(book.id)) return false;
+          seen.add(book.id);
+          return true;
+        }).slice(0, 10);
+
+        setRecommendedBooks(dedupedRecs);
       } catch (error) {
         console.warn('[HomeScreen] Failed to fetch books:', error.message);
       } finally {

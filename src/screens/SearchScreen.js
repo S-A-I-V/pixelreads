@@ -1,16 +1,71 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Keyboard } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ScrollView, StyleSheet, Keyboard, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
 import { searchBooks } from '../api/googleBooks';
 import { useUserBookLibraryStore } from '../features/library/store/userBookLibraryStore';
 import { trackSearch, trackScreenView, track, EventType, EventCategory } from '../utils/analytics';
-import { BookListItem, EmptyState } from '../components/ui';
-import { BookCardSkeleton } from '../components/home';
-import { homeColors, spacing, radius, elevation, textSizes, fontWeights } from '../theme';
+import { EmptyState } from '../components/ui';
+import { NeuShadow } from '../components/ui/NeuShadow';
+import { LibraryBookCard } from '../components/library/LibraryBookCard';
+import { SkeletonShimmer } from '../components/home/SkeletonShimmer';
+import { homeColors, spacing, borderWidth, textSizes, fonts } from '../theme';
 import { SearchHeader, SEARCH_FILTERS } from './search/SearchHeader';
 
-const SKELETON_PLACEHOLDERS = Array.from({ length: 4 }, (_, i) => i);
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const GRID_COLUMNS = 2;
+const GRID_PADDING = spacing.md;
+const CARD_WIDTH = (SCREEN_WIDTH - GRID_PADDING * 2 - spacing.md) / 2;
+const SKELETON_ROWS = 5;
+const SKELETON_PLACEHOLDERS = Array.from({ length: SKELETON_ROWS * GRID_COLUMNS }, (_, i) => i);
+
+// set to true to always show skeleton
+const DEV_SHOW_SKELETON_ONLY = false;
+
+function SearchSkeleton() {
+  return (
+    <ScrollView contentContainerStyle={skeletonStyles.grid} showsVerticalScrollIndicator={false}>
+      {SKELETON_PLACEHOLDERS.map((i) => (
+        <View key={i} style={skeletonStyles.card}>
+          <NeuShadow offset={3}>
+            <View style={skeletonStyles.cardFrame}>
+              <SkeletonShimmer width={'100%'} height={CARD_WIDTH * 1.2} borderRadius={0} />
+              <View style={skeletonStyles.titleStrip}>
+                <SkeletonShimmer width={'100%'} height={10} borderRadius={2} />
+              </View>
+            </View>
+          </NeuShadow>
+        </View>
+      ))}
+    </ScrollView>
+  );
+}
+
+const skeletonStyles = StyleSheet.create({
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    padding: GRID_PADDING,
+  },
+  card: {
+    width: CARD_WIDTH,
+    marginBottom: spacing.md,
+  },
+  cardFrame: {
+    borderWidth: borderWidth.pixel,
+    borderColor: homeColors.border,
+    backgroundColor: homeColors.bgCard,
+  },
+  titleStrip: {
+    borderTopWidth: borderWidth.normal,
+    borderTopColor: homeColors.border,
+    padding: spacing.xs,
+    backgroundColor: '#FFFFFF',
+    height: 30,
+    justifyContent: 'center',
+  },
+});
 
 export default function SearchScreen() {
   const navigation = useNavigation();
@@ -35,7 +90,6 @@ export default function SearchScreen() {
     }, [results.length])
   );
 
-  // Auto-search when navigated with an initialQuery
   useEffect(() => {
     if (initialQuery) {
       setQuery(initialQuery);
@@ -100,7 +154,8 @@ export default function SearchScreen() {
   const hasActiveSearch = query.trim() || filter !== 'all' || searched;
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
+    <View style={styles.screen}>
+      <View style={[styles.safeArea, { height: insets.top }]} />
       <SearchHeader
         query={query}
         filter={filter}
@@ -112,19 +167,8 @@ export default function SearchScreen() {
       />
 
       <View style={styles.resultsContainer}>
-        {loading && !results.length ? (
-          <View style={styles.loadingContainer}>
-            <FlatList
-              data={SKELETON_PLACEHOLDERS}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.skeletonList}
-              keyExtractor={(item) => `skeleton-${item}`}
-              renderItem={() => <BookCardSkeleton />}
-              ItemSeparatorComponent={() => <View style={{ width: spacing.sm }} />}
-            />
-            <Text style={styles.loadingText}>Searching...</Text>
-          </View>
+        {DEV_SHOW_SKELETON_ONLY || (loading && !results.length) ? (
+          <SearchSkeleton />
         ) : error ? (
           <EmptyState icon="alert-circle" title={error}>
             <TouchableOpacity style={styles.retryBtn} onPress={handleSearch}>
@@ -139,33 +183,34 @@ export default function SearchScreen() {
           <FlatList
             data={results}
             keyExtractor={(b, index) => `${b.id}-${index}`}
+            numColumns={GRID_COLUMNS}
+            columnWrapperStyle={styles.gridRow}
+            contentContainerStyle={styles.gridContent}
+            showsVerticalScrollIndicator={false}
+            ListHeaderComponent={
+              <View style={styles.resultsHeader}>
+                <View style={styles.resultChip}>
+                  <Text style={styles.resultCount}>{totalItems.toLocaleString()} results</Text>
+                </View>
+                {filter !== 'all' && (
+                  <View style={styles.resultChip}>
+                    <Text style={styles.filterInfo}>#{filter}</Text>
+                  </View>
+                )}
+              </View>
+            }
             renderItem={({ item }) => (
-              <BookListItem
+              <LibraryBookCard
                 book={item}
-                variant="detailed"
                 shelf={getBookShelf(item.id)}
                 onPress={() => navigation.navigate('BookDetail', { book: item })}
               />
             )}
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
-            contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
-            ListHeaderComponent={
-              <View style={styles.resultsHeader}>
-                <Text style={styles.resultCount}>
-                  {totalItems.toLocaleString()} results
-                </Text>
-                {filter !== 'all' && (
-                  <Text style={styles.filterInfo}>Filtered by {filter}</Text>
-                )}
-              </View>
-            }
             ListFooterComponent={
               results.length > 0 && results.length < totalItems ? (
                 <View style={styles.loadMoreWrap}>
                   {loading ? (
-                    <View style={styles.loadMoreLoading}>
-                      <Text style={styles.loadingText}>Loading...</Text>
-                    </View>
+                    <Text style={styles.loadingText}>Loading...</Text>
                   ) : (
                     <TouchableOpacity style={styles.loadMoreBtn} onPress={loadMore}>
                       <Text style={styles.loadMoreText}>Load More</Text>
@@ -186,79 +231,81 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: homeColors.bgMain,
   },
+  safeArea: {
+    backgroundColor: homeColors.navBg,
+  },
   resultsContainer: {
     flex: 1,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: spacing.xl,
-    padding: spacing.xxl,
-  },
-  skeletonList: {
-    paddingHorizontal: spacing.lg,
-  },
   loadingText: {
-    fontSize: textSizes.md,
+    fontFamily: fonts.body,
+    fontSize: textSizes.sm,
     color: homeColors.textCaption,
+    textAlign: 'center',
   },
   retryBtn: {
-    backgroundColor: homeColors.accent,
-    paddingHorizontal: spacing.xxl,
-    paddingVertical: spacing.md,
-    borderRadius: radius.lg,
+    backgroundColor: '#FBCA1F',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.sm,
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRightWidth: 4,
+    borderBottomWidth: 4,
     marginTop: spacing.md,
-    ...elevation.accent,
   },
   retryText: {
-    color: homeColors.textOnAccent,
-    fontSize: textSizes.md,
-    fontWeight: fontWeights.semibold,
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.sm,
+    color: '#000000',
   },
   resultsHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: homeColors.border,
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  resultChip: {
+    backgroundColor: '#FBCA1F',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderWidth: 2,
+    borderColor: '#000000',
   },
   resultCount: {
-    fontSize: textSizes.md,
-    color: homeColors.textDark,
-    fontWeight: fontWeights.medium,
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.xxs,
+    color: '#000000',
   },
   filterInfo: {
-    fontSize: textSizes.sm,
-    color: homeColors.accent,
-    fontWeight: fontWeights.medium,
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.xxs,
+    color: '#000000',
   },
-  separator: {
-    height: 1,
-    backgroundColor: homeColors.border,
-    marginLeft: 88,
+  gridContent: {
+    paddingHorizontal: GRID_PADDING,
+    paddingBottom: spacing.huge,
+  },
+  gridRow: {
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
   },
   loadMoreWrap: {
-    padding: spacing.xxl,
+    padding: spacing.xl,
     alignItems: 'center',
   },
-  loadMoreLoading: {
-    paddingVertical: spacing.md,
-  },
   loadMoreBtn: {
-    backgroundColor: homeColors.bgCard,
-    paddingHorizontal: spacing.xxl,
-    paddingVertical: spacing.md,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: homeColors.border,
-    ...elevation.sm,
+    backgroundColor: '#FBCA1F',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.sm,
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRightWidth: 4,
+    borderBottomWidth: 4,
   },
   loadMoreText: {
-    color: homeColors.accent,
-    fontSize: textSizes.md,
-    fontWeight: fontWeights.semibold,
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.sm,
+    color: '#000000',
   },
 });

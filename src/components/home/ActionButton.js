@@ -4,11 +4,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { homeColors, spacing, borderWidth, radius, textSizes, fontWeights, fonts } from '../../theme';
 
-/**
- * Neubrutalist button inspired by Uiverse.io/adamgiebl.
- * Yellow (#fbca1f) background, 3px black border, hard box-shadow offset.
- * Translate up on press-in, translate down on press-out for that tactile feel.
- */
 export function ActionButton({
   label,
   onPress,

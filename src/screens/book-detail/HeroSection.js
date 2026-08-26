@@ -1,154 +1,150 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import { StatusBadge, StarRating } from '../../components/ui';
-import { homeColors, spacing, radius, elevation, textSizes, fontWeights } from '../../theme';
+import { NeuShadow } from '../../components/ui/NeuShadow';
+import { homeColors, spacing, borderWidth, textSizes, fonts } from '../../theme';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const COVER_WIDTH = 140;
-const COVER_HEIGHT = 210;
-const HERO_BG_HEIGHT = 180;
+const COVER_WIDTH = 100;
+const COVER_HEIGHT = 150;
 
-/**
- * Modern hero section with blurred cover background,
- * elevated cover card, and clean metadata layout.
- */
 export function HeroSection({ book, shelf, hasEpub }) {
   return (
-    <View style={styles.heroWrapper}>
-      {/* Blurred background using cover image */}
-      <View style={styles.bgContainer}>
-        {book.thumbnail ? (
-          <Image
-            source={{ uri: book.thumbnail }}
-            style={styles.bgImage}
-            blurRadius={25}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={styles.bgFallback} />
-        )}
-        <View style={styles.bgOverlay} />
-      </View>
-
-      {/* Cover card + info */}
-      <View style={styles.contentRow}>
-        <View style={styles.coverCard}>
-          {book.thumbnail ? (
-            <Image source={{ uri: book.thumbnail }} style={styles.cover} resizeMode="cover" />
-          ) : (
-            <View style={[styles.cover, styles.noCover]}>
-              <Text style={styles.noCoverText}>No Cover</Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.info}>
-          <Text style={styles.title} numberOfLines={3}>{book.title || 'Untitled'}</Text>
-          {book.subtitle && (
-            <Text style={styles.subtitle} numberOfLines={2}>{book.subtitle}</Text>
-          )}
-          <Text
-            style={book.authors?.length > 0 ? styles.author : styles.unknownText}
-            numberOfLines={2}
-          >
-            {book.authors?.length > 0 ? book.authors.join(', ') : 'Unknown author'}
-          </Text>
-
-          <View style={styles.ratingRow}>
-            {book.averageRating > 0 ? (
-              <>
-                <StarRating value={Math.round(book.averageRating)} readonly size={16} />
-                <Text style={styles.ratingText}>
-                  {book.averageRating.toFixed(1)}
-                </Text>
-              </>
-            ) : (
-              <Text style={styles.noRatingText}>No ratings</Text>
-            )}
+    <NeuShadow offset={3}>
+      <View style={styles.window}>
+        {/* Title bar */}
+        <View style={styles.titleBar}>
+          <Text style={styles.titleBarText}>book_info.exe</Text>
+          <View style={styles.titleBarBtns}>
+            <View style={styles.titleBtn}><Text style={styles.titleBtnText}>_</Text></View>
+            <View style={[styles.titleBtn, styles.closeBtn]}><Text style={styles.titleBtnText}>x</Text></View>
           </View>
         </View>
-      </View>
 
-      {/* Quick stats bar */}
-      <View style={styles.statsBar}>
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>
-            {book.pageCount > 0 ? book.pageCount : '--'}
-          </Text>
-          <Text style={styles.statLabel}>Pages</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>
-            {book.publishedDate ? book.publishedDate.slice(0, 4) : '--'}
-          </Text>
-          <Text style={styles.statLabel}>Year</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>
-            {book.language ? book.language.toUpperCase() : '--'}
-          </Text>
-          <Text style={styles.statLabel}>Language</Text>
+        {/* Content area */}
+        <View style={styles.content}>
+          {/* Row: cover + meta */}
+          <View style={styles.row}>
+            <View style={styles.coverFrame}>
+              {book.thumbnail ? (
+                <Image source={{ uri: book.thumbnail }} style={styles.cover} resizeMode="cover" />
+              ) : (
+                <View style={[styles.cover, styles.noCover]}>
+                  <Text style={styles.noCoverText}>N/A</Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.info}>
+              <Text style={styles.bookTitle} numberOfLines={3}>{book.title || 'Untitled'}</Text>
+              <Text style={styles.author} numberOfLines={2}>
+                {book.authors?.length > 0 ? book.authors.join(', ') : 'Unknown'}
+              </Text>
+
+              {/* Rating */}
+              <View style={styles.ratingRow}>
+                {book.averageRating > 0 ? (
+                  <>
+                    <StarRating value={Math.round(book.averageRating)} readonly size={12} />
+                    <Text style={styles.ratingText}>{book.averageRating.toFixed(1)}</Text>
+                  </>
+                ) : (
+                  <Text style={styles.noRating}>No ratings</Text>
+                )}
+              </View>
+
+              {/* Stats inline below rating */}
+              <View style={styles.dashedLineWrap}>
+                <Text style={styles.dashedLine}>{'≻────────────── ⋆✩⋆ ──────────────≺'}</Text>
+              </View>
+              <Text style={styles.statsInline}>
+                {book.pageCount > 0 ? `${book.pageCount} pages` : '--'}
+                {' · '}
+                {book.publishedDate ? `Year: ${book.publishedDate.slice(0, 4)}` : '--'}
+                {' · '}
+                {book.language ? `Lang: ${book.language.toUpperCase()}` : '--'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Badges */}
+          {(hasEpub || book.isEbook || book.isFree || shelf) && (
+            <>
+              <View style={styles.inlineDivider} />
+              <View style={styles.badges}>
+                {hasEpub && <StatusBadge label="EREADER" color={homeColors.success} icon="book-open-page-variant" />}
+                {book.isEbook && <StatusBadge label="EBOOK" color={homeColors.accent} icon="book-open-variant" />}
+                {book.isFree && <StatusBadge label="FREE" color="#8B5CF6" icon="gift" />}
+                {shelf && <StatusBadge label={shelf.replace('_', ' ').toUpperCase()} color={homeColors.accentPink} />}
+              </View>
+            </>
+          )}
         </View>
       </View>
-
-      {/* Status badges */}
-      {(hasEpub || book.isEbook || book.isFree || shelf) && (
-        <View style={styles.badges}>
-          {hasEpub && <StatusBadge label="EREADER" color={homeColors.success} icon="book-open-page-variant" />}
-          {book.isEbook && <StatusBadge label="EBOOK" color={homeColors.accent} icon="book-open-variant" />}
-          {book.isFree && <StatusBadge label="FREE" color="#8B5CF6" icon="gift" />}
-          {shelf && <StatusBadge label={shelf.replace('_', ' ').toUpperCase()} color={homeColors.accent} />}
-        </View>
-      )}
-    </View>
+    </NeuShadow>
   );
 }
 
 const styles = StyleSheet.create({
-  heroWrapper: {
-    marginHorizontal: -spacing.lg,
-    marginTop: -spacing.lg,
-    paddingBottom: spacing.md,
+  window: {
+    borderWidth: borderWidth.pixel,
+    borderColor: homeColors.border,
+    backgroundColor: homeColors.bgCard,
   },
-  bgContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: HERO_BG_HEIGHT,
-    overflow: 'hidden',
-  },
-  bgImage: {
-    width: '100%',
-    height: '100%',
-  },
-  bgFallback: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: homeColors.bgElevated,
-  },
-  bgOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(250, 251, 254, 0.75)',
-  },
-  contentRow: {
+  titleBar: {
     flexDirection: 'row',
-    gap: spacing.lg,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xxl,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderBottomWidth: borderWidth.normal,
+    borderBottomColor: homeColors.border,
   },
-  coverCard: {
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-    ...elevation.xl,
+  titleBarText: {
+    fontFamily: fonts.body,
+    fontSize: textSizes.xxs,
+    color: homeColors.textDark,
   },
-  cover: {
+  titleBarBtns: {
+    flexDirection: 'row',
+    gap: spacing.xxs,
+  },
+  titleBtn: {
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: homeColors.border,
+    backgroundColor: '#FFFFFF',
+  },
+  closeBtn: {
+    backgroundColor: homeColors.error,
+  },
+  titleBtnText: {
+    fontFamily: fonts.body,
+    fontSize: 8,
+    color: '#000000',
+    lineHeight: 10,
+  },
+  content: {
+    padding: spacing.sm,
+    backgroundColor: '#FFFFFF',
+    gap: spacing.sm,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  coverFrame: {
     width: COVER_WIDTH,
     height: COVER_HEIGHT,
-    borderRadius: radius.lg,
+    borderWidth: borderWidth.normal,
+    borderColor: homeColors.border,
+    backgroundColor: homeColors.bgElevated,
+  },
+  cover: {
+    width: COVER_WIDTH - 4,
+    height: COVER_HEIGHT - 4,
   },
   noCover: {
     backgroundColor: homeColors.bgElevated,
@@ -156,93 +152,66 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   noCoverText: {
-    fontSize: textSizes.sm,
+    fontFamily: fonts.body,
+    fontSize: textSizes.xxs,
     color: homeColors.textCaption,
-    textAlign: 'center',
   },
   info: {
     flex: 1,
     justifyContent: 'center',
-    gap: spacing.xs,
-    paddingTop: spacing.lg,
+    gap: 2,
   },
-  title: {
-    fontSize: textSizes.xxl,
-    fontWeight: fontWeights.bold,
-    color: homeColors.textDark,
-    lineHeight: textSizes.xxl * 1.3,
-  },
-  subtitle: {
-    fontSize: textSizes.md,
-    color: homeColors.textBody,
-    fontStyle: 'italic',
+  bookTitle: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.lg,
+    color: '#000000',
+    lineHeight: textSizes.lg * 1.3,
   },
   author: {
+    fontFamily: fonts.body,
     fontSize: textSizes.md,
-    fontWeight: fontWeights.medium,
     color: homeColors.accent,
-    marginTop: spacing.xxs,
-  },
-  unknownText: {
-    fontSize: textSizes.md,
-    color: homeColors.textCaption,
-    fontStyle: 'italic',
-    marginTop: spacing.xxs,
+    marginTop: 2,
   },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    marginTop: spacing.xs,
+    gap: spacing.xs,
+    marginTop: spacing.xxs,
   },
   ratingText: {
-    fontSize: textSizes.sm,
-    fontWeight: fontWeights.medium,
-    color: homeColors.textBody,
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.md,
+    color: '#000000',
   },
-  noRatingText: {
+  noRating: {
+    fontFamily: fonts.body,
     fontSize: textSizes.sm,
     color: homeColors.textCaption,
   },
-  statsBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.xl,
-    paddingVertical: spacing.md,
-    backgroundColor: homeColors.bgCard,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: homeColors.borderSubtle,
-    ...elevation.sm,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-    gap: spacing.xxs,
-  },
-  statValue: {
-    fontSize: textSizes.lg,
-    fontWeight: fontWeights.bold,
-    color: homeColors.textDark,
-  },
-  statLabel: {
+  statsInline: {
+    fontFamily: fonts.body,
     fontSize: textSizes.xs,
-    fontWeight: fontWeights.medium,
     color: homeColors.textCaption,
-    textTransform: 'uppercase',
   },
-  statDivider: {
-    width: 1,
-    height: 28,
+  dashedLineWrap: {
+    overflow: 'hidden',
+    height: 18,
+    marginTop: spacing.xs,
+  },
+  dashedLine: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: 11,
+    color: '#000000',
+  },
+  inlineDivider: {
+    height: 1,
     backgroundColor: homeColors.border,
+    marginVertical: spacing.xxs,
   },
   badges: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    marginTop: spacing.md,
+    gap: spacing.xs,
   },
 });

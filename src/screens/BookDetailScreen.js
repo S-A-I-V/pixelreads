@@ -15,6 +15,7 @@ import { HeroSection } from './book-detail/HeroSection';
 import { ShelfPicker } from './book-detail/ShelfPicker';
 import { EbookSection } from './book-detail/EbookSection';
 import { TagsModal } from './book-detail/TagsModal';
+import { BookDetailSkeleton } from './book-detail/BookDetailSkeleton';
 import {
   TagsSection,
   ReadingProgressSection,
@@ -22,6 +23,7 @@ import {
   CategoriesSection,
   PublicationDetails,
   LinksSection,
+  DetailDivider,
 } from './book-detail/BookInfoSections';
 
 const BUILT_IN_SHELVES = [
@@ -30,6 +32,9 @@ const BUILT_IN_SHELVES = [
   { key: 'finished',     label: 'Finished'          },
   { key: 'dnf',          label: 'Did Not Finish'    },
 ];
+
+// Dev flag: set to true to always show skeleton (no real content)
+const DEV_SHOW_SKELETON_ONLY = false;
 
 export default function BookDetailScreen() {
   const navigation = useNavigation();
@@ -180,12 +185,13 @@ export default function BookDetailScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.safeAreaTop} />
       <ScreenHeader
         title="Book Details"
         onBack={() => navigation.goBack()}
         rightContent={shelf && (
-          <TouchableOpacity onPress={handleRemove}>
-            <MaterialCommunityIcons name="delete-outline" size={24} color={homeColors.textCaption} />
+          <TouchableOpacity style={deleteStyles.btn} onPress={handleRemove}>
+            <MaterialCommunityIcons name="delete-outline" size={18} color="#000000" />
           </TouchableOpacity>
         )}
       />
@@ -195,7 +201,13 @@ export default function BookDetailScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}
         showsVerticalScrollIndicator={false}
       >
+        {DEV_SHOW_SKELETON_ONLY ? (
+          <BookDetailSkeleton />
+        ) : (
+        <>
         <HeroSection book={book} shelf={shelf} hasEpub={hasEpub} />
+
+        <DetailDivider />
 
         <ShelfPicker
           shelf={shelf}
@@ -206,22 +218,33 @@ export default function BookDetailScreen() {
         />
 
         {shelf && (
-          <TagsSection bookTags={bookTags} allTags={allTags} onManageTags={() => setShowTagsModal(true)} />
+          <>
+            <DetailDivider />
+            <TagsSection bookTags={bookTags} allTags={allTags} onManageTags={() => setShowTagsModal(true)} />
+          </>
         )}
 
         {shelf && hasEpub && (
-          <ReadingProgressSection
-            progress={stored?.progress ?? 0}
-            currentPage={stored?.currentPage}
-            totalPages={stored?.totalPages}
-          />
+          <>
+            <DetailDivider />
+            <ReadingProgressSection
+              progress={stored?.progress ?? 0}
+              currentPage={stored?.currentPage}
+              totalPages={stored?.totalPages}
+            />
+          </>
         )}
 
+        <DetailDivider />
         <DescriptionSection description={rawDesc.length > 0 ? rawDesc : null} />
+        <DetailDivider />
         <CategoriesSection categories={book.categories} />
+        <DetailDivider />
         <PublicationDetails book={book} />
+        <DetailDivider />
         <LinksSection book={book} onOpenLink={openLink} />
 
+        <DetailDivider />
         <EbookSection
           uploadedFile={uploadedFile}
           importing={importing}
@@ -229,6 +252,8 @@ export default function BookDetailScreen() {
           onReadNow={() => navigation.navigate('Reader', { bookId })}
           onRemoveFile={handleRemoveFile}
         />
+        </>
+        )}
       </ScrollView>
 
       <TagsModal
@@ -245,16 +270,30 @@ export default function BookDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: homeColors.bgMain },
+  safeAreaTop: { backgroundColor: homeColors.navBg, position: 'absolute', top: 0, left: 0, right: 0, height: 60 },
   centered: { justifyContent: 'center', alignItems: 'center' },
   scroll: { flex: 1 },
-  content: { padding: spacing.lg, gap: spacing.xl },
-  errorText: { fontSize: textSizes.lg, color: homeColors.error, marginBottom: spacing.lg },
+  content: { padding: spacing.md, gap: spacing.md },
+  errorText: { fontSize: textSizes.lg, color: homeColors.error, marginBottom: spacing.lg, fontFamily: 'SpaceMono-Bold' },
   backBtn: {
-    backgroundColor: homeColors.accent,
+    backgroundColor: '#FBCA1F',
     paddingHorizontal: spacing.xxl,
     paddingVertical: spacing.md,
-    borderRadius: radius.lg,
-    ...elevation.accent,
+    borderWidth: 3,
+    borderColor: '#000000',
+    borderRightWidth: 6,
+    borderBottomWidth: 6,
   },
-  backBtnText: { color: homeColors.textOnAccent, fontSize: textSizes.lg, fontWeight: fontWeights.semibold },
+  backBtnText: { color: '#000000', fontSize: textSizes.lg, fontFamily: 'SpaceMono-Bold' },
+});
+
+const deleteStyles = StyleSheet.create({
+  btn: {
+    backgroundColor: '#FBCA1F',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRightWidth: 3,
+    borderBottomWidth: 3,
+    padding: spacing.xs,
+  },
 });

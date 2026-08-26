@@ -57,6 +57,9 @@ const RECOMMENDED_FICTION_QUERY = 'subject:fiction';
 const SKELETON_CARD_COUNT = 4;
 const SKELETON_PLACEHOLDERS = Array.from({ length: SKELETON_CARD_COUNT }, (_, i) => i);
 
+// set to true to always show skeleton placeholders (no API calls)
+const DEV_SHOW_SKELETONS_ONLY = false;
+
 export default function HomeScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -75,6 +78,10 @@ export default function HomeScreen() {
   const displayName = userName.charAt(0).toUpperCase() + userName.slice(1);
 
   useEffect(() => {
+    if (DEV_SHOW_SKELETONS_ONLY) {
+      setIsLoading(true);
+      return;
+    }
     async function fetchHomeData() {
       setIsLoading(true);
       try {

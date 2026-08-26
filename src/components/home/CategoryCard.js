@@ -17,10 +17,6 @@ const CARD_HEIGHT = 140;
 const CARD_COMPACT_WIDTH = 180;
 const CARD_COMPACT_HEIGHT = 120;
 
-/**
- * Neubrutalist category card — image-only with thick border and hard shadow.
- * The category images already contain their own title text, so no duplicate label needed.
- */
 export function CategoryCard({ name, onPress, size = 'standard' }) {
   const isCompact = size === 'compact';
   const cardWidth = isCompact ? CARD_COMPACT_WIDTH : CARD_WIDTH;

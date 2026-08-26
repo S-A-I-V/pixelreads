@@ -15,11 +15,6 @@ const TAB_ICONS = {
 const ICON_SIZE = 22;
 const TAB_BUTTON_SIZE = 52;
 
-/**
- * Neubrutalist OS taskbar — thick black borders, square tabs,
- * lavender background with magenta active highlights.
- * Styled like a Y2K desktop taskbar / start menu bar.
- */
 export function FloatingTabBar({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
 

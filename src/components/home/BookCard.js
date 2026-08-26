@@ -7,10 +7,6 @@ import { NeuShadow } from '../ui/NeuShadow';
 const COVER_WIDTH = 130;
 const COVER_HEIGHT = 195;
 
-/**
- * Neubrutalist book card — thick black border, hard offset shadow,
- * lavender surface with sharp corners. Y2K OS file icon aesthetic.
- */
 export function BookCard({ book, onPress }) {
   return (
     <TouchableOpacity

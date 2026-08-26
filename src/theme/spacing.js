@@ -22,23 +22,18 @@ export const radius = {
   lg: 4,
   xl: 6,
   xxl: 8,
-  pill: 4,    // Neubrutalist: no pills, keep slightly rounded at most
-  full: 9999, // Preserved for circular avatars only
+  pill: 4,
+  full: 9999,
 };
 
 export const borderWidth = {
   thin: 1,
   normal: 2,
   thick: 3,
-  pixel: 3,   // Standard neubrutalist border
-  chunky: 4,  // Extra emphasis borders
+  pixel: 3,
+  chunky: 4,
 };
 
-/**
- * Elevation presets — iOS shadow properties only.
- * On Android, use <NeuShadow> wrapper for hard offset shadows.
- * Use these as spread styles on iOS: { ...elevation.sm }
- */
 export const elevation = {
   none: {
     shadowColor: 'transparent',

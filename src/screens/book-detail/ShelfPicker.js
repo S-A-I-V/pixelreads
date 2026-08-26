@@ -1,21 +1,19 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { homeColors, spacing, radius, elevation, textSizes, fontWeights } from '../../theme';
+import { homeColors, spacing, borderWidth, textSizes, fonts } from '../../theme';
 
-/**
- * Add-to-shelf button + expandable shelf option list.
- */
 export function ShelfPicker({ shelf, allShelves, showPicker, onTogglePicker, onSelectShelf }) {
   return (
     <>
       <TouchableOpacity
         style={styles.addButton}
         onPress={onTogglePicker}
+        activeOpacity={0.8}
         accessibilityLabel={shelf ? 'Change shelf' : 'Add to library'}
         accessibilityRole="button"
       >
-        <MaterialCommunityIcons name={shelf ? 'bookshelf' : 'plus'} size={20} color={homeColors.textOnAccent} />
+        <MaterialCommunityIcons name={shelf ? 'bookshelf' : 'plus'} size={18} color="#000000" />
         <Text style={styles.addButtonText}>
           {shelf ? 'Change Shelf' : 'Add to Library'}
         </Text>
@@ -32,7 +30,7 @@ export function ShelfPicker({ shelf, allShelves, showPicker, onTogglePicker, onS
               <Text style={[styles.optionText, shelf === key && styles.optionTextActive]}>
                 {label}
               </Text>
-              {shelf === key && <MaterialCommunityIcons name="check" size={18} color={homeColors.accent} />}
+              {shelf === key && <MaterialCommunityIcons name="check" size={16} color={homeColors.accent} />}
             </TouchableOpacity>
           ))}
         </View>
@@ -47,41 +45,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    backgroundColor: homeColors.accent,
-    paddingVertical: spacing.lg,
-    borderRadius: radius.lg,
-    ...elevation.accent,
+    backgroundColor: '#FBCA1F',
+    paddingVertical: spacing.sm,
+    borderWidth: 3,
+    borderColor: '#000000',
+    borderRightWidth: 6,
+    borderBottomWidth: 6,
   },
   addButtonText: {
-    color: homeColors.textOnAccent,
-    fontSize: textSizes.lg,
-    fontWeight: fontWeights.semibold,
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.md,
+    color: '#000000',
   },
   picker: {
-    backgroundColor: homeColors.bgCard,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: homeColors.borderSubtle,
+    borderWidth: borderWidth.pixel,
+    borderColor: homeColors.border,
+    backgroundColor: homeColors.bgWindow || '#FFFFFF',
     overflow: 'hidden',
-    ...elevation.sm,
   },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: homeColors.border,
   },
   optionActive: {
-    backgroundColor: homeColors.accentLight,
+    backgroundColor: homeColors.bgCard,
   },
   optionText: {
-    fontSize: textSizes.md,
+    fontFamily: fonts.body,
+    fontSize: textSizes.sm,
     color: homeColors.textDark,
   },
   optionTextActive: {
+    fontFamily: 'SpaceMono-Bold',
     color: homeColors.accent,
-    fontWeight: fontWeights.semibold,
   },
 });

@@ -8,10 +8,6 @@ const COVER_WIDTH = 130;
 const COVER_HEIGHT = 195;
 const TITLE_STRIP_HEIGHT = 40;
 
-/**
- * Skeleton placeholder matching BookCard layout.
- * Matches the neubrutalist card frame with border + NeuShadow.
- */
 export function BookCardSkeleton() {
   return (
     <View style={styles.container} accessibilityLabel="Loading book">

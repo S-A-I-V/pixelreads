@@ -1,18 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 
-/**
- * Neubrutalist hard offset shadow wrapper — works on both iOS and Android.
- *
- * Renders a black rectangle offset behind the children.
- * This is the only reliable way to get crisp hard shadows on Android
- * (since Android elevation produces blurred Material shadows only).
- *
- * Usage:
- *   <NeuShadow offset={3}>
- *     <View style={styles.card}>...</View>
- *   </NeuShadow>
- */
 export function NeuShadow({ children, offset = 3, color = '#000000', style }) {
   return (
     <View style={[styles.wrapper, style]}>

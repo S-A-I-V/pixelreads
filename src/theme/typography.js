@@ -1,20 +1,15 @@
 /**
  * Typography Design Tokens
- *
- * Y2K / Neubrutalist OS type system.
- * Headers & accents: Silkscreen / VT323 (retro pixel flavor)
- * Body & book titles: Space Mono / JetBrains Mono (clean monospace readability)
- * Pixel font preserved for badges and micro-labels.
  */
 
 export const fonts = {
-  pixel: 'PressStart2P',      // Micro-labels, badges, XP counters
-  heading: 'VT323',           // Window titles, section headers, retro accents
-  body: 'SpaceMono',          // Body text, book titles, readable monospace
-  bodyBold: 'SpaceMono-Bold', // Bold variant — use instead of fontWeight on Android
-  mono: 'SpaceMono',          // Code-style elements, metadata
-  system: undefined,           // Fallback to platform default
-  serif: 'SpaceMono',         // Override: monospace replaces serif for consistency
+  pixel: 'PressStart2P',
+  heading: 'VT323',
+  body: 'SpaceMono',
+  bodyBold: 'SpaceMono-Bold',
+  mono: 'SpaceMono',
+  system: undefined,
+  serif: 'SpaceMono',
 };
 
 export const textSizes = {
@@ -58,13 +53,12 @@ export const fontWeights = {
 };
 
 /**
- * Letter spacing tokens — wider tracking for retro/pixel fonts,
- * tighter for monospace body to keep density readable.
+ * Letter spacing tokens.
  */
 export const letterSpacing = {
   tight: -0.3,
   normal: 0,
   wide: 0.5,
   wider: 1.0,
-  retro: 1.5,   // For pixel font headers
+  retro: 1.5,
 };

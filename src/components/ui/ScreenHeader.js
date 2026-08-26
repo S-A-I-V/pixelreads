@@ -1,12 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { homeColors, spacing, textSizes, fontWeights } from '../../theme';
+import { homeColors, spacing, borderWidth, textSizes, fonts } from '../../theme';
 
-/**
- * Standard screen header with optional back button, title, and right actions.
- * Replaces manually-built headers across all screens.
- */
 export function ScreenHeader({ title, onBack, rightContent, style }) {
   return (
     <View style={[styles.container, style]}>
@@ -18,7 +14,7 @@ export function ScreenHeader({ title, onBack, rightContent, style }) {
           accessibilityRole="button"
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <MaterialCommunityIcons name="arrow-left" size={24} color={homeColors.textDark} />
+          <MaterialCommunityIcons name="arrow-left" size={22} color="#000000" />
         </TouchableOpacity>
       )}
       <Text style={styles.title} numberOfLines={1}>{title}</Text>
@@ -31,18 +27,27 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: homeColors.navBg,
+    borderBottomWidth: borderWidth.pixel,
+    borderBottomColor: homeColors.border,
+    gap: spacing.sm,
   },
   backButton: {
-    padding: spacing.xs,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#000000',
+    backgroundColor: '#FFFFFF',
   },
   title: {
     flex: 1,
-    fontSize: textSizes.xl,
-    fontWeight: fontWeights.semibold,
-    color: homeColors.textDark,
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.lg,
+    color: '#000000',
   },
   right: {
     flexDirection: 'row',

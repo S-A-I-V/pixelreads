@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
 import { searchBooks } from '../api/googleBooks';
 import { useUserBookLibraryStore } from '../features/library/store/userBookLibraryStore';
 import { trackSearch, trackScreenView, track, EventType, EventCategory } from '../utils/analytics';
@@ -12,8 +12,9 @@ import { SearchHeader, SEARCH_FILTERS } from './search/SearchHeader';
 
 const SKELETON_PLACEHOLDERS = Array.from({ length: 4 }, (_, i) => i);
 
-export default function SearchScreen({ route }) {
+export default function SearchScreen() {
   const navigation = useNavigation();
+  const route = useRoute();
   const insets = useSafeAreaInsets();
   const getBookShelf = useUserBookLibraryStore((s) => s.getBookCurrentShelf);
 

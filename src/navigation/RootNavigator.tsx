@@ -34,13 +34,13 @@ const RootStack = createNativeStackNavigator<RootStackNavigatorParamList>();
  * Navigation theme configuration
  */
 const navigationThemeConfiguration = {
-  dark: true,
+  dark: false,
   colors: {
     primary: '#e94560',
-    background: '#1a1a2e',
-    card: '#2a2a4e',
-    text: '#ffffff',
-    border: '#333',
+    background: '#F8F6FF',
+    card: '#F8F6FF',
+    text: '#1a1a2e',
+    border: 'transparent',
     notification: '#e94560',
   },
 };

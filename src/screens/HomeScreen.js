@@ -24,7 +24,6 @@ const HOME_CATEGORIES = [
   'Fantasy',
 ];
 
-const FLOATING_TAB_BAR_CLEARANCE = 100;
 const POPULAR_BOOKS_QUERY = 'bestseller 2024';
 const RECOMMENDED_BOOKS_QUERY = 'award winning fiction';
 
@@ -209,7 +208,6 @@ export default function HomeScreen() {
           </>
         )}
 
-        <View style={{ height: FLOATING_TAB_BAR_CLEARANCE }} />
       </ScrollView>
     </View>
   );

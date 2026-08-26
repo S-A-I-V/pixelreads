@@ -1,30 +1,36 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { spacing, radius } from '../../theme';
+import { homeColors, spacing, borderWidth } from '../../theme';
+import { NeuShadow } from '../ui/NeuShadow';
 import { SkeletonShimmer } from './SkeletonShimmer';
 
-const COVER_WIDTH = 125;
-const COVER_HEIGHT = 180;
-const TITLE_HEIGHT = 12;
+const COVER_WIDTH = 130;
+const COVER_HEIGHT = 195;
+const TITLE_STRIP_HEIGHT = 40;
 
 /**
  * Skeleton placeholder matching BookCard layout.
- * Shows a cover rectangle + title line while content loads.
+ * Matches the neubrutalist card frame with border + NeuShadow.
  */
 export function BookCardSkeleton() {
   return (
     <View style={styles.container} accessibilityLabel="Loading book">
-      <SkeletonShimmer
-        width={COVER_WIDTH}
-        height={COVER_HEIGHT}
-        borderRadius={radius.md}
-      />
-      <SkeletonShimmer
-        width={COVER_WIDTH * 0.8}
-        height={TITLE_HEIGHT}
-        borderRadius={radius.xs}
-        style={styles.titleLine}
-      />
+      <NeuShadow offset={3}>
+        <View style={styles.cardFrame}>
+          <SkeletonShimmer
+            width={COVER_WIDTH - (borderWidth.pixel * 2)}
+            height={COVER_HEIGHT}
+            borderRadius={0}
+          />
+          <View style={styles.titleStrip}>
+            <SkeletonShimmer
+              width={'100%'}
+              height={10}
+              borderRadius={2}
+            />
+          </View>
+        </View>
+      </NeuShadow>
     </View>
   );
 }
@@ -32,10 +38,22 @@ export function BookCardSkeleton() {
 const styles = StyleSheet.create({
   container: {
     width: COVER_WIDTH,
-    gap: spacing.xs,
+    marginBottom: spacing.xs,
+    marginRight: spacing.xxs,
   },
-  titleLine: {
-    marginTop: spacing.xxs,
+  cardFrame: {
+    width: COVER_WIDTH,
+    borderWidth: borderWidth.pixel,
+    borderColor: homeColors.border,
+    backgroundColor: homeColors.bgCard,
+  },
+  titleStrip: {
+    borderTopWidth: borderWidth.normal,
+    borderTopColor: homeColors.border,
+    height: TITLE_STRIP_HEIGHT,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs,
+    backgroundColor: homeColors.bgWindow,
   },
 });
 

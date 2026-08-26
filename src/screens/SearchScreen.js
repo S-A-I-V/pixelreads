@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -12,12 +12,13 @@ import { SearchHeader, SEARCH_FILTERS } from './search/SearchHeader';
 
 const SKELETON_PLACEHOLDERS = Array.from({ length: 4 }, (_, i) => i);
 
-export default function SearchScreen() {
+export default function SearchScreen({ route }) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const getBookShelf = useUserBookLibraryStore((s) => s.getBookCurrentShelf);
 
-  const [query, setQuery] = useState('');
+  const initialQuery = route?.params?.initialQuery || '';
+  const [query, setQuery] = useState(initialQuery);
   const [filter, setFilter] = useState('all');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -32,6 +33,14 @@ export default function SearchScreen() {
       trackScreenView('Search', { resultsCount: results.length });
     }, [results.length])
   );
+
+  // Auto-search when navigated with an initialQuery
+  useEffect(() => {
+    if (initialQuery) {
+      setQuery(initialQuery);
+      doSearch(initialQuery, filter);
+    }
+  }, [initialQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const doSearch = useCallback(async (q, searchFilter, startIndex = 0, append = false) => {
     if (!q.trim()) return;

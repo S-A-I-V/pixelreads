@@ -105,7 +105,6 @@ const styles = StyleSheet.create({
   },
   tabLabelActive: {
     color: homeColors.textOnTeal,
-    fontWeight: '700',
   },
 });
 

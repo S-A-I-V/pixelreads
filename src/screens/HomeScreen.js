@@ -23,7 +23,7 @@ import { homeColors, spacing } from '../theme';
 function SectionDivider() {
   return (
     <View style={dividerStyles.container}>
-      <Text style={dividerStyles.text} numberOfLines={1}>{'≻──────────── ⋆✩⋆ ────────────≺'}</Text>
+      <Text style={dividerStyles.text} numberOfLines={1}>{'≻ ⋆✩⋆ ──────────── ⋆✩⋆ ──────────── ⋆✩⋆ ≺'}</Text>
     </View>
   );
 }
@@ -36,7 +36,7 @@ const dividerStyles = StyleSheet.create({
   },
   text: {
     fontFamily: 'SpaceMono-Bold',
-    fontSize: 20,
+    fontSize: 15,
     fontWeight: '900',
     color: '#000000',
   },
@@ -150,9 +150,7 @@ export default function HomeScreen() {
     [navigation]
   );
 
-  const handleHeroBannerPress = useCallback(() => {
-    navigation.navigate('Search', { initialQuery: 'recommended' });
-  }, [navigation]);
+  const handleHeroBannerPress = null; // Static image, no navigation
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -215,7 +213,7 @@ export default function HomeScreen() {
         <SectionHeader
           title="Popular books"
           actionText="See all"
-          onActionPress={() => navigation.navigate('Search', { initialQuery: 'popular books' })}
+          onActionPress={() => navigation.navigate('Search', { initialQuery: 'new york times best sellers' })}
         />
         {isLoading ? (
           <FlatList
@@ -265,7 +263,7 @@ export default function HomeScreen() {
               title="Recommended for you"
               actionText="See all"
               onActionPress={() =>
-                navigation.navigate('Search', { initialQuery: 'award winning' })
+                navigation.navigate('Search', { initialQuery: 'mystery fiction bestseller' })
               }
             />
             <FlatList

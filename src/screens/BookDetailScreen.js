@@ -244,6 +244,7 @@ export default function BookDetailScreen() {
         <DetailDivider />
         <LinksSection book={book} onOpenLink={openLink} />
 
+        {/* EbookSection temporarily disabled
         <DetailDivider />
         <EbookSection
           uploadedFile={uploadedFile}
@@ -252,6 +253,7 @@ export default function BookDetailScreen() {
           onReadNow={() => navigation.navigate('Reader', { bookId })}
           onRemoveFile={handleRemoveFile}
         />
+        */}
         </>
         )}
       </ScrollView>

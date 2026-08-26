@@ -30,7 +30,11 @@ export function ShelfPicker({ shelf, allShelves, showPicker, onTogglePicker, onS
               <Text style={[styles.optionText, shelf === key && styles.optionTextActive]}>
                 {label}
               </Text>
-              {shelf === key && <MaterialCommunityIcons name="check" size={16} color={homeColors.accent} />}
+              {shelf === key && (
+                <View style={styles.checkIcon}>
+                  <MaterialCommunityIcons name="check-bold" size={14} color="#000000" />
+                </View>
+              )}
             </TouchableOpacity>
           ))}
         </View>
@@ -82,6 +86,15 @@ const styles = StyleSheet.create({
   },
   optionTextActive: {
     fontFamily: 'SpaceMono-Bold',
-    color: homeColors.accent,
+    color: '#000000',
+  },
+  checkIcon: {
+    width: 22,
+    height: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: homeColors.success,
+    borderWidth: 2,
+    borderColor: '#000000',
   },
 });

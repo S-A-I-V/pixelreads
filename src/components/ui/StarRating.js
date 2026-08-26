@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { colors, spacing } from '../../theme';
+import { homeColors, spacing } from '../../theme';
 
 /**
  * Star rating display/input using MaterialCommunityIcons.
@@ -22,7 +22,7 @@ export function StarRating({ value = 0, onChange, readonly = false, size = 32 })
           <MaterialCommunityIcons
             name={i <= value ? 'star' : 'star-outline'}
             size={size}
-            color={colors.warning}
+            color={homeColors.warning}
           />
         </TouchableOpacity>
       ))}

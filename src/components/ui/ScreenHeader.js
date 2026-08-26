@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { colors, spacing, textSizes, fontWeights, borderWidth } from '../../theme';
+import { homeColors, spacing, textSizes, fontWeights } from '../../theme';
 
 /**
  * Standard screen header with optional back button, title, and right actions.
@@ -18,7 +18,7 @@ export function ScreenHeader({ title, onBack, rightContent, style }) {
           accessibilityRole="button"
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <MaterialCommunityIcons name="arrow-left" size={24} color={colors.textPrimary} />
+          <MaterialCommunityIcons name="arrow-left" size={24} color={homeColors.textDark} />
         </TouchableOpacity>
       )}
       <Text style={styles.title} numberOfLines={1}>{title}</Text>
@@ -33,8 +33,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    borderBottomWidth: borderWidth.thin,
-    borderBottomColor: colors.border,
     gap: spacing.md,
   },
   backButton: {
@@ -44,7 +42,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: textSizes.xl,
     fontWeight: fontWeights.semibold,
-    color: colors.textPrimary,
+    color: homeColors.textDark,
   },
   right: {
     flexDirection: 'row',

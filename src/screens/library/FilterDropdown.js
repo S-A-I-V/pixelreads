@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Pressable, ScrollView, Alert, Animated, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { colors, spacing, radius, textSizes, fontWeights, borderWidth } from '../../theme';
+import { homeColors, spacing, radius, elevation, textSizes, fontWeights, letterSpacing } from '../../theme';
 import {
   LIBRARY_EREADER_FILTER_LABELS,
   CUSTOM_SHELF_INPUT_PLACEHOLDER,
@@ -60,7 +60,7 @@ export function FilterDropdown({ visible, onClose, tags, selectedTags, onToggleT
         <View style={styles.header}>
           <Text style={styles.title}>Filters</Text>
           <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <MaterialCommunityIcons name="close" size={20} color={colors.textPrimary} />
+            <MaterialCommunityIcons name="close" size={20} color={homeColors.textDark} />
           </TouchableOpacity>
         </View>
 
@@ -104,7 +104,7 @@ export function FilterDropdown({ visible, onClose, tags, selectedTags, onToggleT
               value={newShelfName}
               onChangeText={setNewShelfName}
               placeholder={CUSTOM_SHELF_INPUT_PLACEHOLDER}
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={homeColors.textCaption}
               maxLength={25}
             />
             <TouchableOpacity
@@ -125,7 +125,7 @@ export function FilterDropdown({ visible, onClose, tags, selectedTags, onToggleT
                   <View style={[styles.shelfDot, { backgroundColor: shelf.color }]} />
                   <Text style={styles.shelfLabel}>{shelf.label}</Text>
                   <TouchableOpacity onPress={() => confirmDeleteShelf(shelf)}>
-                    <MaterialCommunityIcons name="delete-outline" size={20} color={colors.error} />
+                    <MaterialCommunityIcons name="delete-outline" size={20} color={homeColors.error} />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -138,30 +138,30 @@ export function FilterDropdown({ visible, onClose, tags, selectedTags, onToggleT
 }
 
 const styles = StyleSheet.create({
-  backdrop: { ...StyleSheet.absoluteFillObject, zIndex: 99, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' },
+  backdrop: { ...StyleSheet.absoluteFillObject, zIndex: 99, backgroundColor: 'rgba(15, 23, 42, 0.4)', justifyContent: 'center', alignItems: 'center' },
   container: {
     position: 'absolute', top: '20%', left: spacing.lg, right: spacing.lg, zIndex: 100,
-    backgroundColor: colors.bgElevated, borderRadius: radius.lg, borderWidth: borderWidth.thin,
-    borderColor: colors.borderLight, padding: spacing.xl, maxHeight: '60%',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.5, shadowRadius: 16, elevation: 12,
+    backgroundColor: homeColors.bgCard, borderRadius: radius.xxl, borderWidth: 1,
+    borderColor: homeColors.borderSubtle, padding: spacing.xl, maxHeight: '60%',
+    ...elevation.xl,
   },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg },
-  title: { fontSize: textSizes.xxl, fontWeight: fontWeights.bold, color: colors.textPrimary },
+  title: { fontSize: textSizes.xxl, fontWeight: fontWeights.bold, color: homeColors.textDark },
   scroll: { flexGrow: 0 },
-  sectionTitle: { fontSize: textSizes.sm, fontWeight: fontWeights.semibold, color: colors.textMuted, marginBottom: spacing.md, marginTop: spacing.md, textTransform: 'uppercase', letterSpacing: 0.5 },
+  sectionTitle: { fontSize: textSizes.xs, fontWeight: fontWeights.semibold, color: homeColors.textCaption, marginBottom: spacing.md, marginTop: spacing.md, textTransform: 'uppercase', letterSpacing: letterSpacing.wider },
   chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: 14, paddingVertical: spacing.sm, borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.borderLight, backgroundColor: colors.bgSecondary },
-  chipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
-  chipText: { fontSize: textSizes.md, color: colors.textSecondary },
-  chipTextActive: { color: colors.textPrimary, fontWeight: fontWeights.medium },
-  emptyText: { color: colors.textDim, fontSize: textSizes.md, marginBottom: spacing.lg, fontStyle: 'italic' },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: 14, paddingVertical: spacing.sm, borderRadius: radius.pill, borderWidth: 1.5, borderColor: homeColors.border, backgroundColor: homeColors.bgCard },
+  chipActive: { backgroundColor: homeColors.accent, borderColor: homeColors.accent },
+  chipText: { fontSize: textSizes.md, color: homeColors.textBody },
+  chipTextActive: { color: homeColors.textOnAccent, fontWeight: fontWeights.medium },
+  emptyText: { color: homeColors.textCaption, fontSize: textSizes.md, marginBottom: spacing.lg, fontStyle: 'italic' },
   createRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
-  createInput: { flex: 1, backgroundColor: colors.bgSecondary, borderWidth: borderWidth.thin, borderColor: colors.borderLight, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md, fontSize: textSizes.md, color: colors.textPrimary },
-  createBtn: { backgroundColor: colors.accent, paddingHorizontal: spacing.lg, borderRadius: radius.md, justifyContent: 'center' },
-  createBtnDisabled: { backgroundColor: colors.borderLight },
-  createBtnText: { color: colors.textPrimary, fontSize: textSizes.md, fontWeight: fontWeights.semibold },
+  createInput: { flex: 1, backgroundColor: homeColors.bgSubtle, borderWidth: 1, borderColor: homeColors.border, borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.md, fontSize: textSizes.md, color: homeColors.textDark },
+  createBtn: { backgroundColor: homeColors.accent, paddingHorizontal: spacing.lg, borderRadius: radius.lg, justifyContent: 'center' },
+  createBtnDisabled: { backgroundColor: homeColors.border },
+  createBtnText: { color: homeColors.textOnAccent, fontSize: textSizes.md, fontWeight: fontWeights.semibold },
   shelfList: { gap: spacing.sm, marginBottom: spacing.xl },
-  shelfItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.bgSecondary, padding: spacing.md, borderRadius: radius.md },
+  shelfItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: homeColors.bgSubtle, padding: spacing.md, borderRadius: radius.lg },
   shelfDot: { width: 12, height: 12, borderRadius: 6 },
-  shelfLabel: { flex: 1, fontSize: textSizes.md + 1, color: colors.textPrimary },
+  shelfLabel: { flex: 1, fontSize: textSizes.md + 1, color: homeColors.textDark },
 });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { homeColors, spacing, textSizes, fontWeights, fonts } from '../../theme';
+import { homeColors, spacing, elevation, textSizes, fontWeights } from '../../theme';
 import { SearchIcon, BookmarkIcon, LibraryIcon } from '../icons';
 
 const ICON_BUTTON_SIZE = 44;
@@ -71,22 +71,17 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   logoContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: homeColors.bgCard,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: homeColors.accentLight,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: homeColors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 4,
-    elevation: 2,
+    ...elevation.sm,
   },
   greetingText: {
     fontSize: textSizes.lg,
     fontWeight: fontWeights.semibold,
-    fontFamily: fonts.serif,
     color: homeColors.textDark,
     flex: 1,
   },

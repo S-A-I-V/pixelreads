@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Section, ProgressBar, MetaRow } from '../../components/ui';
-import { colors, spacing, radius, textSizes, fontWeights, borderWidth } from '../../theme';
+import { homeColors, spacing, radius, textSizes, fontWeights } from '../../theme';
 
 /**
  * Tags display section (shown when book is in library).
@@ -13,7 +13,7 @@ export function TagsSection({ bookTags, allTags, onManageTags }) {
       title="Tags"
       rightAction={
         <TouchableOpacity onPress={onManageTags} accessibilityLabel="Manage tags">
-          <MaterialCommunityIcons name="plus-circle" size={24} color={colors.accent} />
+          <MaterialCommunityIcons name="plus-circle" size={24} color={homeColors.accent} />
         </TouchableOpacity>
       }
     >
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   // Tags
   noTagsText: {
     fontSize: textSizes.md,
-    color: colors.textDim,
+    color: homeColors.textCaption,
     fontStyle: 'italic',
   },
   tagsRow: {
@@ -153,11 +153,11 @@ const styles = StyleSheet.create({
   tagPill: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: radius.xl,
+    borderRadius: radius.pill,
   },
   tagPillText: {
     fontSize: textSizes.sm,
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontWeight: fontWeights.medium,
   },
 
@@ -169,28 +169,28 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: textSizes.md,
-    color: colors.textPrimary,
-    fontWeight: fontWeights.medium,
+    color: homeColors.textDark,
+    fontWeight: fontWeights.semibold,
   },
   pageText: {
     fontSize: textSizes.sm,
-    color: colors.textMuted,
+    color: homeColors.textCaption,
   },
   hint: {
     fontSize: textSizes.sm,
-    color: colors.textDim,
+    color: homeColors.textCaption,
     fontStyle: 'italic',
   },
 
   // Description
   descText: {
     fontSize: textSizes.md,
-    color: colors.textSecondary,
-    lineHeight: 22,
+    color: homeColors.textBody,
+    lineHeight: textSizes.md * 1.6,
   },
   emptyText: {
     fontSize: textSizes.md,
-    color: colors.textDim,
+    color: homeColors.textCaption,
     fontStyle: 'italic',
   },
 
@@ -201,24 +201,25 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   chip: {
-    backgroundColor: colors.bgSecondary,
+    backgroundColor: homeColors.accentLight,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: radius.xl,
-    borderWidth: borderWidth.thin,
-    borderColor: colors.borderLight,
+    borderRadius: radius.pill,
   },
   chipText: {
     fontSize: textSizes.sm,
-    color: colors.textSecondary,
+    color: homeColors.accent,
+    fontWeight: fontWeights.medium,
   },
 
   // Details card
   detailsCard: {
-    backgroundColor: colors.bgSecondary,
-    borderRadius: radius.md,
-    padding: spacing.md,
+    backgroundColor: homeColors.bgCard,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
     gap: spacing.md,
+    borderWidth: 1,
+    borderColor: homeColors.borderSubtle,
   },
 
   // Links
@@ -231,20 +232,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.bgSecondary,
-    paddingHorizontal: 14,
+    backgroundColor: homeColors.accent,
+    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: borderWidth.thin,
-    borderColor: colors.borderLight,
+    borderRadius: radius.lg,
   },
   buyBtn: {
-    backgroundColor: colors.success,
-    borderColor: colors.success,
+    backgroundColor: homeColors.success,
   },
   linkBtnText: {
     fontSize: textSizes.sm,
-    color: colors.textPrimary,
-    fontWeight: fontWeights.medium,
+    color: '#FFFFFF',
+    fontWeight: fontWeights.semibold,
   },
 });

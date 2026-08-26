@@ -1,14 +1,16 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Keyboard } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { searchBooks } from '../api/googleBooks';
 import { useUserBookLibraryStore } from '../features/library/store/userBookLibraryStore';
 import { trackSearch, trackScreenView, track, EventType, EventCategory } from '../utils/analytics';
 import { BookListItem, EmptyState } from '../components/ui';
-import { colors, spacing, borderWidth } from '../theme';
+import { BookCardSkeleton } from '../components/home';
+import { homeColors, spacing, radius, elevation, textSizes, fontWeights } from '../theme';
 import { SearchHeader, SEARCH_FILTERS } from './search/SearchHeader';
+
+const SKELETON_PLACEHOLDERS = Array.from({ length: 4 }, (_, i) => i);
 
 export default function SearchScreen() {
   const navigation = useNavigation();
@@ -44,14 +46,18 @@ export default function SearchScreen() {
 
     const startTime = Date.now();
     try {
-      const filterObj = SEARCH_FILTERS.find(f => f.key === searchFilter);
+      const filterObj = SEARCH_FILTERS.find((f) => f.key === searchFilter);
       const searchQuery = filterObj?.prefix ? `${filterObj.prefix}${q}` : q;
       const { items, totalItems: total } = await searchBooks(searchQuery, startIndex);
 
       setResults((prev) => {
         const combined = append ? [...prev, ...items] : items;
         const seen = new Set();
-        return combined.filter((book) => { if (seen.has(book.id)) return false; seen.add(book.id); return true; });
+        return combined.filter((book) => {
+          if (seen.has(book.id)) return false;
+          seen.add(book.id);
+          return true;
+        });
       });
       setTotalItems(total);
       setOffset(startIndex);
@@ -72,13 +78,19 @@ export default function SearchScreen() {
   };
 
   const handleReset = () => {
-    setQuery(''); setFilter('all'); setResults([]); setSearched(false); setTotalItems(0); setOffset(0); setError(null);
+    setQuery('');
+    setFilter('all');
+    setResults([]);
+    setSearched(false);
+    setTotalItems(0);
+    setOffset(0);
+    setError(null);
   };
 
   const hasActiveSearch = query.trim() || filter !== 'all' || searched;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
       <SearchHeader
         query={query}
         filter={filter}
@@ -91,8 +103,16 @@ export default function SearchScreen() {
 
       <View style={styles.resultsContainer}>
         {loading && !results.length ? (
-          <View style={styles.centered}>
-            <ActivityIndicator size="large" color={colors.accent} />
+          <View style={styles.loadingContainer}>
+            <FlatList
+              data={SKELETON_PLACEHOLDERS}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.skeletonList}
+              keyExtractor={(item) => `skeleton-${item}`}
+              renderItem={() => <BookCardSkeleton />}
+              ItemSeparatorComponent={() => <View style={{ width: spacing.sm }} />}
+            />
             <Text style={styles.loadingText}>Searching...</Text>
           </View>
         ) : error ? (
@@ -121,19 +141,24 @@ export default function SearchScreen() {
             contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
             ListHeaderComponent={
               <View style={styles.resultsHeader}>
-                <Text style={styles.resultCount}>{totalItems.toLocaleString()} results</Text>
-                <Text style={styles.filterInfo}>{filter !== 'all' ? `Filtered by ${filter}` : ''}</Text>
+                <Text style={styles.resultCount}>
+                  {totalItems.toLocaleString()} results
+                </Text>
+                {filter !== 'all' && (
+                  <Text style={styles.filterInfo}>Filtered by {filter}</Text>
+                )}
               </View>
             }
             ListFooterComponent={
               results.length > 0 && results.length < totalItems ? (
                 <View style={styles.loadMoreWrap}>
                   {loading ? (
-                    <ActivityIndicator size="small" color={colors.accent} />
+                    <View style={styles.loadMoreLoading}>
+                      <Text style={styles.loadingText}>Loading...</Text>
+                    </View>
                   ) : (
                     <TouchableOpacity style={styles.loadMoreBtn} onPress={loadMore}>
                       <Text style={styles.loadMoreText}>Load More</Text>
-                      <MaterialCommunityIcons name="chevron-down" size={18} color={colors.textPrimary} />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -147,17 +172,83 @@ export default function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bgPrimary },
-  resultsContainer: { flex: 1 },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: spacing.md, padding: spacing.xxl },
-  loadingText: { fontSize: 16, color: colors.textMuted },
-  retryBtn: { backgroundColor: colors.accent, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8, marginTop: spacing.sm },
-  retryText: { color: colors.textPrimary, fontSize: 16, fontWeight: '600' },
-  resultsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing.lg, borderBottomWidth: borderWidth.thin, borderBottomColor: colors.border },
-  resultCount: { fontSize: 14, color: colors.textPrimary, fontWeight: '500' },
-  filterInfo: { fontSize: 12, color: colors.textMuted },
-  separator: { height: 1, backgroundColor: colors.border, marginLeft: 88 },
-  loadMoreWrap: { padding: spacing.xxl, alignItems: 'center' },
-  loadMoreBtn: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.bgSecondary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8, borderWidth: borderWidth.thin, borderColor: colors.borderLight },
-  loadMoreText: { color: colors.textPrimary, fontSize: 14, fontWeight: '600' },
+  screen: {
+    flex: 1,
+    backgroundColor: homeColors.bgMain,
+  },
+  resultsContainer: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing.xl,
+    padding: spacing.xxl,
+  },
+  skeletonList: {
+    paddingHorizontal: spacing.lg,
+  },
+  loadingText: {
+    fontSize: textSizes.md,
+    color: homeColors.textCaption,
+  },
+  retryBtn: {
+    backgroundColor: homeColors.accent,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
+    marginTop: spacing.md,
+    ...elevation.accent,
+  },
+  retryText: {
+    color: homeColors.textOnAccent,
+    fontSize: textSizes.md,
+    fontWeight: fontWeights.semibold,
+  },
+  resultsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: homeColors.border,
+  },
+  resultCount: {
+    fontSize: textSizes.md,
+    color: homeColors.textDark,
+    fontWeight: fontWeights.medium,
+  },
+  filterInfo: {
+    fontSize: textSizes.sm,
+    color: homeColors.accent,
+    fontWeight: fontWeights.medium,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: homeColors.border,
+    marginLeft: 88,
+  },
+  loadMoreWrap: {
+    padding: spacing.xxl,
+    alignItems: 'center',
+  },
+  loadMoreLoading: {
+    paddingVertical: spacing.md,
+  },
+  loadMoreBtn: {
+    backgroundColor: homeColors.bgCard,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.md,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: homeColors.border,
+    ...elevation.sm,
+  },
+  loadMoreText: {
+    color: homeColors.accent,
+    fontSize: textSizes.md,
+    fontWeight: fontWeights.semibold,
+  },
 });

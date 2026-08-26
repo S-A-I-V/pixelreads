@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { colors, spacing, radius, textSizes, fontWeights, borderWidth } from '../../theme';
+import { homeColors, spacing, radius, textSizes, fontWeights } from '../../theme';
 import { StatusBadge } from './StatusBadge';
 import { ProgressBar } from './ProgressBar';
 
@@ -64,19 +64,19 @@ export function BookListItem({ book, onPress, variant = 'standard', shelf, tags,
         {/* Rating + badges row - always show rating slot */}
         <View style={styles.badgeRow}>
           <View style={styles.ratingBadge}>
-            <MaterialCommunityIcons name="star" size={12} color={book.averageRating > 0 ? colors.warning : colors.textDim} />
+            <MaterialCommunityIcons name="star" size={12} color={book.averageRating > 0 ? homeColors.warning : homeColors.textCaption} />
             <Text style={book.averageRating > 0 ? styles.ratingText : styles.ratingTextDim}>
               {book.averageRating > 0 ? book.averageRating.toFixed(1) : '--'}
             </Text>
           </View>
           {shelf && (
-            <StatusBadge label={shelf.replace('_', ' ').toUpperCase()} color={colors.accent} />
+            <StatusBadge label={shelf.replace('_', ' ').toUpperCase()} color={homeColors.accent} />
           )}
           {hasEpub && (
-            <StatusBadge label="EREADER" color={colors.success} icon="book-open-page-variant" />
+            <StatusBadge label="EREADER" color={homeColors.success} icon="book-open-page-variant" />
           )}
-          {book.isEbook && <StatusBadge label="EBOOK" color={colors.info} />}
-          {book.isFree && <StatusBadge label="FREE" color={colors.purple} />}
+          {book.isEbook && <StatusBadge label="EBOOK" color={homeColors.accent} />}
+          {book.isFree && <StatusBadge label="FREE" color="#8B5CF6" />}
         </View>
 
         {/* Tags */}
@@ -100,7 +100,7 @@ export function BookListItem({ book, onPress, variant = 'standard', shelf, tags,
       </View>
 
       {showChevron && (
-        <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+        <MaterialCommunityIcons name="chevron-right" size={24} color={homeColors.textCaption} />
       )}
     </TouchableOpacity>
   );
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   // Compact variant (Home cards)
   compactCard: {
     flexDirection: 'row',
-    backgroundColor: colors.bgSecondary,
+    backgroundColor: homeColors.bgCard,
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.md,
@@ -153,8 +153,8 @@ const styles = StyleSheet.create({
 
   // Shared
   cover: {
-    borderRadius: radius.sm,
-    backgroundColor: colors.borderLight,
+    borderRadius: radius.md,
+    backgroundColor: homeColors.bgElevated,
   },
   noCover: {
     justifyContent: 'center',
@@ -162,17 +162,17 @@ const styles = StyleSheet.create({
   },
   noCoverText: {
     fontSize: textSizes.xxs,
-    color: colors.textMuted,
+    color: homeColors.textCaption,
     textAlign: 'center',
   },
   title: {
     fontSize: textSizes.lg,
     fontWeight: fontWeights.semibold,
-    color: colors.textPrimary,
+    color: homeColors.textDark,
   },
   author: {
     fontSize: textSizes.md,
-    color: colors.textMuted,
+    color: homeColors.textCaption,
   },
   metaRow: {
     flexDirection: 'row',
@@ -182,20 +182,20 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: textSizes.sm,
-    color: colors.textMuted,
+    color: homeColors.textBody,
   },
   metaTextDim: {
     fontSize: textSizes.sm,
-    color: colors.textDim,
+    color: homeColors.textCaption,
     fontStyle: 'italic',
   },
   publisher: {
     fontSize: textSizes.sm,
-    color: colors.textDim,
+    color: homeColors.textCaption,
   },
   publisherDim: {
     fontSize: textSizes.sm,
-    color: colors.textDim,
+    color: homeColors.textCaption,
     fontStyle: 'italic',
   },
   badgeRow: {
@@ -212,11 +212,11 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: textSizes.sm,
-    color: colors.textMuted,
+    color: homeColors.textBody,
   },
   ratingTextDim: {
     fontSize: textSizes.sm,
-    color: colors.textDim,
+    color: homeColors.textCaption,
     fontStyle: 'italic',
   },
   tagRow: {
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   },
   moreTagsText: {
     fontSize: textSizes.xxs,
-    color: colors.textMuted,
+    color: homeColors.textCaption,
     alignSelf: 'center',
   },
 });

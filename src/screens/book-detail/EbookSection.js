@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Section } from '../../components/ui';
-import { colors, spacing, radius, textSizes, fontWeights, borderWidth } from '../../theme';
+import { homeColors, spacing, radius, elevation, textSizes, fontWeights } from '../../theme';
 
 /**
  * E-Book reader section: shows file info + read/remove buttons,
@@ -15,7 +15,7 @@ export function EbookSection({ uploadedFile, importing, onImport, onReadNow, onR
         {uploadedFile ? (
           <>
             <View style={styles.fileInfo}>
-              <MaterialCommunityIcons name="file-document" size={20} color={colors.accent} />
+              <MaterialCommunityIcons name="file-document" size={20} color={homeColors.accent} />
               <View style={styles.fileInfoText}>
                 <Text style={styles.fileName} numberOfLines={1}>{uploadedFile.fileName}</Text>
                 <Text style={styles.fileSize}>
@@ -29,7 +29,7 @@ export function EbookSection({ uploadedFile, importing, onImport, onReadNow, onR
                 <Text style={styles.readNowBtnText}>Read Now</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.removeFileBtn} onPress={onRemoveFile}>
-                <MaterialCommunityIcons name="delete-outline" size={20} color={colors.error} />
+                <MaterialCommunityIcons name="delete-outline" size={20} color={homeColors.error} />
               </TouchableOpacity>
             </View>
           </>
@@ -55,10 +55,12 @@ export function EbookSection({ uploadedFile, importing, onImport, onReadNow, onR
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.bgSecondary,
-    borderRadius: radius.md,
-    padding: spacing.md,
+    backgroundColor: homeColors.bgCard,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
     gap: spacing.md,
+    borderWidth: 1,
+    borderColor: homeColors.borderSubtle,
   },
   fileInfo: {
     flexDirection: 'row',
@@ -68,12 +70,12 @@ const styles = StyleSheet.create({
   fileInfoText: { flex: 1 },
   fileName: {
     fontSize: textSizes.md,
-    color: colors.textPrimary,
+    color: homeColors.textDark,
     fontWeight: fontWeights.medium,
   },
   fileSize: {
     fontSize: textSizes.sm,
-    color: colors.textMuted,
+    color: homeColors.textCaption,
     marginTop: spacing.xxs,
   },
   readerButtons: {
@@ -86,12 +88,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.success,
-    paddingVertical: 14,
-    borderRadius: radius.md,
+    backgroundColor: homeColors.success,
+    paddingVertical: spacing.lg,
+    borderRadius: radius.lg,
   },
   readNowBtnText: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: textSizes.lg,
     fontWeight: fontWeights.semibold,
   },
@@ -100,29 +102,30 @@ const styles = StyleSheet.create({
     height: 48,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 107, 107, 0.1)',
-    borderRadius: radius.md,
-    borderWidth: borderWidth.thin,
-    borderColor: 'rgba(255, 107, 107, 0.3)',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.25)',
   },
   importBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.accent,
-    paddingVertical: 14,
-    borderRadius: radius.md,
+    backgroundColor: homeColors.accent,
+    paddingVertical: spacing.lg,
+    borderRadius: radius.lg,
+    ...elevation.accent,
   },
   importBtnText: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: textSizes.lg,
     fontWeight: fontWeights.semibold,
   },
   hint: {
     fontSize: textSizes.sm,
-    color: colors.textMuted,
-    lineHeight: 18,
+    color: homeColors.textCaption,
+    lineHeight: textSizes.sm * 1.5,
     textAlign: 'center',
   },
 });

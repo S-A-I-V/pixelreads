@@ -2,20 +2,23 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useUserBookLibraryStore } from '../features/library/store/userBookLibraryStore';
 import { trackScreenView, track, EventType, EventCategory } from '../utils/analytics';
-import { BookListItem, EmptyState } from '../components/ui';
-import { colors, spacing, radius, textSizes, fontWeights, borderWidth } from '../theme';
+import { SearchIcon } from '../components/icons';
+import { LibraryBookCard } from '../components/library/LibraryBookCard';
+import { EmptyState } from '../components/ui';
 import { FilterDropdown } from './library/FilterDropdown';
+import { homeColors, spacing, radius, elevation, textSizes, fontWeights, fonts } from '../theme';
 
 const BUILT_IN_TABS = [
-  { key: 'all',          label: 'All'     },
-  { key: 'reading',      label: 'Reading' },
-  { key: 'want_to_read', label: 'Want'    },
-  { key: 'finished',     label: 'Done'    },
-  { key: 'dnf',          label: 'DNF'     },
+  { key: 'all', label: 'All' },
+  { key: 'reading', label: 'Reading' },
+  { key: 'want_to_read', label: 'Want to Read' },
+  { key: 'finished', label: 'Finished' },
+  { key: 'dnf', label: 'DNF' },
 ];
+
+const GRID_COLUMNS = 2;
 
 export default function LibraryScreen() {
   const navigation = useNavigation();
@@ -37,18 +40,26 @@ export default function LibraryScreen() {
   const [showFilterModal, setShowFilterModal] = useState(false);
 
   const allTabs = useMemo(() => {
-    const customTabs = customShelves.map(s => ({ key: s.id, label: s.label, color: s.color }));
+    const customTabs = customShelves.map((s) => ({ key: s.id, label: s.label, color: s.color }));
     return [...BUILT_IN_TABS, ...customTabs];
   }, [customShelves]);
 
   const allBooks = useMemo(() => {
-    const keys = ['reading', 'want_to_read', 'finished', 'dnf', ...customShelves.map(s => s.id)];
-    return keys.flatMap(key => shelves[key] || []);
+    const keys = ['reading', 'want_to_read', 'finished', 'dnf', ...customShelves.map((s) => s.id)];
+    return keys.flatMap((key) => shelves[key] || []);
   }, [shelves, customShelves]);
 
   const counts = useMemo(() => {
-    const result = { all: allBooks.length, reading: shelves.reading?.length || 0, want_to_read: shelves.want_to_read?.length || 0, finished: shelves.finished?.length || 0, dnf: shelves.dnf?.length || 0 };
-    customShelves.forEach(s => { result[s.id] = shelves[s.id]?.length || 0; });
+    const result = {
+      all: allBooks.length,
+      reading: shelves.reading?.length || 0,
+      want_to_read: shelves.want_to_read?.length || 0,
+      finished: shelves.finished?.length || 0,
+      dnf: shelves.dnf?.length || 0,
+    };
+    customShelves.forEach((s) => {
+      result[s.id] = shelves[s.id]?.length || 0;
+    });
     return result;
   }, [allBooks, shelves, customShelves]);
 
@@ -56,105 +67,227 @@ export default function LibraryScreen() {
     let base = activeTab === 'all' ? allBooks : (shelves[activeTab] ?? []);
     if (filter) {
       const lc = filter.toLowerCase();
-      base = base.filter((b) => b.title.toLowerCase().includes(lc) || b.authors?.join(' ').toLowerCase().includes(lc));
+      base = base.filter(
+        (b) =>
+          b.title.toLowerCase().includes(lc) ||
+          b.authors?.join(' ').toLowerCase().includes(lc)
+      );
     }
-    if (selectedTags.length > 0) base = base.filter(b => selectedTags.some(tagId => b.tags?.includes(tagId)));
-    if (eReaderFilter !== null) base = base.filter(b => eReaderFilter ? !!uploadedFiles[b.id] : !uploadedFiles[b.id]);
+    if (selectedTags.length > 0) {
+      base = base.filter((b) => selectedTags.some((tagId) => b.tags?.includes(tagId)));
+    }
+    if (eReaderFilter !== null) {
+      base = base.filter((b) => (eReaderFilter ? !!uploadedFiles[b.id] : !uploadedFiles[b.id]));
+    }
     return base;
   }, [activeTab, allBooks, shelves, filter, selectedTags, eReaderFilter, uploadedFiles]);
 
   const activeFiltersCount = selectedTags.length + (eReaderFilter !== null ? 1 : 0);
 
-  useFocusEffect(useCallback(() => { trackScreenView('Library', { totalBooks: allBooks.length, activeTab }); }, [allBooks.length, activeTab]));
+  useFocusEffect(
+    useCallback(() => {
+      trackScreenView('Library', { totalBooks: allBooks.length, activeTab });
+    }, [allBooks.length, activeTab])
+  );
 
-  const handleTabChange = (tabKey) => { setActiveTab(tabKey); track(EventType.TAB_CHANGE, EventCategory.NAVIGATION, { screen: 'Library', tab: tabKey }); };
-  const handleFilterChange = (text) => { setFilter(text); if (text.length === 3) track(EventType.SEARCH_FILTER, EventCategory.LIBRARY, { filterText: text, screen: 'Library' }); };
-  const handleToggleTag = (tagId) => { setSelectedTags(prev => prev.includes(tagId) ? prev.filter(t => t !== tagId) : [...prev, tagId]); };
-  const handleCreateShelf = (name) => { createCustomShelf(name); track(EventType.CUSTOM_ACTION, EventCategory.LIBRARY, { action: 'create_shelf', name }); };
-  const handleDeleteShelf = (shelfId) => { deleteCustomShelf(shelfId); if (activeTab === shelfId) setActiveTab('all'); };
-  const goBook = (book) => { track(EventType.SEARCH_RESULT_TAP, EventCategory.NAVIGATION, { bookId: book.id, source: 'library' }); navigation.navigate('BookDetail', { book }); };
+  const handleTabChange = (tabKey) => {
+    setActiveTab(tabKey);
+    track(EventType.TAB_CHANGE, EventCategory.NAVIGATION, { screen: 'Library', tab: tabKey });
+  };
 
-  return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Library</Text>
-        <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilterModal(!showFilterModal)} accessibilityLabel="Toggle filters" accessibilityRole="button">
-          <MaterialCommunityIcons name="filter-variant" size={22} color={colors.textPrimary} />
-          {activeFiltersCount > 0 && (
-            <View style={styles.filterBadge}><Text style={styles.filterBadgeText}>{activeFiltersCount}</Text></View>
-          )}
-        </TouchableOpacity>
-      </View>
+  const handleFilterChange = (text) => {
+    setFilter(text);
+    if (text.length === 3) {
+      track(EventType.SEARCH_FILTER, EventCategory.LIBRARY, { filterText: text, screen: 'Library' });
+    }
+  };
 
-      <FilterDropdown
-        visible={showFilterModal} onClose={() => setShowFilterModal(false)} tags={tags}
-        selectedTags={selectedTags} onToggleTag={handleToggleTag} eReaderFilter={eReaderFilter}
-        onSetEReaderFilter={setEReaderFilter} customShelves={customShelves}
-        onCreateShelf={handleCreateShelf} onDeleteShelf={handleDeleteShelf}
-      />
+  const handleToggleTag = (tagId) => {
+    setSelectedTags((prev) =>
+      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]
+    );
+  };
 
-      <View style={styles.filterWrap}>
-        <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} />
-        <TextInput style={styles.filterInput} value={filter} onChangeText={handleFilterChange} placeholder="Filter library..." placeholderTextColor={colors.textMuted} autoCapitalize="none" autoCorrect={false} />
-        {(filter || activeFiltersCount > 0) && (
-          <TouchableOpacity onPress={() => { setFilter(''); setSelectedTags([]); setEReaderFilter(null); }}>
-            <MaterialCommunityIcons name="close-circle" size={20} color={colors.textMuted} />
-          </TouchableOpacity>
-        )}
-      </View>
+  const handleCreateShelf = (name) => {
+    createCustomShelf(name);
+    track(EventType.CUSTOM_ACTION, EventCategory.LIBRARY, { action: 'create_shelf', name });
+  };
 
+  const handleDeleteShelf = (shelfId) => {
+    deleteCustomShelf(shelfId);
+    if (activeTab === shelfId) setActiveTab('all');
+  };
+
+  const handleBookPress = (book) => {
+    track(EventType.SEARCH_RESULT_TAP, EventCategory.NAVIGATION, {
+      bookId: book.id,
+      source: 'library',
+    });
+    navigation.navigate('BookDetail', { book });
+  };
+
+  const clearFilters = () => {
+    setFilter('');
+    setSelectedTags([]);
+    setEReaderFilter(null);
+  };
+
+  const renderHeader = () => (
+    <View>
+      {/* Active filter chips */}
       {activeFiltersCount > 0 && (
         <View style={styles.activeFiltersRow}>
-          {selectedTags.map(tagId => {
-            const tag = tags.find(t => t.id === tagId);
+          {selectedTags.map((tagId) => {
+            const tag = tags.find((t) => t.id === tagId);
             if (!tag) return null;
             return (
-              <TouchableOpacity key={tagId} style={[styles.activeChip, { backgroundColor: tag.color }]} onPress={() => handleToggleTag(tagId)}>
+              <TouchableOpacity
+                key={tagId}
+                style={[styles.activeChip, { backgroundColor: tag.color }]}
+                onPress={() => handleToggleTag(tagId)}
+                accessibilityLabel={`Remove ${tag.label} filter`}
+                accessibilityRole="button"
+              >
                 <Text style={styles.activeChipText}>{tag.label}</Text>
-                <MaterialCommunityIcons name="close" size={14} color="#fff" />
+                <Text style={styles.activeChipClose}>x</Text>
               </TouchableOpacity>
             );
           })}
           {eReaderFilter !== null && (
-            <TouchableOpacity style={[styles.activeChip, { backgroundColor: colors.info }]} onPress={() => setEReaderFilter(null)}>
-              <Text style={styles.activeChipText}>{eReaderFilter ? 'Has eReader' : 'No eReader'}</Text>
-              <MaterialCommunityIcons name="close" size={14} color="#fff" />
+            <TouchableOpacity
+              style={[styles.activeChip, { backgroundColor: homeColors.accentPurple }]}
+              onPress={() => setEReaderFilter(null)}
+              accessibilityLabel="Remove eReader filter"
+              accessibilityRole="button"
+            >
+              <Text style={styles.activeChipText}>
+                {eReaderFilter ? 'Has eBook' : 'No eBook'}
+              </Text>
+              <Text style={styles.activeChipClose}>x</Text>
             </TouchableOpacity>
           )}
         </View>
       )}
+    </View>
+  );
 
-      <FlatList
-        data={allTabs} horizontal showsHorizontalScrollIndicator={false}
-        style={styles.tabBar} contentContainerStyle={styles.tabBarContent} keyExtractor={(t) => t.key}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handleTabChange(item.key)} style={[styles.tab, activeTab === item.key && styles.tabActive, item.color && activeTab === item.key && { backgroundColor: item.color }]}>
-            <Text style={[styles.tabLabel, activeTab === item.key && styles.tabLabelActive]}>{item.label} ({counts[item.key] || 0})</Text>
+  return (
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>My Library</Text>
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={() => setShowFilterModal(!showFilterModal)}
+          accessibilityLabel="Toggle filters"
+          accessibilityRole="button"
+        >
+          <Text style={styles.filterButtonText}>Filters</Text>
+          {activeFiltersCount > 0 && (
+            <View style={styles.filterBadge}>
+              <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Search input */}
+      <View style={styles.searchContainer}>
+        <SearchIcon size={18} color={homeColors.textCaption} />
+        <TextInput
+          style={styles.searchInput}
+          value={filter}
+          onChangeText={handleFilterChange}
+          placeholder="Search your library..."
+          placeholderTextColor={homeColors.textCaption}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        {(filter || activeFiltersCount > 0) && (
+          <TouchableOpacity
+            onPress={clearFilters}
+            accessibilityLabel="Clear filters"
+            accessibilityRole="button"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={styles.clearText}>Clear</Text>
           </TouchableOpacity>
         )}
+      </View>
+
+      {/* Shelf tabs */}
+      <FlatList
+        data={allTabs}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.tabBar}
+        contentContainerStyle={styles.tabBarContent}
+        keyExtractor={(t) => t.key}
+        renderItem={({ item }) => {
+          const isActive = activeTab === item.key;
+          return (
+            <TouchableOpacity
+              onPress={() => handleTabChange(item.key)}
+              style={[
+                styles.tab,
+                isActive && styles.tabActive,
+                item.color && isActive && { backgroundColor: item.color },
+              ]}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isActive }}
+            >
+              <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
+                {item.label}
+              </Text>
+              <Text style={[styles.tabCount, isActive && styles.tabCountActive]}>
+                {counts[item.key] || 0}
+              </Text>
+            </TouchableOpacity>
+          );
+        }}
       />
 
+      {/* Filter modal */}
+      <FilterDropdown
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        tags={tags}
+        selectedTags={selectedTags}
+        onToggleTag={handleToggleTag}
+        eReaderFilter={eReaderFilter}
+        onSetEReaderFilter={setEReaderFilter}
+        customShelves={customShelves}
+        onCreateShelf={handleCreateShelf}
+        onDeleteShelf={handleDeleteShelf}
+      />
+
+      {/* Book grid */}
       {displayBooks.length === 0 ? (
         <EmptyState
           icon={filter || activeFiltersCount > 0 ? 'book-search' : 'bookshelf'}
           title={filter || activeFiltersCount > 0 ? 'No matches found' : 'Shelf is empty'}
-          subtitle={filter || activeFiltersCount > 0 ? 'Try different filters' : 'Add books from Search'}
+          subtitle={
+            filter || activeFiltersCount > 0
+              ? 'Try different filters'
+              : 'Add books from Search'
+          }
         />
       ) : (
         <FlatList
-          data={displayBooks} keyExtractor={(b) => b.id}
-          renderItem={({ item }) => {
-            const bookTags = tags.filter(t => item.tags?.includes(t.id));
-            return (
-              <BookListItem
-                book={item} variant="standard" shelf={item.shelf}
-                hasEpub={!!uploadedFiles[item.id]} tags={bookTags}
-                onPress={() => goBook(item)}
-              />
-            );
-          }}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          contentContainerStyle={{ paddingBottom: 24 }}
+          data={displayBooks}
+          keyExtractor={(b) => b.id}
+          numColumns={GRID_COLUMNS}
+          columnWrapperStyle={styles.gridRow}
+          contentContainerStyle={styles.gridContent}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={renderHeader}
+          renderItem={({ item }) => (
+            <LibraryBookCard
+              book={item}
+              shelf={item.shelf || activeTab}
+              onPress={() => handleBookPress(item)}
+            />
+          )}
         />
       )}
     </View>
@@ -162,22 +295,152 @@ export default function LibraryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bgPrimary },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderBottomWidth: borderWidth.thin, borderBottomColor: colors.border },
-  headerTitle: { fontSize: textSizes.h2, fontWeight: fontWeights.bold, color: colors.textPrimary },
-  filterButton: { padding: spacing.sm, position: 'relative' },
-  filterBadge: { position: 'absolute', top: 2, right: 2, backgroundColor: colors.accent, borderRadius: 10, minWidth: 18, height: 18, justifyContent: 'center', alignItems: 'center' },
-  filterBadgeText: { color: colors.textPrimary, fontSize: textSizes.xxs, fontWeight: fontWeights.bold },
-  filterWrap: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, margin: spacing.lg, paddingHorizontal: spacing.md, backgroundColor: colors.bgSecondary, borderWidth: borderWidth.thin, borderColor: colors.borderLight, borderRadius: radius.md },
-  filterInput: { flex: 1, fontSize: textSizes.lg, color: colors.textPrimary, paddingVertical: spacing.md },
-  activeFiltersRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, paddingHorizontal: spacing.lg, marginBottom: spacing.md },
-  activeChip: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.xl },
-  activeChipText: { color: colors.textPrimary, fontSize: textSizes.sm, fontWeight: fontWeights.medium },
-  tabBar: { flexGrow: 0, borderBottomWidth: borderWidth.thin, borderBottomColor: colors.border },
-  tabBarContent: { paddingHorizontal: spacing.md, gap: spacing.sm },
-  tab: { paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderRadius: radius.md },
-  tabActive: { backgroundColor: colors.accent },
-  tabLabel: { fontSize: textSizes.md, color: colors.textMuted, fontWeight: fontWeights.medium },
-  tabLabelActive: { color: colors.textPrimary },
-  separator: { height: 1, backgroundColor: colors.border, marginLeft: 78 },
+  screen: {
+    flex: 1,
+    backgroundColor: homeColors.bgMain,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  headerTitle: {
+    fontSize: textSizes.h1,
+    fontWeight: fontWeights.bold,
+    color: homeColors.textDark,
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: homeColors.bgCard,
+    borderWidth: 1,
+    borderColor: homeColors.border,
+    ...elevation.sm,
+  },
+  filterButtonText: {
+    fontSize: textSizes.sm,
+    fontWeight: fontWeights.medium,
+    color: homeColors.textBody,
+  },
+  filterBadge: {
+    backgroundColor: homeColors.accent,
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  filterBadgeText: {
+    color: '#FFFFFF',
+    fontSize: textSizes.xxs,
+    fontWeight: fontWeights.bold,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: homeColors.bgCard,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: homeColors.borderSubtle,
+    ...elevation.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: textSizes.md,
+    color: homeColors.textDark,
+    paddingVertical: spacing.xs,
+  },
+  clearText: {
+    fontSize: textSizes.sm,
+    fontWeight: fontWeights.medium,
+    color: homeColors.accent,
+  },
+  tabBar: {
+    flexGrow: 0,
+    flexShrink: 0,
+    marginBottom: spacing.md,
+    height: 48,
+  },
+  tabBarContent: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+  },
+  tab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.pill,
+    backgroundColor: homeColors.bgCard,
+    borderWidth: 1,
+    borderColor: homeColors.border,
+    height: 36,
+  },
+  tabActive: {
+    backgroundColor: homeColors.accent,
+    borderColor: homeColors.accent,
+    ...elevation.accent,
+  },
+  tabLabel: {
+    fontSize: textSizes.sm,
+    fontWeight: fontWeights.medium,
+    color: homeColors.textBody,
+  },
+  tabLabelActive: {
+    color: '#FFFFFF',
+  },
+  tabCount: {
+    fontSize: textSizes.xs,
+    color: homeColors.textCaption,
+  },
+  tabCountActive: {
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  activeFiltersRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
+  },
+  activeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+  },
+  activeChipText: {
+    color: '#FFFFFF',
+    fontSize: textSizes.xs,
+    fontWeight: fontWeights.medium,
+  },
+  activeChipClose: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: textSizes.xs,
+    fontWeight: fontWeights.bold,
+    marginLeft: spacing.xxs,
+  },
+  gridContent: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.huge,
+  },
+  gridRow: {
+    justifyContent: 'space-between',
+    marginBottom: spacing.xl,
+  },
 });

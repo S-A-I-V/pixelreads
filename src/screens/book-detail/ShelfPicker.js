@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { colors, spacing, radius, textSizes, fontWeights, borderWidth } from '../../theme';
+import { homeColors, spacing, radius, elevation, textSizes, fontWeights } from '../../theme';
 
 /**
  * Add-to-shelf button + expandable shelf option list.
@@ -15,7 +15,7 @@ export function ShelfPicker({ shelf, allShelves, showPicker, onTogglePicker, onS
         accessibilityLabel={shelf ? 'Change shelf' : 'Add to library'}
         accessibilityRole="button"
       >
-        <MaterialCommunityIcons name={shelf ? 'bookshelf' : 'plus'} size={20} color={colors.textPrimary} />
+        <MaterialCommunityIcons name={shelf ? 'bookshelf' : 'plus'} size={20} color={homeColors.textOnAccent} />
         <Text style={styles.addButtonText}>
           {shelf ? 'Change Shelf' : 'Add to Library'}
         </Text>
@@ -32,7 +32,7 @@ export function ShelfPicker({ shelf, allShelves, showPicker, onTogglePicker, onS
               <Text style={[styles.optionText, shelf === key && styles.optionTextActive]}>
                 {label}
               </Text>
-              {shelf === key && <MaterialCommunityIcons name="check" size={18} color={colors.accent} />}
+              {shelf === key && <MaterialCommunityIcons name="check" size={18} color={homeColors.accent} />}
             </TouchableOpacity>
           ))}
         </View>
@@ -47,39 +47,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.accent,
-    paddingVertical: 14,
-    borderRadius: radius.md,
+    backgroundColor: homeColors.accent,
+    paddingVertical: spacing.lg,
+    borderRadius: radius.lg,
+    ...elevation.accent,
   },
   addButtonText: {
-    color: colors.textPrimary,
+    color: homeColors.textOnAccent,
     fontSize: textSizes.lg,
     fontWeight: fontWeights.semibold,
   },
   picker: {
-    backgroundColor: colors.bgSecondary,
-    borderRadius: radius.md,
-    borderWidth: borderWidth.thin,
-    borderColor: colors.borderLight,
+    backgroundColor: homeColors.bgCard,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: homeColors.borderSubtle,
     overflow: 'hidden',
+    ...elevation.sm,
   },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: spacing.lg,
-    borderBottomWidth: borderWidth.thin,
-    borderBottomColor: colors.border,
+    borderBottomWidth: 1,
+    borderBottomColor: homeColors.border,
   },
   optionActive: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: homeColors.accentLight,
   },
   optionText: {
-    fontSize: textSizes.lg,
-    color: colors.textPrimary,
+    fontSize: textSizes.md,
+    color: homeColors.textDark,
   },
   optionTextActive: {
-    color: colors.accent,
+    color: homeColors.accent,
     fontWeight: fontWeights.semibold,
   },
 });

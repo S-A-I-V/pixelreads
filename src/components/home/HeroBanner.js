@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { homeColors, spacing, radius } from '../../theme';
+import { homeColors, spacing, radius, elevation } from '../../theme';
 
 const BG_IMAGE = require('../../../assets/images/categories/bg.png');
 
@@ -31,11 +31,7 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.lg,
     borderRadius: radius.xl,
     overflow: 'hidden',
-    shadowColor: homeColors.gradientStart,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 5,
+    ...elevation.lg,
   },
   image: {
     width: '100%',

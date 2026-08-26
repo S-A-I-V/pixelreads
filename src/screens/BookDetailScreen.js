@@ -9,7 +9,7 @@ import { useUserBookLibraryStore } from '../features/library/store/userBookLibra
 import { useEpubReaderStore } from '../features/reader/store/epubReaderStore';
 import { trackScreenView, trackEpubImport, track, EventType, EventCategory } from '../utils/analytics';
 import { ScreenHeader } from '../components/ui';
-import { colors, spacing } from '../theme';
+import { homeColors, spacing, radius, elevation, textSizes, fontWeights } from '../theme';
 
 import { HeroSection } from './book-detail/HeroSection';
 import { ShelfPicker } from './book-detail/ShelfPicker';
@@ -185,7 +185,7 @@ export default function BookDetailScreen() {
         onBack={() => navigation.goBack()}
         rightContent={shelf && (
           <TouchableOpacity onPress={handleRemove}>
-            <MaterialCommunityIcons name="delete-outline" size={24} color={colors.textMuted} />
+            <MaterialCommunityIcons name="delete-outline" size={24} color={homeColors.textCaption} />
           </TouchableOpacity>
         )}
       />
@@ -244,11 +244,17 @@ export default function BookDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bgPrimary },
+  container: { flex: 1, backgroundColor: homeColors.bgMain },
   centered: { justifyContent: 'center', alignItems: 'center' },
   scroll: { flex: 1 },
   content: { padding: spacing.lg, gap: spacing.xl },
-  errorText: { fontSize: 16, color: colors.error, marginBottom: spacing.lg },
-  backBtn: { backgroundColor: colors.accent, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 },
-  backBtnText: { color: colors.textPrimary, fontSize: 16, fontWeight: '600' },
+  errorText: { fontSize: textSizes.lg, color: homeColors.error, marginBottom: spacing.lg },
+  backBtn: {
+    backgroundColor: homeColors.accent,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
+    ...elevation.accent,
+  },
+  backBtnText: { color: homeColors.textOnAccent, fontSize: textSizes.lg, fontWeight: fontWeights.semibold },
 });

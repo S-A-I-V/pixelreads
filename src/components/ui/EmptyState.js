@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { colors, spacing, textSizes, fontWeights } from '../../theme';
+import { homeColors, spacing, textSizes, fontWeights } from '../../theme';
 
 /**
  * Reusable empty state with icon, title, and optional subtitle/action.
@@ -11,7 +11,9 @@ export function EmptyState({ icon, title, subtitle, children, style }) {
   return (
     <View style={[styles.container, style]}>
       {icon && (
-        <MaterialCommunityIcons name={icon} size={48} color={colors.textMuted} />
+        <View style={styles.iconCircle}>
+          <MaterialCommunityIcons name={icon} size={40} color={homeColors.accent} />
+        </View>
       )}
       <Text style={styles.title}>{title}</Text>
       {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
@@ -28,15 +30,25 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.xxl,
   },
+  iconCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: homeColors.accentLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
   title: {
     fontSize: textSizes.xl,
-    fontWeight: fontWeights.semibold,
-    color: colors.textPrimary,
+    fontWeight: fontWeights.bold,
+    color: homeColors.textDark,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: textSizes.md,
-    color: colors.textMuted,
+    color: homeColors.textCaption,
     textAlign: 'center',
+    lineHeight: textSizes.md * 1.4,
   },
 });

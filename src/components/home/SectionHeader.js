@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { homeColors, spacing, textSizes, fontWeights, fonts } from '../../theme';
+import { homeColors, spacing, textSizes, fontWeights } from '../../theme';
 import { ActionButton } from './ActionButton';
 
 export function SectionHeader({ title, actionText, onActionPress }) {
@@ -33,7 +33,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: textSizes.xl,
     fontWeight: fontWeights.bold,
-    fontFamily: fonts.serif,
     color: homeColors.textDark,
   },
 });

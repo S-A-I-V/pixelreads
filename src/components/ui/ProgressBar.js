@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { colors, spacing, radius } from '../../theme';
+import { homeColors, radius } from '../../theme';
 
 /**
  * Generic progress bar with configurable height and color.
@@ -10,11 +10,11 @@ export function ProgressBar({ progress = 0, height = 8, trackColor, fillColor, s
   const clampedProgress = Math.min(100, Math.max(0, progress));
 
   return (
-    <View style={[styles.track, { height, backgroundColor: trackColor || colors.borderLight }, style]}>
+    <View style={[styles.track, { height, backgroundColor: trackColor || homeColors.bgElevated }, style]}>
       <View
         style={[
           styles.fill,
-          { width: `${clampedProgress}%`, backgroundColor: fillColor || colors.accent },
+          { width: `${clampedProgress}%`, backgroundColor: fillColor || homeColors.accent },
         ]}
       />
     </View>

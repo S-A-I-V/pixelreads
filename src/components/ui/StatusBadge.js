@@ -1,17 +1,21 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { spacing, textSizes, fontWeights } from '../../theme';
+import { spacing, radius, textSizes, fontWeights, letterSpacing } from '../../theme';
 
 /**
- * Small colored badge pill with optional icon.
- * Used for shelf status, ebook/free labels, tags, etc.
+ * Modern status badge — soft tinted pill with a color-coded ambient dot.
+ * Used for shelf status, ebook/free labels, availability, etc.
  */
 export function StatusBadge({ label, color, icon, style }) {
   return (
-    <View style={[styles.badge, { backgroundColor: color }, style]}>
-      {icon && <MaterialCommunityIcons name={icon} size={12} color="#fff" />}
-      <Text style={styles.text}>{label}</Text>
+    <View style={[styles.badge, { backgroundColor: color + '1A' }, style]}>
+      {icon ? (
+        <MaterialCommunityIcons name={icon} size={12} color={color} />
+      ) : (
+        <View style={[styles.dot, { backgroundColor: color }]} />
+      )}
+      <Text style={[styles.text, { color }]}>{label}</Text>
     </View>
   );
 }
@@ -23,11 +27,16 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderRadius: spacing.xs,
+    borderRadius: radius.pill,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   text: {
     fontSize: textSizes.xxs,
     fontWeight: fontWeights.semibold,
-    color: '#fff',
+    letterSpacing: letterSpacing.wide,
   },
 });

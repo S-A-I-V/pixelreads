@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Pressable, ScrollView, Animated, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { colors, spacing, radius, textSizes, fontWeights, borderWidth } from '../../theme';
+import { homeColors, spacing, radius, elevation, textSizes, fontWeights, letterSpacing } from '../../theme';
 import {
   TAG_INPUT_PLACEHOLDER,
   TAG_BUTTON_CREATE,
@@ -44,7 +44,7 @@ export function TagsModal({ visible, onClose, allTags, bookTags, onToggleTag, on
         <View style={styles.header}>
           <Text style={styles.title}>Manage Tags</Text>
           <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <MaterialCommunityIcons name="close" size={20} color={colors.textPrimary} />
+            <MaterialCommunityIcons name="close" size={20} color={homeColors.textDark} />
           </TouchableOpacity>
         </View>
 
@@ -56,7 +56,7 @@ export function TagsModal({ visible, onClose, allTags, bookTags, onToggleTag, on
               value={newTagName}
               onChangeText={setNewTagName}
               placeholder={TAG_INPUT_PLACEHOLDER}
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={homeColors.textCaption}
               maxLength={30}
             />
             <TouchableOpacity
@@ -115,29 +115,29 @@ export function TagsModal({ visible, onClose, allTags, bookTags, onToggleTag, on
 }
 
 const styles = StyleSheet.create({
-  backdrop: { ...StyleSheet.absoluteFillObject, zIndex: 99, backgroundColor: 'rgba(0,0,0,0.4)' },
+  backdrop: { ...StyleSheet.absoluteFillObject, zIndex: 99, backgroundColor: 'rgba(15, 23, 42, 0.4)' },
   container: {
     position: 'absolute', top: '15%', left: spacing.lg, right: spacing.lg, zIndex: 100,
-    backgroundColor: colors.bgElevated, borderRadius: radius.lg, borderWidth: borderWidth.thin,
-    borderColor: colors.borderLight, padding: spacing.xl, maxHeight: '70%',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.5, shadowRadius: 16, elevation: 12,
+    backgroundColor: homeColors.bgCard, borderRadius: radius.xxl, borderWidth: 1,
+    borderColor: homeColors.borderSubtle, padding: spacing.xl, maxHeight: '70%',
+    ...elevation.xl,
   },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg },
-  title: { fontSize: textSizes.xxl, fontWeight: fontWeights.bold, color: colors.textPrimary },
+  title: { fontSize: textSizes.xxl, fontWeight: fontWeights.bold, color: homeColors.textDark },
   scroll: { flexGrow: 0 },
-  sectionTitle: { fontSize: textSizes.sm, fontWeight: fontWeights.semibold, color: colors.textMuted, marginBottom: spacing.md, marginTop: spacing.md, textTransform: 'uppercase', letterSpacing: 0.5 },
+  sectionTitle: { fontSize: textSizes.xs, fontWeight: fontWeights.semibold, color: homeColors.textCaption, marginBottom: spacing.md, marginTop: spacing.md, textTransform: 'uppercase', letterSpacing: letterSpacing.wider },
   createRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
-  input: { flex: 1, backgroundColor: colors.bgSecondary, borderWidth: borderWidth.thin, borderColor: colors.borderLight, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md, fontSize: textSizes.md, color: colors.textPrimary },
-  createBtn: { backgroundColor: colors.accent, paddingHorizontal: spacing.lg, borderRadius: radius.md, justifyContent: 'center' },
-  createBtnDisabled: { backgroundColor: colors.borderLight },
-  createBtnText: { color: colors.textPrimary, fontSize: textSizes.md, fontWeight: fontWeights.semibold },
+  input: { flex: 1, backgroundColor: homeColors.bgSubtle, borderWidth: 1, borderColor: homeColors.border, borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.md, fontSize: textSizes.md, color: homeColors.textDark },
+  createBtn: { backgroundColor: homeColors.accent, paddingHorizontal: spacing.lg, borderRadius: radius.lg, justifyContent: 'center' },
+  createBtnDisabled: { backgroundColor: homeColors.border },
+  createBtnText: { color: homeColors.textOnAccent, fontSize: textSizes.md, fontWeight: fontWeights.semibold },
   colorRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.xl, flexWrap: 'wrap' },
   colorDot: { width: 28, height: 28, borderRadius: 14 },
-  colorDotSelected: { borderWidth: 3, borderColor: colors.textPrimary },
-  emptyText: { fontSize: textSizes.md, color: colors.textDim, marginBottom: spacing.lg, fontStyle: 'italic' },
+  colorDotSelected: { borderWidth: 3, borderColor: homeColors.textDark },
+  emptyText: { fontSize: textSizes.md, color: homeColors.textCaption, marginBottom: spacing.lg, fontStyle: 'italic' },
   tagsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: 14, paddingVertical: spacing.sm, borderRadius: radius.pill, borderWidth: 1.5, backgroundColor: colors.bgSecondary },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: 14, paddingVertical: spacing.sm, borderRadius: radius.pill, borderWidth: 1.5, backgroundColor: homeColors.bgCard },
   chipDisabled: { opacity: 0.5 },
-  chipText: { fontSize: textSizes.md, color: colors.textSecondary },
-  chipTextActive: { color: colors.textPrimary, fontWeight: fontWeights.medium },
+  chipText: { fontSize: textSizes.md, color: homeColors.textBody },
+  chipTextActive: { color: '#FFFFFF', fontWeight: fontWeights.medium },
 });

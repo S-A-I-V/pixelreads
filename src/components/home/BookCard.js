@@ -1,17 +1,21 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { homeColors, spacing, radius, textSizes, fontWeights, fonts } from '../../theme';
+import { homeColors, spacing, radius, elevation, textSizes, fontWeights } from '../../theme';
 import { LibraryIcon } from '../icons';
 
-const COVER_WIDTH = 125;
-const COVER_HEIGHT = 180;
+const COVER_WIDTH = 130;
+const COVER_HEIGHT = 195;
 
+/**
+ * Horizontal scroll book card for the Home screen.
+ * Modern elevated card with 2:3 cover aspect ratio.
+ */
 export function BookCard({ book, onPress }) {
   return (
     <TouchableOpacity
-      style={[styles.container, { width: COVER_WIDTH }]}
+      style={styles.container}
       onPress={onPress}
-      activeOpacity={0.8}
+      activeOpacity={0.85}
       accessibilityLabel={`${book.title} by ${book.authors?.join(', ') || 'Unknown author'}`}
       accessibilityRole="button"
     >
@@ -24,7 +28,7 @@ export function BookCard({ book, onPress }) {
           />
         ) : (
           <View style={styles.placeholderCover}>
-            <LibraryIcon size={32} color={homeColors.textCaption} />
+            <LibraryIcon size={28} color={homeColors.textCaption} />
             <Text style={styles.placeholderText} numberOfLines={3}>
               {book.title}
             </Text>
@@ -43,30 +47,25 @@ export function BookCard({ book, onPress }) {
 
 const styles = StyleSheet.create({
   container: {
+    width: COVER_WIDTH,
     gap: spacing.xs,
   },
   coverContainer: {
     width: COVER_WIDTH,
     height: COVER_HEIGHT,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     overflow: 'hidden',
-    backgroundColor: homeColors.border,
-    shadowColor: homeColors.shadowStrong,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: homeColors.bgElevated,
+    ...elevation.md,
   },
   coverImage: {
     width: COVER_WIDTH,
     height: COVER_HEIGHT,
-    borderRadius: radius.md,
   },
   placeholderCover: {
     width: COVER_WIDTH,
     height: COVER_HEIGHT,
-    backgroundColor: homeColors.border,
-    borderRadius: radius.md,
+    backgroundColor: homeColors.bgElevated,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.sm,
@@ -84,9 +83,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: textSizes.sm,
     fontWeight: fontWeights.semibold,
-    fontFamily: fonts.serif,
     color: homeColors.textDark,
-    lineHeight: textSizes.sm * 1.3,
+    lineHeight: textSizes.sm * 1.4,
   },
 });
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { colors, spacing, textSizes } from '../../theme';
+import { homeColors, spacing, textSizes } from '../../theme';
 
 /**
  * Icon + label + value row for metadata display.
@@ -10,7 +10,7 @@ import { colors, spacing, textSizes } from '../../theme';
 export function MetaRow({ icon, label, value }) {
   return (
     <View style={styles.row}>
-      {icon && <MaterialCommunityIcons name={icon} size={16} color={colors.textMuted} />}
+      {icon && <MaterialCommunityIcons name={icon} size={16} color={homeColors.textCaption} />}
       <Text style={styles.label}>{label}</Text>
       <Text style={value ? styles.value : styles.emptyValue}>
         {value || 'Not available'}
@@ -27,18 +27,18 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: textSizes.sm,
-    color: colors.textMuted,
+    color: homeColors.textCaption,
     width: 90,
   },
   value: {
     flex: 1,
     fontSize: textSizes.sm,
-    color: colors.textPrimary,
+    color: homeColors.textDark,
   },
   emptyValue: {
     flex: 1,
     fontSize: textSizes.sm,
-    color: colors.textDim,
+    color: homeColors.textCaption,
     fontStyle: 'italic',
   },
 });

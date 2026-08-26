@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { colors, spacing, radius, textSizes, fontWeights } from '../../theme';
+import { homeColors, spacing, radius, elevation, textSizes, fontWeights } from '../../theme';
 
 /**
  * Standard bottom sheet modal wrapper.
@@ -26,7 +26,7 @@ export function BottomSheet({ visible, onClose, title, children, maxHeight = '80
               accessibilityLabel={`Close ${title}`}
               accessibilityRole="button"
             >
-              <MaterialCommunityIcons name="close" size={24} color={colors.textPrimary} />
+              <MaterialCommunityIcons name="close" size={24} color={homeColors.textDark} />
             </TouchableOpacity>
           </View>
           <ScrollView
@@ -45,16 +45,17 @@ export function BottomSheet({ visible, onClose, title, children, maxHeight = '80
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: colors.bgOverlay,
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: colors.bgPrimary,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
+    backgroundColor: homeColors.bgCard,
+    borderTopLeftRadius: radius.xxl,
+    borderTopRightRadius: radius.xxl,
     minHeight: 300,
     padding: spacing.xl,
     paddingBottom: spacing.huge,
+    ...elevation.xl,
   },
   header: {
     flexDirection: 'row',
@@ -65,7 +66,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: textSizes.xxl,
     fontWeight: fontWeights.bold,
-    color: colors.textPrimary,
+    color: homeColors.textDark,
   },
   content: {
     flex: 1,

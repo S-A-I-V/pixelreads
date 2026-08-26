@@ -1,5 +1,5 @@
 /**
- * Layout spacing, radius, and border tokens.
+ * Layout Spacing, Radius, Border, and Elevation Tokens.
  */
 
 export const spacing = {
@@ -21,7 +21,8 @@ export const radius = {
   md: 8,
   lg: 12,
   xl: 16,
-  pill: 20,
+  xxl: 20,
+  pill: 9999,
   full: 9999,
 };
 
@@ -30,4 +31,53 @@ export const borderWidth = {
   normal: 2,
   thick: 3,
   pixel: 4,
+};
+
+/**
+ * Elevation presets — consistent shadow system for card depth.
+ * Use these as spread styles: { ...elevation.sm }
+ */
+export const elevation = {
+  none: {
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+  },
+  sm: {
+    shadowColor: 'rgba(15, 23, 42, 0.06)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  md: {
+    shadowColor: 'rgba(15, 23, 42, 0.08)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  lg: {
+    shadowColor: 'rgba(15, 23, 42, 0.12)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 1,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  xl: {
+    shadowColor: 'rgba(15, 23, 42, 0.16)',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 1,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  accent: {
+    shadowColor: 'rgba(99, 102, 241, 0.25)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 6,
+  },
 };

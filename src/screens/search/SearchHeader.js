@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { colors, spacing, radius, textSizes, fontWeights, borderWidth } from '../../theme';
+import { SearchIcon } from '../../components/icons';
+import { homeColors, spacing, radius, elevation, textSizes, fontWeights } from '../../theme';
 
 const SEARCH_FILTERS = [
   { key: 'all', label: 'All', prefix: '' },
@@ -24,7 +25,6 @@ export function SearchHeader({ query, filter, hasActiveSearch, onQueryChange, on
         <Text style={styles.title}>Search</Text>
         {hasActiveSearch && (
           <TouchableOpacity onPress={onReset} style={styles.resetBtn} accessibilityLabel="Reset search">
-            <MaterialCommunityIcons name="refresh" size={18} color={colors.accent} />
             <Text style={styles.resetText}>Reset</Text>
           </TouchableOpacity>
         )}
@@ -32,13 +32,13 @@ export function SearchHeader({ query, filter, hasActiveSearch, onQueryChange, on
 
       <View style={styles.searchBar}>
         <View style={styles.inputContainer}>
-          <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} style={styles.inputIcon} />
+          <SearchIcon size={18} color={homeColors.textCaption} />
           <TextInput
             style={styles.input}
             value={query}
             onChangeText={onQueryChange}
             placeholder="Search books..."
-            placeholderTextColor={colors.textDim}
+            placeholderTextColor={homeColors.textCaption}
             onSubmitEditing={onSearch}
             returnKeyType="search"
             autoCapitalize="none"
@@ -46,12 +46,12 @@ export function SearchHeader({ query, filter, hasActiveSearch, onQueryChange, on
           />
           {query.length > 0 && (
             <TouchableOpacity onPress={() => onQueryChange('')} style={styles.clearBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <MaterialCommunityIcons name="close-circle" size={18} color={colors.textDim} />
+              <MaterialCommunityIcons name="close-circle" size={18} color={homeColors.textCaption} />
             </TouchableOpacity>
           )}
         </View>
         <TouchableOpacity onPress={onSearch} style={styles.searchBtn} accessibilityLabel="Search">
-          <MaterialCommunityIcons name="magnify" size={22} color={colors.textPrimary} />
+          <SearchIcon size={22} color={homeColors.textOnAccent} />
         </TouchableOpacity>
       </View>
 
@@ -72,9 +72,7 @@ export function SearchHeader({ query, filter, hasActiveSearch, onQueryChange, on
 
 const styles = StyleSheet.create({
   fixedHeader: {
-    backgroundColor: colors.bgPrimary,
-    borderBottomWidth: borderWidth.thin,
-    borderBottomColor: colors.border,
+    backgroundColor: homeColors.bgMain,
   },
   titleRow: {
     flexDirection: 'row',
@@ -84,23 +82,20 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   title: {
-    fontSize: textSizes.h2,
+    fontSize: textSizes.h1,
     fontWeight: fontWeights.bold,
-    color: colors.textPrimary,
+    color: homeColors.textDark,
   },
   resetBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.accentLight,
-    borderRadius: radius.xl,
+    backgroundColor: homeColors.accentLight,
+    borderRadius: radius.pill,
   },
   resetText: {
     fontSize: textSizes.sm,
-    color: colors.accent,
-    fontWeight: fontWeights.medium,
+    color: homeColors.accent,
+    fontWeight: fontWeights.semibold,
   },
   searchBar: {
     flexDirection: 'row',
@@ -112,27 +107,29 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.bgSecondary,
-    borderWidth: borderWidth.thin,
-    borderColor: colors.borderLight,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
+    backgroundColor: homeColors.bgCard,
+    borderWidth: 1,
+    borderColor: homeColors.borderSubtle,
+    borderRadius: radius.xl,
+    paddingHorizontal: spacing.lg,
+    ...elevation.sm,
   },
-  inputIcon: { marginRight: spacing.sm },
   input: {
     flex: 1,
-    fontSize: textSizes.lg,
-    color: colors.textPrimary,
+    fontSize: textSizes.md,
+    color: homeColors.textDark,
     paddingVertical: spacing.md,
   },
   clearBtn: { padding: spacing.xs },
   searchBtn: {
-    backgroundColor: colors.accent,
+    backgroundColor: homeColors.accent,
     width: 48,
     height: 48,
-    borderRadius: radius.md,
+    borderRadius: radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
+    ...elevation.accent,
   },
   filterBar: { flexGrow: 0 },
   filterBarContent: {
@@ -144,22 +141,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: radius.pill,
-    backgroundColor: colors.bgSecondary,
-    borderWidth: borderWidth.thin,
-    borderColor: colors.borderLight,
+    backgroundColor: homeColors.bgCard,
+    borderWidth: 1,
+    borderColor: homeColors.border,
     marginRight: spacing.sm,
   },
   chipActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
+    backgroundColor: homeColors.accent,
+    borderColor: homeColors.accent,
+    ...elevation.accent,
   },
   chipText: {
-    fontSize: textSizes.md,
-    color: colors.textPrimary,
+    fontSize: textSizes.sm,
+    color: homeColors.textBody,
     fontWeight: fontWeights.medium,
   },
   chipTextActive: {
-    color: colors.textPrimary,
+    color: homeColors.textOnAccent,
     fontWeight: fontWeights.semibold,
   },
 });

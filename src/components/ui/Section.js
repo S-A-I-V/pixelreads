@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, spacing, textSizes, fontWeights } from '../../theme';
+import { homeColors, spacing, textSizes, fontWeights } from '../../theme';
 
 /**
  * Reusable content section with a title and optional right-side action.
@@ -32,6 +32,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: textSizes.lg,
     fontWeight: fontWeights.semibold,
-    color: colors.textPrimary,
+    color: homeColors.textDark,
   },
 });

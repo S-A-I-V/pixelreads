@@ -1,27 +1,23 @@
 import React from 'react';
-import Svg, { Path, G, Defs, ClipPath, Rect } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 
-const ICON_SIZE = 24;
+const DEFAULT_SIZE = 24;
+const STROKE_WIDTH = 1.8;
 
-export function FavouritesIcon({ size = ICON_SIZE, color = '#000000' }) {
+/**
+ * Modern favourites/heart icon — smooth bezier heart.
+ * Consistent stroke style with rounded joins.
+ */
+export function FavouritesIcon({ size = DEFAULT_SIZE, color = '#000000' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <G clipPath="url(#clip_favourites)">
-        <Path
-          opacity={0.4}
-          d="M18 18.8597H17.24C16.44 18.8597 15.68 19.1698 15.12 19.7298L13.41 21.4198C12.63 22.1898 11.36 22.1898 10.58 21.4198L8.87 19.7298C8.31 19.1698 7.54 18.8597 6.75 18.8597H6C4.34 18.8597 3 17.5298 3 15.8898V4.97977C3 3.33977 4.34 2.00977 6 2.00977H18C19.66 2.00977 21 3.33977 21 4.97977V15.8898C21 17.5198 19.66 18.8597 18 18.8597Z"
-          fill={color}
-        />
-        <Path
-          d="M12.28 14.96C12.13 15.01 11.88 15.01 11.72 14.96C10.42 14.51 7.5 12.66 7.5 9.51001C7.5 8.12001 8.62 7 10 7C10.82 7 11.54 7.39 12 8C12.46 7.39 13.18 7 14 7C15.38 7 16.5 8.12001 16.5 9.51001C16.49 12.66 13.58 14.51 12.28 14.96Z"
-          fill={color}
-        />
-      </G>
-      <Defs>
-        <ClipPath id="clip_favourites">
-          <Rect width={24} height={24} fill="white" />
-        </ClipPath>
-      </Defs>
+      <Path
+        d="M12 20.5L10.55 19.19C5.4 14.52 2 11.44 2 7.69C2 4.61 4.42 2.19 7.5 2.19C9.24 2.19 10.91 3.01 12 4.28C13.09 3.01 14.76 2.19 16.5 2.19C19.58 2.19 22 4.61 22 7.69C22 11.44 18.6 14.52 13.45 19.19L12 20.5Z"
+        stroke={color}
+        strokeWidth={STROKE_WIDTH}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </Svg>
   );
 }

@@ -48,7 +48,7 @@ export function CategoryCard({ name, onPress, size = 'standard' }) {
 
 const styles = StyleSheet.create({
   container: {
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   imageWrapper: {
     borderRadius: radius.lg,
@@ -66,7 +66,6 @@ const styles = StyleSheet.create({
   placeholder: {
     backgroundColor: homeColors.border,
   },
-
 });
 
 export default CategoryCard;

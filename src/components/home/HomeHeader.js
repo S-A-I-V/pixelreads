@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { homeColors, spacing, textSizes, fontWeights, fonts } from '../../theme';
+import { SearchIcon, BookmarkIcon, LibraryIcon } from '../icons';
 
 const ICON_BUTTON_SIZE = 44;
 const ICON_SIZE = 22;
+const LOGO_ICON_SIZE = 18;
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -21,7 +22,7 @@ export function HomeHeader({ userName, onSearchPress, onBookmarkPress }) {
     <View style={styles.container}>
       <View style={styles.leftSection}>
         <View style={styles.logoContainer} accessibilityLabel="PixelReads logo">
-          <MaterialCommunityIcons name="book-open-variant" size={20} color={homeColors.accentPurple} />
+          <LibraryIcon size={LOGO_ICON_SIZE} color={homeColors.accentPurple} />
         </View>
         <Text style={styles.greetingText} numberOfLines={1}>
           {displayGreeting}
@@ -37,7 +38,7 @@ export function HomeHeader({ userName, onSearchPress, onBookmarkPress }) {
           accessibilityRole="button"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <MaterialCommunityIcons name="magnify" size={ICON_SIZE} color={homeColors.textDark} />
+          <SearchIcon size={ICON_SIZE} color={homeColors.textDark} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -48,7 +49,7 @@ export function HomeHeader({ userName, onSearchPress, onBookmarkPress }) {
           accessibilityRole="button"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <MaterialCommunityIcons name="bookmark-outline" size={ICON_SIZE} color={homeColors.textDark} />
+          <BookmarkIcon size={ICON_SIZE} color={homeColors.textDark} />
         </TouchableOpacity>
       </View>
     </View>
@@ -61,7 +62,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
   },
   leftSection: {
     flexDirection: 'row',

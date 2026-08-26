@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, ScrollView, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, ScrollView, FlatList, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useUserBookLibraryStore } from '../features/library/store/userBookLibraryStore';
@@ -12,6 +12,7 @@ import {
   CategoryCard,
   BookCard,
   SectionHeader,
+  BookCardSkeleton,
 } from '../components/home';
 import { homeColors, spacing } from '../theme';
 
@@ -26,6 +27,8 @@ const HOME_CATEGORIES = [
 
 const POPULAR_BOOKS_QUERY = 'bestseller 2024';
 const RECOMMENDED_BOOKS_QUERY = 'award winning fiction';
+const SKELETON_CARD_COUNT = 4;
+const SKELETON_PLACEHOLDERS = Array.from({ length: SKELETON_CARD_COUNT }, (_, i) => i);
 
 export default function HomeScreen() {
   const navigation = useNavigation();
@@ -166,9 +169,16 @@ export default function HomeScreen() {
           onActionPress={() => navigation.navigate('Search', { initialQuery: 'popular books' })}
         />
         {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={homeColors.accentPurple} />
-          </View>
+          <FlatList
+            data={SKELETON_PLACEHOLDERS}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+            keyExtractor={(item) => `skeleton-popular-${item}`}
+            renderItem={() => <BookCardSkeleton />}
+            ItemSeparatorComponent={() => <View style={styles.bookGap} />}
+            ListFooterComponent={<View style={styles.listTrailingSpace} />}
+          />
         ) : (
           <FlatList
             data={popularBooks}
@@ -184,7 +194,21 @@ export default function HomeScreen() {
           />
         )}
 
-        {recommendedBooks.length > 0 && (
+        {isLoading ? (
+          <>
+            <SectionHeader title="Recommended for you" />
+            <FlatList
+              data={SKELETON_PLACEHOLDERS}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}
+              keyExtractor={(item) => `skeleton-rec-${item}`}
+              renderItem={() => <BookCardSkeleton />}
+              ItemSeparatorComponent={() => <View style={styles.bookGap} />}
+              ListFooterComponent={<View style={styles.listTrailingSpace} />}
+            />
+          </>
+        ) : recommendedBooks.length > 0 && (
           <>
             <SectionHeader
               title="Recommended for you"
@@ -222,10 +246,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.sm,
   },
   bannerSection: {
-    marginTop: spacing.md,
+    marginTop: spacing.xs,
   },
   horizontalList: {
     paddingLeft: spacing.lg,
@@ -235,10 +259,6 @@ const styles = StyleSheet.create({
   },
   bookGap: {
     width: spacing.sm,
-  },
-  loadingContainer: {
-    paddingVertical: spacing.xxl,
-    alignItems: 'center',
   },
   listTrailingSpace: {
     width: spacing.lg,

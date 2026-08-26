@@ -1,39 +1,30 @@
 import React from 'react';
-import Svg, { Path, G, Defs, ClipPath, Rect } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
 
-const ICON_SIZE = 24;
+const DEFAULT_SIZE = 24;
+const STROKE_WIDTH = 1.8;
 
-export function SearchIcon({ size = ICON_SIZE, color = '#000000' }) {
+/**
+ * Modern search icon — clean circle with angled handle.
+ * Distinctive: slightly larger lens, slim handle.
+ */
+export function SearchIcon({ size = DEFAULT_SIZE, color = '#000000' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <G clipPath="url(#clip_search)">
-        <Path
-          d="M7.69994 11.16C7.31994 9.96997 7.76994 8.47997 9.01994 8.07997C9.67994 7.85997 10.4899 8.04997 10.9599 8.68997C11.3899 8.02997 12.2399 7.87997 12.8899 8.07997C14.1499 8.47997 14.5899 9.96997 14.2099 11.16C13.6099 13.06 11.5299 14.04 10.9599 14.04C10.3899 14.04 8.30994 13.08 7.69994 11.16Z"
-          stroke={color}
-          strokeWidth={1.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <Path
-          d="M10.97 2.02002C15.94 2.02002 19.97 6.05002 19.97 11.02C19.97 15.99 15.94 20.02 10.97 20.02C5.99997 20.02 1.96997 15.99 1.96997 11.02C1.96997 7.52002 3.96997 4.48002 6.89997 2.99002"
-          stroke={color}
-          strokeWidth={1.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <Path
-          d="M18.8699 20.48C19.1499 22.14 20.3299 22.48 21.4599 21.24C22.4899 20.1 22.0999 18.98 20.5699 18.75C19.4399 18.57 18.6799 19.35 18.8699 20.49V20.48Z"
-          stroke={color}
-          strokeWidth={1.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </G>
-      <Defs>
-        <ClipPath id="clip_search">
-          <Rect width={24} height={24} fill="white" />
-        </ClipPath>
-      </Defs>
+      <Circle
+        cx={11}
+        cy={11}
+        r={7}
+        stroke={color}
+        strokeWidth={STROKE_WIDTH}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M16.5 16.5L20.5 20.5"
+        stroke={color}
+        strokeWidth={STROKE_WIDTH}
+        strokeLinecap="round"
+      />
     </Svg>
   );
 }

@@ -1,39 +1,30 @@
 import React from 'react';
-import Svg, { Path, G, Defs, ClipPath, Rect } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
 
-const ICON_SIZE = 24;
+const DEFAULT_SIZE = 24;
+const STROKE_WIDTH = 1.8;
 
-export function ProfileIcon({ size = ICON_SIZE, color = '#000000' }) {
+/**
+ * Modern profile icon — minimal avatar with rounded shoulders.
+ * Distinctive: no enclosing circle, just head + shoulders silhouette.
+ */
+export function ProfileIcon({ size = DEFAULT_SIZE, color = '#000000' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <G clipPath="url(#clip_profile)">
-        <Path
-          d="M14.94 8.04047C15.16 8.48047 15.29 8.98047 15.29 9.51047C15.28 11.2805 13.89 12.7305 12.13 12.7805C12.06 12.7705 11.97 12.7705 11.89 12.7805C10.13 12.7205 8.73 11.2805 8.73 9.51047C8.73 7.70047 10.19 6.23047 12.01 6.23047"
-          stroke={color}
-          strokeWidth={1.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <Path
-          d="M18.74 19.3796C16.96 21.0096 14.6 21.9996 12 21.9996C9.4 21.9996 7.04 21.0096 5.26 19.3796C5.36 18.4396 5.96 17.5196 7.03 16.7996C9.77 14.9796 14.25 14.9796 16.97 16.7996C18.04 17.5196 18.64 18.4396 18.74 19.3796Z"
-          stroke={color}
-          strokeWidth={1.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <Path
-          d="M4 6C2.75 7.67 2 9.75 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2C10.57 2 9.2 2.3 7.97 2.85"
-          stroke={color}
-          strokeWidth={1.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </G>
-      <Defs>
-        <ClipPath id="clip_profile">
-          <Rect width={24} height={24} fill="white" />
-        </ClipPath>
-      </Defs>
+      <Circle
+        cx={12}
+        cy={8}
+        r={4}
+        stroke={color}
+        strokeWidth={STROKE_WIDTH}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M4 21C4 17.134 7.58172 14 12 14C16.4183 14 20 17.134 20 21"
+        stroke={color}
+        strokeWidth={STROKE_WIDTH}
+        strokeLinecap="round"
+      />
     </Svg>
   );
 }

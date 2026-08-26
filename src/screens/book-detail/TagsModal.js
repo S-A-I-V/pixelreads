@@ -138,10 +138,10 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     top: '12%',
-    left: spacing.md,
-    right: spacing.md,
+    left: spacing.xl,
+    right: spacing.xl,
     zIndex: 100,
-    maxHeight: '75%',
+    maxHeight: '60%',
     borderWidth: borderWidth.pixel,
     borderColor: '#000000',
     backgroundColor: homeColors.bgCard,

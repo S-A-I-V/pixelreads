@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Pressable, ScrollView, Alert, Animated, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { homeColors, spacing, radius, elevation, textSizes, fontWeights, letterSpacing } from '../../theme';
+import { homeColors, spacing, borderWidth, textSizes, fonts } from '../../theme';
 import {
   LIBRARY_EREADER_FILTER_LABELS,
   CUSTOM_SHELF_INPUT_PLACEHOLDER,
@@ -16,9 +16,6 @@ const EREADER_FILTER_OPTIONS = [
   { key: 'no', label: LIBRARY_EREADER_FILTER_LABELS.NO_EPUB, value: false },
 ];
 
-/**
- * Inline dropdown popup for library filters: eReader status, tags, custom shelves.
- */
 export function FilterDropdown({ visible, onClose, tags, selectedTags, onToggleTag,
   eReaderFilter, onSetEReaderFilter, customShelves, onCreateShelf, onDeleteShelf }) {
   const [newShelfName, setNewShelfName] = useState('');
@@ -57,80 +54,82 @@ export function FilterDropdown({ visible, onClose, tags, selectedTags, onToggleT
     <>
       <Pressable style={styles.backdrop} onPress={onClose} />
       <Animated.View style={[styles.container, { opacity, transform: [{ translateY }] }]}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Filters</Text>
-          <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <MaterialCommunityIcons name="close" size={20} color={homeColors.textDark} />
+        <View style={styles.titleBar}>
+          <Text style={styles.titleBarText}>filters.cfg</Text>
+          <TouchableOpacity style={styles.closeBtn} onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Text style={styles.closeBtnText}>x</Text>
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} nestedScrollEnabled>
-          <Text style={styles.sectionTitle}>eReader Status</Text>
-          <View style={styles.chipsRow}>
-            {EREADER_FILTER_OPTIONS.map(opt => (
-              <TouchableOpacity
-                key={opt.key}
-                style={[styles.chip, eReaderFilter === opt.value && styles.chipActive]}
-                onPress={() => onSetEReaderFilter(opt.value)}
-              >
-                <Text style={[styles.chipText, eReaderFilter === opt.value && styles.chipTextActive]}>
-                  {opt.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <Text style={styles.sectionTitle}>Tags</Text>
-          {tags.length === 0 ? (
-            <Text style={styles.emptyText}>No tags created yet</Text>
-          ) : (
+        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} nestedScrollEnabled keyboardShouldPersistTaps="handled">
+          <View style={styles.content}>
+            <Text style={styles.sectionTitle}># eReader Status</Text>
             <View style={styles.chipsRow}>
-              {tags.map(tag => (
+              {EREADER_FILTER_OPTIONS.map(opt => (
                 <TouchableOpacity
-                  key={tag.id}
-                  style={[styles.chip, { borderColor: tag.color }, selectedTags.includes(tag.id) && { backgroundColor: tag.color }]}
-                  onPress={() => onToggleTag(tag.id)}
+                  key={opt.key}
+                  style={[styles.chip, eReaderFilter === opt.value && styles.chipActive]}
+                  onPress={() => onSetEReaderFilter(opt.value)}
                 >
-                  <Text style={[styles.chipText, selectedTags.includes(tag.id) && styles.chipTextActive]}>{tag.label}</Text>
+                  <Text style={[styles.chipText, eReaderFilter === opt.value && styles.chipTextActive]}>
+                    {opt.label}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
-          )}
 
-          <Text style={styles.sectionTitle}>Custom Shelves</Text>
-          <View style={styles.createRow}>
-            <TextInput
-              style={styles.createInput}
-              value={newShelfName}
-              onChangeText={setNewShelfName}
-              placeholder={CUSTOM_SHELF_INPUT_PLACEHOLDER}
-              placeholderTextColor={homeColors.textCaption}
-              maxLength={25}
-            />
-            <TouchableOpacity
-              style={[styles.createBtn, !newShelfName.trim() && styles.createBtnDisabled]}
-              onPress={handleCreateShelf}
-              disabled={!newShelfName.trim()}
-            >
-              <Text style={styles.createBtnText}>{CUSTOM_SHELF_BUTTON_CREATE}</Text>
-            </TouchableOpacity>
-          </View>
-
-          {customShelves.length === 0 ? (
-            <Text style={styles.emptyText}>No custom shelves yet</Text>
-          ) : (
-            <View style={styles.shelfList}>
-              {customShelves.map(shelf => (
-                <View key={shelf.id} style={styles.shelfItem}>
-                  <View style={[styles.shelfDot, { backgroundColor: shelf.color }]} />
-                  <Text style={styles.shelfLabel}>{shelf.label}</Text>
-                  <TouchableOpacity onPress={() => confirmDeleteShelf(shelf)}>
-                    <MaterialCommunityIcons name="delete-outline" size={20} color={homeColors.error} />
+            <Text style={styles.sectionTitle}># Tags</Text>
+            {tags.length === 0 ? (
+              <Text style={styles.emptyText}>No tags created yet</Text>
+            ) : (
+              <View style={styles.chipsRow}>
+                {tags.map(tag => (
+                  <TouchableOpacity
+                    key={tag.id}
+                    style={[styles.chip, selectedTags.includes(tag.id) && { backgroundColor: tag.color, borderColor: tag.color }]}
+                    onPress={() => onToggleTag(tag.id)}
+                  >
+                    <Text style={[styles.chipText, selectedTags.includes(tag.id) && styles.chipTextActive]}>{tag.label}</Text>
                   </TouchableOpacity>
-                </View>
-              ))}
+                ))}
+              </View>
+            )}
+
+            <Text style={styles.sectionTitle}># Custom Shelves</Text>
+            <View style={styles.createRow}>
+              <TextInput
+                style={styles.createInput}
+                value={newShelfName}
+                onChangeText={setNewShelfName}
+                placeholder={CUSTOM_SHELF_INPUT_PLACEHOLDER}
+                placeholderTextColor={homeColors.textCaption}
+                maxLength={25}
+              />
+              <TouchableOpacity
+                style={[styles.createBtn, !newShelfName.trim() && styles.createBtnDisabled]}
+                onPress={handleCreateShelf}
+                disabled={!newShelfName.trim()}
+              >
+                <Text style={styles.createBtnText}>{CUSTOM_SHELF_BUTTON_CREATE}</Text>
+              </TouchableOpacity>
             </View>
-          )}
+
+            {customShelves.length === 0 ? (
+              <Text style={styles.emptyText}>No custom shelves yet</Text>
+            ) : (
+              <View style={styles.shelfList}>
+                {customShelves.map(shelf => (
+                  <View key={shelf.id} style={styles.shelfItem}>
+                    <View style={[styles.shelfDot, { backgroundColor: shelf.color }]} />
+                    <Text style={styles.shelfLabel}>{shelf.label}</Text>
+                    <TouchableOpacity onPress={() => confirmDeleteShelf(shelf)}>
+                      <MaterialCommunityIcons name="delete-outline" size={18} color={homeColors.error} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
         </ScrollView>
       </Animated.View>
     </>
@@ -138,30 +137,155 @@ export function FilterDropdown({ visible, onClose, tags, selectedTags, onToggleT
 }
 
 const styles = StyleSheet.create({
-  backdrop: { ...StyleSheet.absoluteFillObject, zIndex: 99, backgroundColor: 'rgba(15, 23, 42, 0.4)', justifyContent: 'center', alignItems: 'center' },
-  container: {
-    position: 'absolute', top: '20%', left: spacing.lg, right: spacing.lg, zIndex: 100,
-    backgroundColor: homeColors.bgCard, borderRadius: radius.xxl, borderWidth: 1,
-    borderColor: homeColors.borderSubtle, padding: spacing.xl, maxHeight: '60%',
-    ...elevation.xl,
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 99,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg },
-  title: { fontSize: textSizes.xxl, fontWeight: fontWeights.bold, color: homeColors.textDark },
-  scroll: { flexGrow: 0 },
-  sectionTitle: { fontSize: textSizes.xs, fontWeight: fontWeights.semibold, color: homeColors.textCaption, marginBottom: spacing.md, marginTop: spacing.md, textTransform: 'uppercase', letterSpacing: letterSpacing.wider },
-  chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: 14, paddingVertical: spacing.sm, borderRadius: radius.pill, borderWidth: 1.5, borderColor: homeColors.border, backgroundColor: homeColors.bgCard },
-  chipActive: { backgroundColor: homeColors.accent, borderColor: homeColors.accent },
-  chipText: { fontSize: textSizes.md, color: homeColors.textBody },
-  chipTextActive: { color: homeColors.textOnAccent, fontWeight: fontWeights.medium },
-  emptyText: { color: homeColors.textCaption, fontSize: textSizes.md, marginBottom: spacing.lg, fontStyle: 'italic' },
-  createRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
-  createInput: { flex: 1, backgroundColor: homeColors.bgSubtle, borderWidth: 1, borderColor: homeColors.border, borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.md, fontSize: textSizes.md, color: homeColors.textDark },
-  createBtn: { backgroundColor: homeColors.accent, paddingHorizontal: spacing.lg, borderRadius: radius.lg, justifyContent: 'center' },
-  createBtnDisabled: { backgroundColor: homeColors.border },
-  createBtnText: { color: homeColors.textOnAccent, fontSize: textSizes.md, fontWeight: fontWeights.semibold },
-  shelfList: { gap: spacing.sm, marginBottom: spacing.xl },
-  shelfItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: homeColors.bgSubtle, padding: spacing.md, borderRadius: radius.lg },
-  shelfDot: { width: 12, height: 12, borderRadius: 6 },
-  shelfLabel: { flex: 1, fontSize: textSizes.md + 1, color: homeColors.textDark },
+  container: {
+    position: 'absolute',
+    top: '15%',
+    left: spacing.xl,
+    right: spacing.xl,
+    zIndex: 100,
+    maxHeight: '55%',
+    borderWidth: borderWidth.pixel,
+    borderColor: '#000000',
+    backgroundColor: homeColors.bgCard,
+  },
+  titleBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+    borderBottomWidth: borderWidth.normal,
+    borderBottomColor: '#000000',
+  },
+  titleBarText: {
+    fontFamily: fonts.body,
+    fontSize: textSizes.xxs,
+    color: '#000000',
+  },
+  closeBtn: {
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#000000',
+    backgroundColor: homeColors.error,
+  },
+  closeBtnText: {
+    fontFamily: fonts.body,
+    fontSize: 10,
+    color: '#FFFFFF',
+    lineHeight: 12,
+  },
+  scroll: {
+    flexGrow: 0,
+  },
+  content: {
+    padding: spacing.md,
+    backgroundColor: '#FFFFFF',
+  },
+  sectionTitle: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.xs,
+    color: '#000000',
+    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  chipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  chip: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderWidth: 2,
+    borderColor: '#000000',
+    backgroundColor: '#FFFFFF',
+    borderRightWidth: 3,
+    borderBottomWidth: 3,
+  },
+  chipActive: {
+    backgroundColor: '#FBCA1F',
+    borderColor: '#000000',
+  },
+  chipText: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.xxs,
+    color: '#000000',
+  },
+  chipTextActive: {
+    color: '#FFFFFF',
+  },
+  emptyText: {
+    fontFamily: fonts.body,
+    fontSize: textSizes.xs,
+    color: homeColors.textCaption,
+    marginBottom: spacing.md,
+  },
+  createRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  createInput: {
+    flex: 1,
+    fontFamily: fonts.body,
+    fontSize: textSizes.sm,
+    color: '#000000',
+    borderWidth: 2,
+    borderColor: '#000000',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    backgroundColor: '#FFFFFF',
+  },
+  createBtn: {
+    backgroundColor: '#FBCA1F',
+    paddingHorizontal: spacing.md,
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRightWidth: 4,
+    borderBottomWidth: 4,
+  },
+  createBtnDisabled: {
+    backgroundColor: '#CCCCCC',
+  },
+  createBtnText: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.xs,
+    color: '#000000',
+  },
+  shelfList: {
+    gap: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  shelfItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: '#000000',
+    backgroundColor: '#FFFFFF',
+  },
+  shelfDot: {
+    width: 10,
+    height: 10,
+    borderWidth: 1,
+    borderColor: '#000000',
+  },
+  shelfLabel: {
+    flex: 1,
+    fontFamily: fonts.body,
+    fontSize: textSizes.xs,
+    color: '#000000',
+  },
 });

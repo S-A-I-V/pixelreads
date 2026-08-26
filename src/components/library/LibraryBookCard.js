@@ -1,21 +1,16 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import { homeColors, spacing, radius, elevation, textSizes, fontWeights } from '../../theme';
+import { homeColors, spacing, borderWidth, textSizes, fonts } from '../../theme';
 import { LibraryIcon } from '../icons';
+import { NeuShadow } from '../ui/NeuShadow';
 import { ProgressBar } from '../ui/ProgressBar';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const GRID_GAP = spacing.md;
-const GRID_PADDING = spacing.lg;
+const GRID_PADDING = spacing.md;
 const CARD_WIDTH = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP) / 2;
-const COVER_ASPECT_RATIO = 1.5;
-const COVER_HEIGHT = CARD_WIDTH * COVER_ASPECT_RATIO;
-const PROGRESS_BAR_HEIGHT = 3;
+const COVER_HEIGHT = CARD_WIDTH * 1.2;
 
-/**
- * Grid-optimized book card for the Library screen.
- * Modern elevated card with 2:3 aspect cover, subtle shadow, and progress overlay.
- */
 export function LibraryBookCard({ book, onPress, shelf }) {
   const showProgress = shelf === 'reading' && book.progress > 0;
 
@@ -27,38 +22,28 @@ export function LibraryBookCard({ book, onPress, shelf }) {
       accessibilityLabel={`${book.title} by ${book.authors?.join(', ') || 'Unknown author'}`}
       accessibilityRole="button"
     >
-      <View style={styles.coverContainer}>
-        {book.thumbnail ? (
-          <Image
-            source={{ uri: book.thumbnail }}
-            style={styles.coverImage}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={styles.placeholderCover}>
-            <LibraryIcon size={28} color={homeColors.textCaption} />
+      <NeuShadow offset={3}>
+        <View style={styles.cardFrame}>
+          <View style={styles.coverContainer}>
+            {book.thumbnail ? (
+              <Image source={{ uri: book.thumbnail }} style={styles.coverImage} resizeMode="cover" />
+            ) : (
+              <View style={styles.placeholderCover}>
+                <LibraryIcon size={24} color={homeColors.textDark} />
+              </View>
+            )}
+            {showProgress && (
+              <View style={styles.progressOverlay}>
+                <ProgressBar progress={book.progress} height={4} trackColor="rgba(0,0,0,0.3)" fillColor="#FBCA1F" />
+              </View>
+            )}
           </View>
-        )}
-        {showProgress && (
-          <View style={styles.progressOverlay}>
-            <ProgressBar
-              progress={book.progress}
-              height={PROGRESS_BAR_HEIGHT}
-              trackColor="rgba(255,255,255,0.3)"
-              fillColor={homeColors.accent}
-            />
+          <View style={styles.infoContainer}>
+            <Text style={styles.title} numberOfLines={2}>{book.title}</Text>
+            <Text style={styles.author} numberOfLines={1}>{book.authors?.join(', ') || 'Unknown'}</Text>
           </View>
-        )}
-      </View>
-
-      <View style={styles.infoContainer}>
-        <Text style={styles.title} numberOfLines={2}>
-          {book.title}
-        </Text>
-        <Text style={styles.author} numberOfLines={1}>
-          {book.authors?.join(', ') || 'Unknown'}
-        </Text>
-      </View>
+        </View>
+      </NeuShadow>
     </TouchableOpacity>
   );
 }
@@ -66,15 +51,18 @@ export function LibraryBookCard({ book, onPress, shelf }) {
 const styles = StyleSheet.create({
   container: {
     width: CARD_WIDTH,
-    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  cardFrame: {
+    borderWidth: borderWidth.pixel,
+    borderColor: homeColors.border,
+    backgroundColor: homeColors.bgCard,
   },
   coverContainer: {
-    width: CARD_WIDTH,
+    width: '100%',
     height: COVER_HEIGHT,
-    borderRadius: radius.lg,
     overflow: 'hidden',
     backgroundColor: homeColors.bgElevated,
-    ...elevation.md,
   },
   coverImage: {
     width: '100%',
@@ -92,24 +80,28 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: spacing.sm,
-    paddingBottom: spacing.sm,
+    padding: spacing.xs,
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   infoContainer: {
-    paddingHorizontal: spacing.xxs,
-    gap: spacing.xxs,
+    borderTopWidth: borderWidth.normal,
+    borderTopColor: homeColors.border,
+    padding: spacing.xs,
+    backgroundColor: '#FFFFFF',
+    height: 46,
+    justifyContent: 'center',
   },
   title: {
-    fontSize: textSizes.md,
-    fontWeight: fontWeights.semibold,
-    color: homeColors.textDark,
-    lineHeight: textSizes.md * 1.4,
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.xxs,
+    color: '#000000',
+    lineHeight: textSizes.xxs * 1.4,
   },
   author: {
-    fontSize: textSizes.sm,
-    fontWeight: fontWeights.normal,
+    fontFamily: fonts.body,
+    fontSize: 9,
     color: homeColors.textCaption,
-    lineHeight: textSizes.sm * 1.3,
+    marginTop: 1,
   },
 });
 

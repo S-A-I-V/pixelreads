@@ -33,7 +33,7 @@ const BUILT_IN_SHELVES = [
   { key: 'dnf',          label: 'Did Not Finish'    },
 ];
 
-// Dev flag: set to true to always show skeleton (no real content)
+// set to true to always show skeleton (no real content)
 const DEV_SHOW_SKELETON_ONLY = false;
 
 export default function BookDetailScreen() {
@@ -69,7 +69,7 @@ export default function BookDetailScreen() {
   const shelf = getBookShelf(bookId);
   const uploadedFile = getUploadedFile(bookId);
   const hasEpub = !!uploadedFile || !!uploadedFiles[bookId];
-  const bookTags = stored?.tags || [];
+  const bookTags = useUserBookLibraryStore((s) => s.getBookById(bookId)?.tags || []);
   const allShelves = [...BUILT_IN_SHELVES, ...customShelves.map(s => ({ key: s.id, label: s.label }))];
 
   useEffect(() => {

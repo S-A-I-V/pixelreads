@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { homeColors, spacing, radius, elevation } from '../../theme';
+import { homeColors, spacing, borderWidth, fonts, textSizes } from '../../theme';
 import { HomeIcon, SearchIcon, LibraryIcon, ProfileIcon } from '../icons';
 
 const TAB_ICONS = {
@@ -12,12 +12,13 @@ const TAB_ICONS = {
   Profile: ProfileIcon,
 };
 
-const ICON_SIZE = 24;
-const TAB_BUTTON_SIZE = 48;
+const ICON_SIZE = 22;
+const TAB_BUTTON_SIZE = 52;
 
 /**
- * Modern floating tab bar with ambient glow on active tab.
- * Minimal, elevated, with haptic feedback.
+ * Neubrutalist OS taskbar — thick black borders, square tabs,
+ * lavender background with magenta active highlights.
+ * Styled like a Y2K desktop taskbar / start menu bar.
  */
 export function FloatingTabBar({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
@@ -43,7 +44,7 @@ export function FloatingTabBar({ state, descriptors, navigation }) {
           };
 
           const IconComponent = TAB_ICONS[route.name] || HomeIcon;
-          const iconColor = isFocused ? homeColors.accent : homeColors.navInactive;
+          const iconColor = isFocused ? homeColors.textOnTeal : homeColors.navInactive;
 
           return (
             <TouchableOpacity
@@ -56,7 +57,9 @@ export function FloatingTabBar({ state, descriptors, navigation }) {
               accessibilityLabel={options.tabBarAccessibilityLabel || route.name}
             >
               <IconComponent size={ICON_SIZE} color={iconColor} />
-              {isFocused && <View style={styles.activeIndicator} />}
+              <Text style={[styles.tabLabel, isFocused && styles.tabLabelActive]}>
+                {route.name}
+              </Text>
             </TouchableOpacity>
           );
         })}
@@ -67,43 +70,42 @@ export function FloatingTabBar({ state, descriptors, navigation }) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: homeColors.bgMain,
+    backgroundColor: homeColors.navBg,
   },
   container: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.xs,
-    paddingVertical: spacing.sm,
-    backgroundColor: homeColors.bgCard,
-    borderRadius: radius.xxl,
-    borderWidth: 1,
-    borderColor: homeColors.borderSubtle,
-    ...elevation.lg,
+    paddingVertical: spacing.xs,
+    backgroundColor: homeColors.navBg,
+    borderTopWidth: borderWidth.pixel,
+    borderTopColor: homeColors.border,
   },
   tabButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: TAB_BUTTON_SIZE,
-    height: TAB_BUTTON_SIZE,
-    borderRadius: TAB_BUTTON_SIZE / 2,
+    width: 48,
+    height: 44,
+    borderWidth: borderWidth.normal,
+    borderColor: 'transparent',
+    gap: 1,
   },
   tabButtonActive: {
-    backgroundColor: homeColors.accentLight,
-    shadowColor: homeColors.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 0,
+    backgroundColor: homeColors.accentPink,
+    borderColor: homeColors.border,
+    borderRightWidth: 3,
+    borderBottomWidth: 3,
+    borderRightColor: '#000000',
+    borderBottomColor: '#000000',
   },
-  activeIndicator: {
-    position: 'absolute',
-    bottom: 6,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: homeColors.accent,
+  tabLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: textSizes.xxs,
+    color: homeColors.navInactive,
+  },
+  tabLabelActive: {
+    color: homeColors.textOnTeal,
+    fontWeight: '700',
   },
 });
 

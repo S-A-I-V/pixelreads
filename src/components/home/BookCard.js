@@ -1,14 +1,15 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { homeColors, spacing, radius, elevation, textSizes, fontWeights } from '../../theme';
+import { homeColors, spacing, borderWidth, textSizes, fontWeights, fonts } from '../../theme';
 import { LibraryIcon } from '../icons';
+import { NeuShadow } from '../ui/NeuShadow';
 
 const COVER_WIDTH = 130;
 const COVER_HEIGHT = 195;
 
 /**
- * Horizontal scroll book card for the Home screen.
- * Modern elevated card with 2:3 cover aspect ratio.
+ * Neubrutalist book card — thick black border, hard offset shadow,
+ * lavender surface with sharp corners. Y2K OS file icon aesthetic.
  */
 export function BookCard({ book, onPress }) {
   return (
@@ -19,28 +20,34 @@ export function BookCard({ book, onPress }) {
       accessibilityLabel={`${book.title} by ${book.authors?.join(', ') || 'Unknown author'}`}
       accessibilityRole="button"
     >
-      <View style={styles.coverContainer}>
-        {book.thumbnail ? (
-          <Image
-            source={{ uri: book.thumbnail }}
-            style={styles.coverImage}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={styles.placeholderCover}>
-            <LibraryIcon size={28} color={homeColors.textCaption} />
-            <Text style={styles.placeholderText} numberOfLines={3}>
+      <NeuShadow offset={3}>
+        <View style={styles.cardFrame}>
+          {/* Cover area */}
+          <View style={styles.coverContainer}>
+            {book.thumbnail ? (
+              <Image
+                source={{ uri: book.thumbnail }}
+                style={styles.coverImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.placeholderCover}>
+                <LibraryIcon size={28} color={homeColors.textDark} />
+                <Text style={styles.placeholderText} numberOfLines={3}>
+                  {book.title}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Title strip at bottom of card */}
+          <View style={styles.titleStrip}>
+            <Text style={styles.title} numberOfLines={2}>
               {book.title}
             </Text>
           </View>
-        )}
-      </View>
-
-      <View style={styles.infoContainer}>
-        <Text style={styles.title} numberOfLines={2}>
-          {book.title}
-        </Text>
-      </View>
+        </View>
+      </NeuShadow>
     </TouchableOpacity>
   );
 }
@@ -48,23 +55,26 @@ export function BookCard({ book, onPress }) {
 const styles = StyleSheet.create({
   container: {
     width: COVER_WIDTH,
-    gap: spacing.xs,
+    marginBottom: spacing.xs,
+    marginRight: spacing.xxs,
+  },
+  cardFrame: {
+    borderWidth: borderWidth.pixel,
+    borderColor: homeColors.border,
+    backgroundColor: homeColors.bgCard,
   },
   coverContainer: {
-    width: COVER_WIDTH,
+    width: COVER_WIDTH - (borderWidth.pixel * 2),
     height: COVER_HEIGHT,
-    borderRadius: radius.lg,
     overflow: 'hidden',
     backgroundColor: homeColors.bgElevated,
-    ...elevation.md,
   },
   coverImage: {
-    width: COVER_WIDTH,
+    width: '100%',
     height: COVER_HEIGHT,
   },
   placeholderCover: {
-    width: COVER_WIDTH,
-    height: COVER_HEIGHT,
+    flex: 1,
     backgroundColor: homeColors.bgElevated,
     alignItems: 'center',
     justifyContent: 'center',
@@ -72,19 +82,25 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   placeholderText: {
-    fontSize: textSizes.xs,
-    color: homeColors.textCaption,
+    fontFamily: fonts.body,
+    fontSize: textSizes.xxs,
+    color: homeColors.textDark,
     textAlign: 'center',
   },
-  infoContainer: {
-    paddingHorizontal: spacing.xxs,
-    height: 36,
+  titleStrip: {
+    borderTopWidth: borderWidth.normal,
+    borderTopColor: homeColors.border,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xs,
+    backgroundColor: homeColors.bgWindow,
+    height: 40,
+    justifyContent: 'center',
   },
   title: {
-    fontSize: textSizes.sm,
-    fontWeight: fontWeights.semibold,
+    fontFamily: fonts.bodyBold,
+    fontSize: textSizes.xs,
     color: homeColors.textDark,
-    lineHeight: textSizes.sm * 1.4,
+    lineHeight: textSizes.xs * 1.4,
   },
 });
 

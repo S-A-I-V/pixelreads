@@ -24,10 +24,13 @@ import { colors } from './src/theme';
 SplashScreen.preventAutoHideAsync();
 
 /**
- * Pixel font asset configuration
+ * Font asset configuration — Y2K / Neubrutalist OS type system
  */
 const PIXEL_FONT_ASSETS = {
   PressStart2P: require('./assets/fonts/PressStart2P-Regular.ttf'),
+  VT323: require('@expo-google-fonts/vt323/400Regular/VT323_400Regular.ttf'),
+  SpaceMono: require('@expo-google-fonts/space-mono/400Regular/SpaceMono_400Regular.ttf'),
+  'SpaceMono-Bold': require('@expo-google-fonts/space-mono/700Bold/SpaceMono_700Bold.ttf'),
 } as const;
 
 /**

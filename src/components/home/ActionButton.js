@@ -1,9 +1,14 @@
-import React from 'react';
-import { Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useRef } from 'react';
+import { Text, TouchableOpacity, StyleSheet, ActivityIndicator, Animated } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { homeColors, spacing, radius, textSizes, fontWeights, fonts } from '../../theme';
+import { homeColors, spacing, borderWidth, radius, textSizes, fontWeights, fonts } from '../../theme';
 
+/**
+ * Neubrutalist button inspired by Uiverse.io/adamgiebl.
+ * Yellow (#fbca1f) background, 3px black border, hard box-shadow offset.
+ * Translate up on press-in, translate down on press-out for that tactile feel.
+ */
 export function ActionButton({
   label,
   onPress,
@@ -17,6 +22,23 @@ export function ActionButton({
   style,
 }) {
   const isDisabled = disabled || loading;
+  const pressAnim = useRef(new Animated.Value(0)).current;
+
+  const handlePressIn = () => {
+    Animated.timing(pressAnim, {
+      toValue: 1,
+      duration: 80,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.timing(pressAnim, {
+      toValue: 0,
+      duration: 100,
+      useNativeDriver: true,
+    }).start();
+  };
 
   const handlePress = () => {
     if (isDisabled) return;
@@ -26,11 +48,22 @@ export function ActionButton({
     onPress?.();
   };
 
+  // Translate: resting = (-1, -1), pressed = (1, 1) — simulates shadow push
+  const translateX = pressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-1, 1],
+  });
+  const translateY = pressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-1, 1],
+  });
+
   const containerStyles = [
     styles.base,
     styles[`${variant}Container`],
     styles[`${size}Size`],
     isDisabled && styles.disabled,
+    { transform: [{ translateX }, { translateY }] },
     style,
   ];
 
@@ -40,78 +73,98 @@ export function ActionButton({
     styles[`${size}Label`],
   ];
 
-  const iconColor = variant === 'primary'
-    ? homeColors.textOnGradient
-    : homeColors.accentPurple;
+  const iconColor = '#000000';
 
   const iconSize = size === 'sm' ? 14 : size === 'lg' ? 20 : 16;
 
   return (
-    <TouchableOpacity
-      style={containerStyles}
-      onPress={handlePress}
-      activeOpacity={0.7}
-      disabled={isDisabled}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled: isDisabled }}
-    >
-      {loading ? (
-        <ActivityIndicator
-          size="small"
-          color={variant === 'primary' ? homeColors.textOnGradient : homeColors.accentPurple}
-        />
-      ) : (
-        <>
-          {iconLeft && (
-            <MaterialCommunityIcons name={iconLeft} size={iconSize} color={iconColor} />
-          )}
-          <Text style={textStyles}>{label}</Text>
-          {iconRight && (
-            <MaterialCommunityIcons name={iconRight} size={iconSize} color={iconColor} />
-          )}
-        </>
-      )}
-    </TouchableOpacity>
+    <Animated.View style={containerStyles}>
+      <TouchableOpacity
+        style={styles.touchable}
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
+        disabled={isDisabled}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ disabled: isDisabled }}
+      >
+        {loading ? (
+          <ActivityIndicator
+            size="small"
+            color={variant === 'ghost' ? homeColors.accent : homeColors.textOnAccent}
+          />
+        ) : (
+          <>
+            {iconLeft && (
+              <MaterialCommunityIcons name={iconLeft} size={iconSize} color={iconColor} />
+            )}
+            <Text style={textStyles}>{label}</Text>
+            {iconRight && (
+              <MaterialCommunityIcons name={iconRight} size={iconSize} color={iconColor} />
+            )}
+          </>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   base: {
+    borderRadius: radius.md,
+    minHeight: 44,
+  },
+  touchable: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    minHeight: 44,
+    flex: 1,
   },
+  // Primary: #fbca1f yellow, 3px black border, hard shadow
   primaryContainer: {
-    backgroundColor: homeColors.accentPurple,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.xl,
+    backgroundColor: '#FBCA1F',
+    borderWidth: 3,
+    borderColor: '#000000',
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    borderRightWidth: 6,
+    borderBottomWidth: 6,
   },
+  // Secondary: lavender fill, same border treatment
   secondaryContainer: {
-    backgroundColor: 'transparent',
-    borderRadius: radius.pill,
-    borderWidth: 1.5,
-    borderColor: homeColors.accentPurple,
-    paddingHorizontal: spacing.xl,
+    backgroundColor: homeColors.bgCard,
+    borderWidth: 3,
+    borderColor: '#000000',
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    borderRightWidth: 5,
+    borderBottomWidth: 5,
   },
+  // Ghost: same style as primary but smaller padding — used for inline "See all" / "View all"
   ghostContainer: {
-    backgroundColor: 'transparent',
+    backgroundColor: '#FBCA1F',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: radius.md,
     paddingHorizontal: spacing.sm,
+    borderRightWidth: 4,
+    borderBottomWidth: 4,
   },
   primaryLabel: {
-    color: homeColors.textOnGradient,
+    color: '#000000',
   },
   secondaryLabel: {
-    color: homeColors.accentPurple,
+    color: '#000000',
   },
   ghostLabel: {
-    color: homeColors.accentPurple,
+    color: '#000000',
   },
   smSize: {
-    minHeight: 36,
-    paddingVertical: spacing.xs,
+    minHeight: 30,
+    paddingVertical: 3,
   },
   mdSize: {
     minHeight: 44,
@@ -131,8 +184,8 @@ const styles = StyleSheet.create({
     fontSize: textSizes.lg,
   },
   label: {
-    fontFamily: fonts.serif,
-    fontWeight: fontWeights.semibold,
+    fontFamily: fonts.bodyBold,
+    fontSize: 16,
   },
   disabled: {
     opacity: 0.5,

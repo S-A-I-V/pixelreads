@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, ScrollView, FlatList, StyleSheet } from 'react-native';
+import { View, ScrollView, FlatList, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useUserBookLibraryStore } from '../features/library/store/userBookLibraryStore';
@@ -15,6 +15,32 @@ import {
   BookCardSkeleton,
 } from '../components/home';
 import { homeColors, spacing } from '../theme';
+
+/**
+ * Decorative section divider — text-based ornamental line.
+ * ≻────────────── ⋆✩⋆ ──────────────≺
+ */
+function SectionDivider() {
+  return (
+    <View style={dividerStyles.container}>
+      <Text style={dividerStyles.text} numberOfLines={1}>{'≻──────────── ⋆✩⋆ ────────────≺'}</Text>
+    </View>
+  );
+}
+
+const dividerStyles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    marginTop: spacing.md,
+    marginBottom: spacing.xxs,
+  },
+  text: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#000000',
+  },
+});
 
 const HOME_CATEGORIES = [
   'Personal development',
@@ -127,6 +153,8 @@ export default function HomeScreen() {
           <HeroBanner onPress={handleHeroBannerPress} />
         </View>
 
+        <SectionDivider />
+
         {currentlyReading.length > 0 && (
           <>
             <SectionHeader
@@ -146,6 +174,7 @@ export default function HomeScreen() {
               ItemSeparatorComponent={() => <View style={styles.bookGap} />}
               ListFooterComponent={<View style={styles.listTrailingSpace} />}
             />
+            <SectionDivider />
           </>
         )}
 
@@ -162,6 +191,8 @@ export default function HomeScreen() {
           ItemSeparatorComponent={() => <View style={styles.cardGap} />}
           ListFooterComponent={<View style={styles.listTrailingSpace} />}
         />
+
+        <SectionDivider />
 
         <SectionHeader
           title="Popular books"
@@ -196,6 +227,7 @@ export default function HomeScreen() {
 
         {isLoading ? (
           <>
+            <SectionDivider />
             <SectionHeader title="Recommended for you" />
             <FlatList
               data={SKELETON_PLACEHOLDERS}
@@ -210,6 +242,7 @@ export default function HomeScreen() {
           </>
         ) : recommendedBooks.length > 0 && (
           <>
+            <SectionDivider />
             <SectionHeader
               title="Recommended for you"
               actionText="See all"
@@ -246,19 +279,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.xl,
   },
   bannerSection: {
-    marginTop: spacing.xs,
+    marginTop: spacing.md,
   },
   horizontalList: {
     paddingLeft: spacing.lg,
   },
   cardGap: {
-    width: spacing.sm,
+    width: spacing.md,
   },
   bookGap: {
-    width: spacing.sm,
+    width: spacing.md,
   },
   listTrailingSpace: {
     width: spacing.lg,

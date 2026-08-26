@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { homeColors, spacing, radius } from '../../theme';
+import { homeColors, spacing, borderWidth } from '../../theme';
+import { NeuShadow } from '../ui/NeuShadow';
 
 const CATEGORY_IMAGES = {
   'Personal development': require('../../../assets/images/categories/personal-development.png'),
@@ -16,6 +17,10 @@ const CARD_HEIGHT = 140;
 const CARD_COMPACT_WIDTH = 180;
 const CARD_COMPACT_HEIGHT = 120;
 
+/**
+ * Neubrutalist category card — image-only with thick border and hard shadow.
+ * The category images already contain their own title text, so no duplicate label needed.
+ */
 export function CategoryCard({ name, onPress, size = 'standard' }) {
   const isCompact = size === 'compact';
   const cardWidth = isCompact ? CARD_COMPACT_WIDTH : CARD_WIDTH;
@@ -24,47 +29,44 @@ export function CategoryCard({ name, onPress, size = 'standard' }) {
 
   return (
     <TouchableOpacity
-      style={[styles.container, { width: cardWidth }]}
+      style={{ width: cardWidth + 3, height: cardHeight + 3 }}
       onPress={onPress}
       activeOpacity={0.8}
       accessibilityLabel={`${name} category`}
       accessibilityRole="button"
     >
-      <View style={[styles.imageWrapper, { width: cardWidth, height: cardHeight }]}>
-        {imageSource ? (
-          <Image
-            source={imageSource}
-            style={[styles.image, { width: cardWidth, height: cardHeight }]}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={[styles.placeholder, { width: cardWidth, height: cardHeight }]} />
-        )}
-      </View>
-
+      <NeuShadow offset={3}>
+        <View style={[styles.container, { width: cardWidth, height: cardHeight }]}>
+          <View style={[styles.imageWrapper, { width: cardWidth - (borderWidth.pixel * 2), height: cardHeight - (borderWidth.pixel * 2) }]}>
+            {imageSource ? (
+              <Image
+                source={imageSource}
+                style={[styles.image, { width: cardWidth - (borderWidth.pixel * 2), height: cardHeight - (borderWidth.pixel * 2) }]}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={[styles.placeholder, { width: cardWidth - (borderWidth.pixel * 2), height: cardHeight - (borderWidth.pixel * 2) }]} />
+            )}
+          </View>
+        </View>
+      </NeuShadow>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    gap: spacing.xs,
+    borderWidth: borderWidth.pixel,
+    borderColor: homeColors.border,
+    backgroundColor: homeColors.bgCard,
   },
   imageWrapper: {
-    borderRadius: radius.lg,
     overflow: 'hidden',
-    backgroundColor: homeColors.border,
-    shadowColor: homeColors.shadowStrong,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
-    shadowRadius: 6,
-    elevation: 4,
+    backgroundColor: homeColors.bgElevated,
   },
-  image: {
-    borderRadius: radius.lg,
-  },
+  image: {},
   placeholder: {
-    backgroundColor: homeColors.border,
+    backgroundColor: homeColors.bgElevated,
   },
 });
 

@@ -7,3 +7,4 @@ export { BottomSheet } from './BottomSheet';
 export { EmptyState } from './EmptyState';
 export { MetaRow } from './MetaRow';
 export { StarRating } from './StarRating';
+export { NeuShadow } from './NeuShadow';

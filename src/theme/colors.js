@@ -30,56 +30,59 @@ export const colors = {
   transparent: 'transparent',
 };
 
-// Primary design tokens — modern light surfaces with Electric Indigo
+// Primary design tokens — Y2K / Neubrutalist OS aesthetic
 export const homeColors = {
   // Surfaces
-  bgMain: '#FAFBFE',
-  bgCard: '#FFFFFF',
-  bgElevated: '#F1F3F9',
-  bgOverlay: 'rgba(250, 251, 254, 0.95)',
-  bgSubtle: '#F5F6FA',
+  bgMain: '#00A896',        // Grid Teal — primary canvas
+  bgCard: '#C8B6FF',        // Soft Lavender — window/card surfaces
+  bgElevated: '#E8DEFF',    // Lighter lavender for elevated panels
+  bgOverlay: 'rgba(0, 168, 150, 0.92)',
+  bgSubtle: '#B8A4F0',      // Muted lavender for subtle backgrounds
+  bgWindow: '#FFFFFF',      // White interior for window content areas
 
-  // Accent system — Electric Indigo
-  accent: '#6366F1',
-  accentLight: 'rgba(99, 102, 241, 0.08)',
-  accentMedium: 'rgba(99, 102, 241, 0.15)',
-  accentDark: '#4F46E5',
-  accentPurple: '#6366F1',
-  accentPink: '#EC4899',
+  // Accent system — Retro Amber + Neon Magenta
+  accent: '#FF9F1C',        // Retro Amber — primary CTA
+  accentLight: 'rgba(255, 159, 28, 0.15)',
+  accentMedium: 'rgba(255, 159, 28, 0.3)',
+  accentDark: '#E8880A',    // Darker amber for pressed states
+  accentPurple: '#C8B6FF',  // Lavender (compat alias)
+  accentPink: '#F15BB5',    // Neon Magenta — badges, favorites, active highlights
 
   // Text hierarchy
-  textDark: '#0F172A',
-  textBody: '#334155',
-  textCaption: '#94A3B8',
-  textOnAccent: '#FFFFFF',
+  textDark: '#000000',      // Pure black for max contrast
+  textBody: '#1A1A1A',      // Near-black for body
+  textCaption: '#4A4A4A',   // Dark gray for captions (high contrast on lavender)
+  textOnAccent: '#000000',  // Black text on amber buttons
+  textOnTeal: '#FFFFFF',    // White text on teal background
+  textWindow: '#000000',    // Black text inside windows
 
-  // Borders — subtle, semi-transparent
-  border: '#E2E8F0',
-  borderSubtle: 'rgba(148, 163, 184, 0.2)',
+  // Borders — thick, deliberate, neubrutalist
+  border: '#000000',        // Pure black 3-4px borders
+  borderSubtle: '#000000',  // All borders are intentional and black
 
-  // Shadows
-  shadow: 'rgba(15, 23, 42, 0.04)',
-  shadowMedium: 'rgba(15, 23, 42, 0.08)',
-  shadowStrong: 'rgba(15, 23, 42, 0.12)',
-  shadowAccent: 'rgba(99, 102, 241, 0.2)',
+  // Shadows — hard offset, no blur
+  shadow: '#000000',
+  shadowMedium: '#000000',
+  shadowStrong: '#000000',
+  shadowAccent: '#000000',
 
   // Navigation
-  navBg: 'rgba(255, 255, 255, 0.95)',
-  navActive: '#6366F1',
-  navInactive: '#94A3B8',
-  navGlow: 'rgba(99, 102, 241, 0.25)',
+  navBg: '#C8B6FF',         // Lavender taskbar
+  navActive: '#F15BB5',     // Neon Magenta active tab
+  navInactive: '#000000',   // Black inactive icons
+  navGlow: 'rgba(241, 91, 181, 0.3)',
 
   // Status
   success: '#10B981',
-  warning: '#F59E0B',
+  warning: '#FF9F1C',       // Amber doubles as warning
   error: '#EF4444',
 
   // Legacy compat aliases
-  gradientStart: '#6366F1',
-  gradientEnd: '#818CF8',
-  textOnGradient: '#FFFFFF',
-  navCenterBtn: '#0F172A',
-  bgMain_old: '#F8F6FF',
+  gradientStart: '#FF9F1C',
+  gradientEnd: '#F15BB5',
+  textOnGradient: '#000000',
+  navCenterBtn: '#000000',
+  bgMain_old: '#00A896',
 };
 
 // Retro pixel theme (for pixel-art features, reader, etc.)

@@ -1,29 +1,34 @@
 /**
  * Typography Design Tokens
  *
- * Clean modern type scale with strict hierarchy.
- * Uses system font stack for crisp rendering; serif for display headings.
+ * Y2K / Neubrutalist OS type system.
+ * Headers & accents: Silkscreen / VT323 (retro pixel flavor)
+ * Body & book titles: Space Mono / JetBrains Mono (clean monospace readability)
+ * Pixel font preserved for badges and micro-labels.
  */
 
 export const fonts = {
-  pixel: 'PressStart2P',
-  system: undefined, // uses platform default (SF Pro / Roboto)
-  serif: 'serif',
-  mono: 'monospace',
+  pixel: 'PressStart2P',      // Micro-labels, badges, XP counters
+  heading: 'VT323',           // Window titles, section headers, retro accents
+  body: 'SpaceMono',          // Body text, book titles, readable monospace
+  bodyBold: 'SpaceMono-Bold', // Bold variant — use instead of fontWeight on Android
+  mono: 'SpaceMono',          // Code-style elements, metadata
+  system: undefined,           // Fallback to platform default
+  serif: 'SpaceMono',         // Override: monospace replaces serif for consistency
 };
 
 export const textSizes = {
   xxs: 10,
   xs: 11,
-  sm: 12,
+  sm: 13,
   md: 14,
   lg: 16,
   xl: 18,
   xxl: 20,
   h3: 22,
-  h2: 24,
-  h1: 28,
-  hero: 32,
+  h2: 26,
+  h1: 30,
+  hero: 36,
 };
 
 export const pixelTextSizes = {
@@ -42,7 +47,7 @@ export const lineHeights = {
   snug: 1.35,
   normal: 1.5,
   relaxed: 1.6,
-  loose: 2.0,
+  loose: 1.8,
 };
 
 export const fontWeights = {
@@ -53,11 +58,13 @@ export const fontWeights = {
 };
 
 /**
- * Letter spacing tokens for micro-labels and uppercase text.
+ * Letter spacing tokens — wider tracking for retro/pixel fonts,
+ * tighter for monospace body to keep density readable.
  */
 export const letterSpacing = {
-  tight: -0.5,
+  tight: -0.3,
   normal: 0,
   wide: 0.5,
   wider: 1.0,
+  retro: 1.5,   // For pixel font headers
 };

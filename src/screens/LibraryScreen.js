@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, TextInput, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { useUserBookLibraryStore } from '../features/library/store/userBookLibraryStore';
@@ -38,6 +38,8 @@ export default function LibraryScreen() {
   const [selectedTags, setSelectedTags] = useState([]);
   const [eReaderFilter, setEReaderFilter] = useState(null);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showCreateShelfModal, setShowCreateShelfModal] = useState(false);
+  const [newShelfName, setNewShelfName] = useState('');
 
   const allTabs = useMemo(() => {
     const customTabs = customShelves.map((s) => ({ key: s.id, label: s.label, color: s.color }));
@@ -184,19 +186,29 @@ export default function LibraryScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Library</Text>
-        <TouchableOpacity
-          style={styles.filterButton}
-          onPress={() => setShowFilterModal(!showFilterModal)}
-          accessibilityLabel="Toggle filters"
-          accessibilityRole="button"
-        >
-          <Text style={styles.filterButtonText}>Filters</Text>
-          {activeFiltersCount > 0 && (
-            <View style={styles.filterBadge}>
-              <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity
+            style={styles.addShelfButton}
+            onPress={() => setShowCreateShelfModal(true)}
+            accessibilityLabel="Create shelf"
+            accessibilityRole="button"
+          >
+            <Text style={styles.filterButtonText}>+ Shelf</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.filterButton}
+            onPress={() => setShowFilterModal(!showFilterModal)}
+            accessibilityLabel="Toggle filters"
+            accessibilityRole="button"
+          >
+            <Text style={styles.filterButtonText}>Filters</Text>
+            {activeFiltersCount > 0 && (
+              <View style={styles.filterBadge}>
+                <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Search input */}
@@ -268,6 +280,64 @@ export default function LibraryScreen() {
         onCreateShelf={handleCreateShelf}
         onDeleteShelf={handleDeleteShelf}
       />
+
+      {/* Create shelf modal */}
+      {showCreateShelfModal && (
+        <>
+          <Pressable style={styles.modalBackdrop} onPress={() => setShowCreateShelfModal(false)} />
+          <View style={styles.createShelfModal}>
+            <View style={styles.createShelfTitleBar}>
+              <Text style={styles.createShelfTitleText}>shelves.exe</Text>
+              <TouchableOpacity style={styles.createShelfCloseBtn} onPress={() => setShowCreateShelfModal(false)}>
+                <Text style={styles.createShelfCloseBtnText}>x</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.createShelfContent}>
+              <Text style={styles.createShelfSectionTitle}># Create New Shelf</Text>
+              <View style={styles.createShelfRow}>
+                <TextInput
+                  style={styles.createShelfInput}
+                  value={newShelfName}
+                  onChangeText={setNewShelfName}
+                  placeholder="Shelf name..."
+                  placeholderTextColor={homeColors.textCaption}
+                  maxLength={25}
+                  autoFocus
+                />
+                <TouchableOpacity
+                  style={[styles.createShelfBtn, !newShelfName.trim() && styles.createShelfBtnDisabled]}
+                  onPress={() => {
+                    if (newShelfName.trim()) {
+                      handleCreateShelf(newShelfName.trim());
+                      setNewShelfName('');
+                    }
+                  }}
+                  disabled={!newShelfName.trim()}
+                >
+                  <Text style={styles.createShelfBtnText}>Create</Text>
+                </TouchableOpacity>
+              </View>
+
+              {customShelves.length > 0 && (
+                <>
+                  <Text style={styles.createShelfSectionTitle}># Your Shelves</Text>
+                  <View style={styles.shelfList}>
+                    {customShelves.map(shelf => (
+                      <View key={shelf.id} style={styles.shelfItem}>
+                        <View style={[styles.shelfDot, { backgroundColor: shelf.color }]} />
+                        <Text style={styles.shelfLabel}>{shelf.label}</Text>
+                        <TouchableOpacity onPress={() => handleDeleteShelf(shelf.id)}>
+                          <Text style={styles.shelfDeleteText}>x</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              )}
+            </View>
+          </View>
+        </>
+      )}
 
       {/* Book grid */}
       {displayBooks.length === 0 ? (
@@ -491,5 +561,140 @@ const styles = StyleSheet.create({
   gridRow: {
     justifyContent: 'space-between',
     marginBottom: spacing.sm,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  addShelfButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    backgroundColor: '#FBCA1F',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRightWidth: 3,
+    borderBottomWidth: 3,
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 99,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  createShelfModal: {
+    position: 'absolute',
+    top: '30%',
+    left: spacing.xl,
+    right: spacing.xl,
+    zIndex: 100,
+    borderWidth: 3,
+    borderColor: '#000000',
+    backgroundColor: homeColors.bgCard,
+  },
+  createShelfTitleBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+    borderBottomWidth: 2,
+    borderBottomColor: '#000000',
+  },
+  createShelfTitleText: {
+    fontFamily: fonts.body,
+    fontSize: textSizes.xxs,
+    color: '#000000',
+  },
+  createShelfCloseBtn: {
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#000000',
+    backgroundColor: '#EF4444',
+  },
+  createShelfCloseBtnText: {
+    fontFamily: fonts.body,
+    fontSize: 10,
+    color: '#FFFFFF',
+    lineHeight: 12,
+  },
+  createShelfContent: {
+    padding: spacing.md,
+    backgroundColor: '#FFFFFF',
+    gap: spacing.sm,
+  },
+  createShelfInput: {
+    flex: 1,
+    fontFamily: fonts.body,
+    fontSize: textSizes.sm,
+    color: '#000000',
+    borderWidth: 2,
+    borderColor: '#000000',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    backgroundColor: '#FFFFFF',
+  },
+  createShelfBtn: {
+    backgroundColor: '#FBCA1F',
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRightWidth: 4,
+    borderBottomWidth: 4,
+  },
+  createShelfBtnDisabled: {
+    backgroundColor: '#CCCCCC',
+  },
+  createShelfBtnText: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.sm,
+    color: '#000000',
+  },
+  createShelfSectionTitle: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.xs,
+    color: '#000000',
+    marginBottom: spacing.xs,
+  },
+  createShelfRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  shelfList: {
+    gap: spacing.xs,
+  },
+  shelfItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: '#000000',
+    backgroundColor: '#FFFFFF',
+  },
+  shelfDot: {
+    width: 10,
+    height: 10,
+    borderWidth: 1,
+    borderColor: '#000000',
+  },
+  shelfLabel: {
+    flex: 1,
+    fontFamily: fonts.body,
+    fontSize: textSizes.xs,
+    color: '#000000',
+  },
+  shelfDeleteText: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.sm,
+    color: '#EF4444',
+    paddingHorizontal: spacing.xs,
   },
 });

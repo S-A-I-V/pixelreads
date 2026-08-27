@@ -94,41 +94,6 @@ export function FilterDropdown({ visible, onClose, tags, selectedTags, onToggleT
                 ))}
               </View>
             )}
-
-            <Text style={styles.sectionTitle}># Custom Shelves</Text>
-            <View style={styles.createRow}>
-              <TextInput
-                style={styles.createInput}
-                value={newShelfName}
-                onChangeText={setNewShelfName}
-                placeholder={CUSTOM_SHELF_INPUT_PLACEHOLDER}
-                placeholderTextColor={homeColors.textCaption}
-                maxLength={25}
-              />
-              <TouchableOpacity
-                style={[styles.createBtn, !newShelfName.trim() && styles.createBtnDisabled]}
-                onPress={handleCreateShelf}
-                disabled={!newShelfName.trim()}
-              >
-                <Text style={styles.createBtnText}>{CUSTOM_SHELF_BUTTON_CREATE}</Text>
-              </TouchableOpacity>
-            </View>
-
-            {customShelves.length === 0 ? (
-              <Text style={styles.emptyText}>No custom shelves yet</Text>
-            ) : (
-              <View style={styles.shelfList}>
-                {customShelves.map(shelf => (
-                  <View key={shelf.id} style={styles.shelfItem}>
-                    <View style={[styles.shelfDot, { backgroundColor: shelf.color }]} />
-                    <Text style={styles.shelfLabel}>{shelf.label}</Text>
-                    <TouchableOpacity onPress={() => confirmDeleteShelf(shelf)}>
-                      <MaterialCommunityIcons name="delete-outline" size={18} color={homeColors.error} />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </View>
-            )}
           </View>
         </ScrollView>
       </Animated.View>

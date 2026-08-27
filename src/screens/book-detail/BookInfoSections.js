@@ -115,11 +115,18 @@ export function ReadingProgressSection({ progress, currentPage, totalPages }) {
 }
 
 export function DescriptionSection({ description }) {
+  const [expanded, setExpanded] = React.useState(false);
+
   return (
     <SectionWindow title="description.txt">
-      <Text style={description ? styles.descText : styles.emptyText} numberOfLines={8}>
+      <Text style={description ? styles.descText : styles.emptyText} numberOfLines={expanded ? undefined : 6}>
         {description || 'No description available'}
       </Text>
+      {description && description.length > 150 && (
+        <TouchableOpacity onPress={() => setExpanded(!expanded)} style={styles.readMoreBtn}>
+          <Text style={styles.readMoreText}>{expanded ? '▲ Show less' : '▼ Read more'}</Text>
+        </TouchableOpacity>
+      )}
     </SectionWindow>
   );
 }
@@ -232,6 +239,20 @@ const styles = StyleSheet.create({
     fontSize: textSizes.xs,
     color: homeColors.textBody,
     lineHeight: textSizes.xs * 1.6,
+  },
+  readMoreBtn: {
+    marginTop: spacing.xs,
+    alignSelf: 'flex-start',
+    backgroundColor: '#FBCA1F',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderWidth: 2,
+    borderColor: '#000000',
+  },
+  readMoreText: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.xxs,
+    color: '#000000',
   },
 
   // Categories

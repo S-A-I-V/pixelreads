@@ -8,30 +8,30 @@ import {
   KeyboardAvoidingView,
   Platform,
   ImageBackground,
+  ActivityIndicator,
 } from 'react-native';
 
 import { useAuthLoginFormState } from '../hooks/useAuthLoginFormState';
 import {
   AUTH_SCREEN_TITLE_APP_NAME,
   AUTH_SCREEN_TAGLINE,
-  AUTH_INPUT_LABEL_EMAIL,
-  AUTH_INPUT_PLACEHOLDER_EMAIL,
-  AUTH_BUTTON_LABEL_LOGIN,
 } from '../constants/authFeatureConstants';
 
-// Analytics
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const analytics = require('../../../utils/analytics');
 
-// Background wallpaper
 const BG_IMAGE = require('../../../../assets/images/categories/app-bg.png');
 
 export function AuthLoginScreen(): React.JSX.Element {
   const {
     emailInputValue,
     setEmailInputValue,
+    passwordInputValue,
+    setPasswordInputValue,
     formErrorMessage,
+    isSignUpMode,
+    isLoading,
     handleLoginFormSubmit,
+    toggleMode,
   } = useAuthLoginFormState();
 
   useEffect(() => {
@@ -57,31 +57,42 @@ export function AuthLoginScreen(): React.JSX.Element {
             <View style={styles.logoContent}>
               <Text style={styles.appName}>{AUTH_SCREEN_TITLE_APP_NAME}</Text>
               <Text style={styles.tagline}>{AUTH_SCREEN_TAGLINE}</Text>
-              <Text style={styles.divider}>{'≻──────── ⋆✩⋆ ────────≺'}</Text>
             </View>
           </View>
 
           {/* Login form window */}
           <View style={styles.formWindow}>
             <View style={styles.formTitleBar}>
-              <Text style={styles.formTitleBarText}>login.exe</Text>
+              <Text style={styles.formTitleBarText}>{isSignUpMode ? 'signup.exe' : 'login.exe'}</Text>
             </View>
             <View style={styles.formContent}>
-              <Text style={styles.inputLabel}>{AUTH_INPUT_LABEL_EMAIL}</Text>
-
+              <Text style={styles.inputLabel}>Email</Text>
               <TextInput
                 style={styles.emailInput}
                 value={emailInputValue}
                 onChangeText={setEmailInputValue}
-                placeholder={AUTH_INPUT_PLACEHOLDER_EMAIL}
+                placeholder="you@example.com"
                 placeholderTextColor="#999999"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                returnKeyType="next"
+                accessibilityLabel="Email"
+              />
+
+              <Text style={styles.inputLabel}>Password</Text>
+              <TextInput
+                style={styles.emailInput}
+                value={passwordInputValue}
+                onChangeText={setPasswordInputValue}
+                placeholder="min 6 characters"
+                placeholderTextColor="#999999"
+                secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
                 returnKeyType="go"
                 onSubmitEditing={handleLoginFormSubmit}
-                accessibilityLabel={AUTH_INPUT_LABEL_EMAIL}
-                accessibilityHint="Enter your email address to login"
+                accessibilityLabel="Password"
               />
 
               {formErrorMessage ? (
@@ -92,10 +103,22 @@ export function AuthLoginScreen(): React.JSX.Element {
                 style={styles.loginButton}
                 onPress={handleLoginFormSubmit}
                 activeOpacity={0.8}
+                disabled={isLoading}
                 accessibilityRole="button"
-                accessibilityLabel={AUTH_BUTTON_LABEL_LOGIN}
               >
-                <Text style={styles.loginButtonText}>{AUTH_BUTTON_LABEL_LOGIN}</Text>
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#000000" />
+                ) : (
+                  <Text style={styles.loginButtonText}>
+                    {isSignUpMode ? 'Sign Up' : 'Login'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={toggleMode} style={styles.toggleBtn}>
+                <Text style={styles.toggleText}>
+                  {isSignUpMode ? 'Already have an account? Login' : "Don't have an account? Sign Up"}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -118,17 +141,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     gap: 16,
   },
-
-  // Logo window
   logoWindow: {
     borderWidth: 3,
     borderColor: '#000000',
     backgroundColor: 'transparent',
-    shadowColor: '#000000',
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 0,
     borderRightWidth: 6,
     borderBottomWidth: 6,
   },
@@ -140,7 +156,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderBottomWidth: 2,
     borderBottomColor: '#000000',
-    backgroundColor: 'rgba(200, 182, 255, 0.6)',
+    backgroundColor: 'rgba(200, 182, 255, 0.4)',
   },
   logoTitleBarText: {
     fontFamily: 'SpaceMono',
@@ -171,7 +187,7 @@ const styles = StyleSheet.create({
   },
   logoContent: {
     padding: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     gap: 6,
   },
@@ -185,14 +201,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#4A4A4A',
   },
-  divider: {
-    fontFamily: 'SpaceMono-Bold',
-    fontSize: 11,
-    color: '#000000',
-    marginTop: 4,
-  },
-
-  // Form window
   formWindow: {
     borderWidth: 3,
     borderColor: '#000000',
@@ -205,7 +213,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderBottomWidth: 2,
     borderBottomColor: '#000000',
-    backgroundColor: 'rgba(200, 182, 255, 0.6)',
+    backgroundColor: 'rgba(200, 182, 255, 0.4)',
   },
   formTitleBarText: {
     fontFamily: 'SpaceMono',
@@ -214,7 +222,7 @@ const styles = StyleSheet.create({
   },
   formContent: {
     padding: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     gap: 10,
   },
   inputLabel: {
@@ -230,7 +238,7 @@ const styles = StyleSheet.create({
     borderColor: '#000000',
     paddingHorizontal: 10,
     paddingVertical: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     minHeight: 40,
   },
   errorText: {
@@ -255,8 +263,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000000',
   },
-
-  // Footer
+  toggleBtn: {
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderWidth: 2,
+    borderColor: '#000000',
+    alignSelf: 'center',
+    marginTop: 4,
+  },
+  toggleText: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: 11,
+    color: '#000000',
+  },
   footer: {
     fontFamily: 'SpaceMono',
     fontSize: 10,

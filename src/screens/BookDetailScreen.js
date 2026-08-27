@@ -9,7 +9,7 @@ import { useUserBookLibraryStore } from '../features/library/store/userBookLibra
 import { useEpubReaderStore } from '../features/reader/store/epubReaderStore';
 import { trackScreenView, trackEpubImport, track, EventType, EventCategory } from '../utils/analytics';
 import { ScreenHeader } from '../components/ui';
-import { homeColors, spacing, radius, elevation, textSizes, fontWeights } from '../theme';
+import { homeColors, spacing, borderWidth, textSizes, fonts } from '../theme';
 
 import { HeroSection } from './book-detail/HeroSection';
 import { ShelfPicker } from './book-detail/ShelfPicker';

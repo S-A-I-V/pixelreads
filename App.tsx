@@ -1,3 +1,5 @@
+import 'react-native-url-polyfill/auto';
+
 /**
  * =========================================================================
  *  PixelReads App Entry Point
@@ -18,6 +20,7 @@ import * as Font from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { useAuthUserSessionStore } from './src/features/auth/store/authUserSessionStore';
 import { colors } from './src/theme';
 
 // Keep splash screen visible while fonts load
@@ -47,13 +50,14 @@ export default function PixelReadsAppRoot(): React.JSX.Element | null {
       try {
         await Font.loadAsync(PIXEL_FONT_ASSETS);
       } catch (fontLoadError) {
-        // Font load failed — app will fall back to system monospace
         console.warn(
           '[App] Font load failed, using fallback:',
           (fontLoadError as Error).message
         );
       } finally {
         setAreFontsLoaded(true);
+        // Restore Supabase session
+        await useAuthUserSessionStore.getState().restoreSession();
         await SplashScreen.hideAsync();
       }
     }
@@ -68,7 +72,7 @@ export default function PixelReadsAppRoot(): React.JSX.Element | null {
   return (
     <GestureHandlerRootView style={appRootStyles.gestureHandlerContainer}>
       <SafeAreaProvider>
-        <StatusBar style="light" backgroundColor={colors.bgDark} />
+        <StatusBar style="light" backgroundColor={colors.bgPrimary} />
         <RootNavigator />
       </SafeAreaProvider>
     </GestureHandlerRootView>
@@ -78,6 +82,6 @@ export default function PixelReadsAppRoot(): React.JSX.Element | null {
 const appRootStyles = StyleSheet.create({
   gestureHandlerContainer: {
     flex: 1,
-    backgroundColor: colors.bgDark,
+    backgroundColor: colors.bgPrimary,
   },
 });

@@ -118,3 +118,4 @@ pnpm-lock.yaml
 .sass-cache/
 *.css.map
 *.js.map
+scripts/

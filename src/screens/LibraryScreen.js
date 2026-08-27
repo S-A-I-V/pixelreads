@@ -8,7 +8,7 @@ import { SearchIcon } from '../components/icons';
 import { LibraryBookCard } from '../components/library/LibraryBookCard';
 import { EmptyState } from '../components/ui';
 import { FilterDropdown } from './library/FilterDropdown';
-import { homeColors, spacing, radius, elevation, borderWidth, textSizes, fontWeights, fonts } from '../theme';
+import { homeColors, spacing, radius, borderWidth, textSizes, fontWeights, fonts } from '../theme';
 
 const BUILT_IN_TABS = [
   { key: 'all', label: 'All' },

@@ -28,6 +28,7 @@ import type {
 // Analytics (will be converted to TypeScript later)
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const analytics = require('../../../utils/analytics');
+const { syncBookToSupabase, removeBookFromSupabase, updateBookInSupabase, updateBookTagsInSupabase, syncTagToSupabase, removeTagFromSupabase, syncShelfToSupabase, removeShelfFromSupabase } = require('../../../lib/supabaseSync');
 
 /**
  * Built-in shelf keys
@@ -344,6 +345,9 @@ export const useUserBookLibraryStore = create<UserBookLibraryStoreType>()(
           `[LibraryStore] Added "${bookData.title}" to ${targetShelf}` +
           (previousShelf ? ` (moved from ${previousShelf})` : '')
         );
+
+        // Sync to Supabase — pass the fully hydrated libraryEntry, not raw bookData
+        syncBookToSupabase(libraryEntry, targetShelf);
       },
 
       removeBookFromLibrary(bookId) {
@@ -369,6 +373,9 @@ export const useUserBookLibraryStore = create<UserBookLibraryStoreType>()(
           analytics.trackBookRemoveFromShelf(bookId, bookData.title, previousShelf);
           console.log(`[LibraryStore] Removed "${bookData.title}" from ${previousShelf}`);
         }
+
+        // Sync to Supabase
+        removeBookFromSupabase(bookId);
       },
 
       updateBookReadingProgress(bookId, progressPercent) {
@@ -397,6 +404,9 @@ export const useUserBookLibraryStore = create<UserBookLibraryStoreType>()(
             `[LibraryStore] Progress "${bookData?.title}": ${previousProgress}% → ${progressPercent}%`
           );
         }
+
+        // Sync to Supabase
+        updateBookInSupabase(bookId, { progress: progressPercent });
       },
 
       rateBookWithReview(bookId, starRating, reviewText) {
@@ -427,6 +437,9 @@ export const useUserBookLibraryStore = create<UserBookLibraryStoreType>()(
         console.log(
           `[LibraryStore] Rated "${bookData?.title}": ${previousRating}★ → ${starRating}★`
         );
+
+        // Sync to Supabase
+        updateBookInSupabase(bookId, { rating: starRating, review: reviewText || '' });
       },
 
       getBookCurrentShelf(bookId) {
@@ -559,6 +572,9 @@ export const useUserBookLibraryStore = create<UserBookLibraryStoreType>()(
         
         set({ tags: [...tags, newTag] });
         console.log(`[LibraryStore] Created tag: "${label}" (${uniqueId})`);
+
+        // Sync to Supabase
+        syncTagToSupabase(newTag);
         return newTag;
       },
 
@@ -582,6 +598,9 @@ export const useUserBookLibraryStore = create<UserBookLibraryStoreType>()(
           shelves: updatedShelves,
         });
         console.log(`[LibraryStore] Deleted tag: ${tagId}`);
+
+        // Sync to Supabase
+        removeTagFromSupabase(tagId);
       },
 
       updateTag(tagId, updates) {
@@ -612,6 +631,10 @@ export const useUserBookLibraryStore = create<UserBookLibraryStoreType>()(
 
         set({ shelves: updatedShelves });
         console.log(`[LibraryStore] Added tag "${tagId}" to "${book.title}"`);
+
+        // Sync tags to Supabase
+        const updatedBook = get().getBookById(bookId);
+        if (updatedBook) updateBookTagsInSupabase(bookId, updatedBook.tags || []);
       },
 
       removeTagFromBook(bookId, tagId) {
@@ -632,6 +655,10 @@ export const useUserBookLibraryStore = create<UserBookLibraryStoreType>()(
 
         set({ shelves: updatedShelves });
         console.log(`[LibraryStore] Removed tag "${tagId}" from "${book.title}"`);
+
+        // Sync tags to Supabase
+        const updatedBook = get().getBookById(bookId);
+        if (updatedBook) updateBookTagsInSupabase(bookId, updatedBook.tags || []);
       },
 
       getAllTags() {
@@ -663,6 +690,9 @@ export const useUserBookLibraryStore = create<UserBookLibraryStoreType>()(
           shelves: { ...shelves, [uniqueId]: [] },
         });
         console.log(`[LibraryStore] Created custom shelf: "${label}" (${uniqueId})`);
+
+        // Sync to Supabase
+        syncShelfToSupabase(newShelf);
         return newShelf;
       },
 
@@ -683,6 +713,9 @@ export const useUserBookLibraryStore = create<UserBookLibraryStoreType>()(
           shelves: updatedShelves,
         });
         console.log(`[LibraryStore] Deleted custom shelf: ${shelfId} (moved ${booksOnShelf.length} books to want_to_read)`);
+
+        // Sync to Supabase
+        removeShelfFromSupabase(shelfId);
       },
 
       updateCustomShelf(shelfId, updates) {

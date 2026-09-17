@@ -8,6 +8,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { useUserBookLibraryStore } from '../features/library/store/userBookLibraryStore';
 import { useEpubReaderStore } from '../features/reader/store/epubReaderStore';
 import { trackScreenView, trackEpubImport, track, EventType, EventCategory } from '../utils/analytics';
+import { uploadEpubToSupabase, deleteEpubFromSupabase } from '../lib/supabaseSync';
 import { ScreenHeader } from '../components/ui';
 import { homeColors, spacing, borderWidth, textSizes, fonts } from '../theme';
 
@@ -153,6 +154,10 @@ export default function BookDetailScreen() {
       saveBookUploadedFile(bookId, fileInfo);
       if (!shelf) addToShelf(book, 'reading');
 
+      uploadEpubToSupabase(bookId, destPath, file.name, file.size || 0).catch((e) =>
+        console.log('[Epub] Background upload failed:', e?.message)
+      );
+
       trackEpubImport(bookId, true, file.size || 0);
       Alert.alert('Success', 'EPUB imported! Tap "Read Now" to start reading.');
     } catch (error) {
@@ -175,9 +180,14 @@ export default function BookDetailScreen() {
             removeUploadedFile(bookId);
             removeBookUploadedFile(bookId);
             track(EventType.EPUB_DELETE, EventCategory.LIBRARY, { bookId });
+
+            deleteEpubFromSupabase(bookId).catch((e) =>
+              console.log('[Epub] Background delete failed:', e?.message)
+            );
           } catch (e) {
             removeUploadedFile(bookId);
             removeBookUploadedFile(bookId);
+            deleteEpubFromSupabase(bookId).catch(() => {});
           }
         }
       },
@@ -247,7 +257,6 @@ export default function BookDetailScreen() {
         <DetailDivider />
         <LinksSection book={book} onOpenLink={openLink} />
 
-        {/* EbookSection temporarily disabled
         <DetailDivider />
         <EbookSection
           uploadedFile={uploadedFile}
@@ -256,7 +265,6 @@ export default function BookDetailScreen() {
           onReadNow={() => navigation.navigate('Reader', { bookId })}
           onRemoveFile={handleRemoveFile}
         />
-        */}
         </>
         )}
       </ScrollView>

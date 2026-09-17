@@ -161,26 +161,173 @@ export async function pullAllDataFromSupabase() {
 
   logSync('PULL', 'all', { userId });
   try {
-    const [booksRes, tagsRes, shelvesRes] = await Promise.all([
+    const [booksRes, tagsRes, shelvesRes, epubsRes] = await Promise.all([
       supabase.from('user_books').select('*').eq('user_id', userId),
       supabase.from('user_tags').select('*').eq('user_id', userId),
       supabase.from('custom_shelves').select('*').eq('user_id', userId),
+      supabase.from('user_epub_files').select('book_id, storage_path, file_name, file_size, imported_at').eq('user_id', userId),
     ]);
 
     if (booksRes.error) logError('PULL', 'books', booksRes.error);
     if (tagsRes.error) logError('PULL', 'tags', tagsRes.error);
     if (shelvesRes.error) logError('PULL', 'shelves', shelvesRes.error);
+    if (epubsRes.error) logError('PULL', 'epubs', epubsRes.error);
 
     const result = {
       books: booksRes.data || [],
       tags: tagsRes.data || [],
       customShelves: shelvesRes.data || [],
+      epubFiles: epubsRes.data || [],
     };
 
-    logSync('PULL ✓', 'all', { books: result.books.length, tags: result.tags.length, shelves: result.customShelves.length });
+    logSync('PULL ✓', 'all', { books: result.books.length, tags: result.tags.length, shelves: result.customShelves.length, epubs: result.epubFiles.length });
     return result;
   } catch (e) {
     logError('PULL', 'all', e);
     return null;
+  }
+}
+
+// ─── EPUB Files ───────────────────────────────────────────────────────────
+
+const EPUB_BUCKET = 'epub-files';
+
+export async function uploadEpubToSupabase(bookId, localUri, fileName, fileSize) {
+  const userId = getUserId();
+  if (!userId) return null;
+
+  const storagePath = `${userId}/${bookId}.epub`;
+  logSync('UPLOAD', 'epub', { bookId, fileName, storagePath });
+
+  try {
+    const response = await fetch(localUri);
+    const blob = await response.blob();
+
+    const { error: uploadError } = await supabase.storage
+      .from(EPUB_BUCKET)
+      .upload(storagePath, blob, {
+        contentType: 'application/epub+zip',
+        upsert: true,
+      });
+
+    if (uploadError) {
+      logError('UPLOAD', `epub:${bookId}`, uploadError);
+      return null;
+    }
+
+    logSync('UPLOAD ✓', 'epub-storage', { storagePath });
+
+    const { error: dbError } = await supabase.from('user_epub_files').upsert(
+      {
+        user_id: userId,
+        book_id: bookId,
+        storage_path: storagePath,
+        file_name: fileName,
+        file_size: fileSize,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,book_id' }
+    );
+
+    if (dbError) logError('UPSERT', `epub-meta:${bookId}`, dbError);
+    else logSync('UPSERT ✓', 'epub-meta', { bookId, fileName });
+
+    return { storagePath };
+  } catch (e) {
+    logError('UPLOAD', `epub:${bookId}`, e);
+    return null;
+  }
+}
+
+export async function deleteEpubFromSupabase(bookId) {
+  const userId = getUserId();
+  if (!userId) return;
+
+  const storagePath = `${userId}/${bookId}.epub`;
+  logSync('DELETE', 'epub', { bookId, storagePath });
+
+  try {
+    const { error: storageErr } = await supabase.storage
+      .from(EPUB_BUCKET)
+      .remove([storagePath]);
+
+    if (storageErr) logError('DELETE', `epub-storage:${bookId}`, storageErr);
+    else logSync('DELETE ✓', 'epub-storage', { storagePath });
+
+    const { error: dbErr } = await supabase
+      .from('user_epub_files')
+      .delete()
+      .eq('user_id', userId)
+      .eq('book_id', bookId);
+
+    if (dbErr) logError('DELETE', `epub-meta:${bookId}`, dbErr);
+    else logSync('DELETE ✓', 'epub-meta', { bookId });
+  } catch (e) {
+    logError('DELETE', `epub:${bookId}`, e);
+  }
+}
+
+export async function downloadEpubFromSupabase(storagePath, localDestUri) {
+  logSync('DOWNLOAD', 'epub', { storagePath });
+
+  try {
+    const { data, error } = await supabase.storage
+      .from(EPUB_BUCKET)
+      .download(storagePath);
+
+    if (error || !data) {
+      logError('DOWNLOAD', `epub:${storagePath}`, error || { message: 'No data returned' });
+      return false;
+    }
+
+    const FileSystem = require('expo-file-system/legacy');
+    const reader = new FileReader();
+
+    await new Promise((resolve, reject) => {
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result.split(',')[1];
+          await FileSystem.writeAsStringAsync(localDestUri, base64, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          resolve();
+        } catch (writeErr) {
+          reject(writeErr);
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(data);
+    });
+
+    logSync('DOWNLOAD ✓', 'epub', { storagePath, localDestUri });
+    return true;
+  } catch (e) {
+    logError('DOWNLOAD', `epub:${storagePath}`, e);
+    return false;
+  }
+}
+
+export async function pullEpubFilesFromSupabase() {
+  const userId = getUserId();
+  if (!userId) return [];
+
+  logSync('PULL', 'epub-files', { userId });
+
+  try {
+    const { data, error } = await supabase
+      .from('user_epub_files')
+      .select('book_id, storage_path, file_name, file_size, imported_at')
+      .eq('user_id', userId);
+
+    if (error) {
+      logError('PULL', 'epub-files', error);
+      return [];
+    }
+
+    logSync('PULL ✓', 'epub-files', { count: data.length });
+    return data;
+  } catch (e) {
+    logError('PULL', 'epub-files', e);
+    return [];
   }
 }

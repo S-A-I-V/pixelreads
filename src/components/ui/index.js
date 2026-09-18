@@ -9,3 +9,4 @@ export { MetaRow } from './MetaRow';
 export { StarRating } from './StarRating';
 export { NeuShadow } from './NeuShadow';
 export { RetroProgressBar } from './RetroProgressBar';
+export { ConfettiBanner } from './ConfettiBanner';

@@ -4,10 +4,23 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { NeuShadow } from '../../components/ui/NeuShadow';
 import { RetroProgressBar } from '../../components/ui/RetroProgressBar';
+import { ConfettiBanner } from '../../components/ui/ConfettiBanner';
 import { SkeletonShimmer } from '../../components/home/SkeletonShimmer';
 import { homeColors, spacing, borderWidth, textSizes, fonts } from '../../theme';
 
 const BTN_HEIGHT = 40;
+
+function getButtonLabel(progress) {
+  if (progress >= 100) return 'Read Again';
+  if (progress > 0) return 'Continue';
+  return 'Read Now';
+}
+
+function getButtonIcon(progress) {
+  if (progress >= 100) return 'book-refresh';
+  if (progress > 0) return 'book-open-page-variant';
+  return 'book-open-page-variant';
+}
 
 export function EbookSection({
   uploadedFile,
@@ -39,7 +52,7 @@ export function EbookSection({
     return <EbookSectionSkeleton />;
   }
 
-  const hasProgress = !!uploadedFile;
+  const isComplete = progress >= 100;
 
   return (
     <NeuShadow offset={3}>
@@ -70,30 +83,35 @@ export function EbookSection({
                 </View>
               </View>
 
-              {hasProgress && (
-                <>
-                  <View style={styles.divider} />
-                  <View style={styles.progressSection}>
-                    <RetroProgressBar progress={progress} />
-                    {currentPage > 0 && totalPages > 0 && (
-                      <Text style={styles.pageText}>p.{currentPage}/{totalPages}</Text>
-                    )}
-                  </View>
-                </>
+              <View style={styles.divider} />
+
+              {isComplete ? (
+                <ConfettiBanner />
+              ) : (
+                <View style={styles.progressSection}>
+                  <RetroProgressBar progress={progress} />
+                  {currentPage > 0 && totalPages > 0 && (
+                    <Text style={styles.pageText}>p.{currentPage}/{totalPages}</Text>
+                  )}
+                </View>
               )}
 
               <View style={styles.divider} />
 
               <View style={styles.actionsRow}>
                 <TouchableOpacity
-                  style={styles.readNowBtn}
+                  style={[styles.readNowBtn, isComplete && styles.readNowBtnComplete]}
                   onPress={handleReadNow}
                   activeOpacity={0.8}
                   accessibilityRole="button"
-                  accessibilityLabel="Read this e-book now"
+                  accessibilityLabel={getButtonLabel(progress)}
                 >
-                  <MaterialCommunityIcons name="book-open-page-variant" size={16} color="#000000" />
-                  <Text style={styles.readNowText}>{hasProgress ? 'Continue' : 'Read Now'}</Text>
+                  <MaterialCommunityIcons
+                    name={getButtonIcon(progress)}
+                    size={16}
+                    color="#000000"
+                  />
+                  <Text style={styles.readNowText}>{getButtonLabel(progress)}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -271,6 +289,9 @@ const styles = StyleSheet.create({
     borderColor: '#000000',
     borderRightWidth: 5,
     borderBottomWidth: 5,
+  },
+  readNowBtnComplete: {
+    backgroundColor: homeColors.success,
   },
   readNowText: {
     fontFamily: 'SpaceMono-Bold',

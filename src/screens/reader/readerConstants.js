@@ -20,9 +20,15 @@ export const READER_THEMES = {
     bg: '#ffffff',
     text: '#1a1a1a',
     css: {
+      html: { background: '#ffffff' },
       body: { background: '#ffffff', color: '#1a1a1a' },
       p:    { color: '#1a1a1a' },
-      '*':  { color: '#1a1a1a' },
+      span: { color: '#1a1a1a' },
+      div:  { color: '#1a1a1a' },
+      h1:   { color: '#1a1a1a' },
+      h2:   { color: '#1a1a1a' },
+      h3:   { color: '#1a1a1a' },
+      a:    { color: '#3B82F6' },
     },
     chrome: {
       bg: homeColors.bgCard,           // #C8B6FF lavender
@@ -49,9 +55,15 @@ export const READER_THEMES = {
     bg: '#1a1a2e',
     text: '#e0e0e0',
     css: {
+      html: { background: '#1a1a2e !important' },
       body: { background: '#1a1a2e !important', color: '#e0e0e0 !important' },
       p:    { color: '#e0e0e0 !important' },
-      '*':  { color: '#e0e0e0 !important', background: 'transparent !important' },
+      span: { color: '#e0e0e0 !important' },
+      div:  { color: '#e0e0e0 !important' },
+      h1:   { color: '#e0e0e0 !important' },
+      h2:   { color: '#e0e0e0 !important' },
+      h3:   { color: '#e0e0e0 !important' },
+      a:    { color: '#8888CC !important' },
     },
     chrome: {
       bg: '#1E1E3A',                   // deep navy chrome
@@ -78,9 +90,15 @@ export const READER_THEMES = {
     bg: '#f4ecd8',
     text: '#5c4b37',
     css: {
+      html: { background: '#f4ecd8' },
       body: { background: '#f4ecd8', color: '#5c4b37' },
       p:    { color: '#5c4b37' },
-      '*':  { color: '#5c4b37' },
+      span: { color: '#5c4b37' },
+      div:  { color: '#5c4b37' },
+      h1:   { color: '#5c4b37' },
+      h2:   { color: '#5c4b37' },
+      h3:   { color: '#5c4b37' },
+      a:    { color: '#7A5C3A' },
     },
     chrome: {
       bg: '#D4C4A0',                   // warm tan chrome

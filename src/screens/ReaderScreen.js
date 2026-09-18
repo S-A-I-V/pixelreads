@@ -34,7 +34,7 @@ function ReaderContent({ bookId, fileUri, book }) {
     search, clearSearchResults, toc,
   } = useReader();
 
-  // Reader store (settings are user-level, reading data is per-book)
+  // Reader store
   const settings = useEpubReaderStore((s) => s.settings);
   const updateSettings = useEpubReaderStore((s) => s.updateSettings);
   const saveLocation = useEpubReaderStore((s) => s.saveLocation);
@@ -44,11 +44,11 @@ function ReaderContent({ bookId, fileUri, book }) {
   const storeAddBookmark = useEpubReaderStore((s) => s.addBookmark);
   const storeRemoveBookmark = useEpubReaderStore((s) => s.removeBookmark);
 
-  // Library store (for page info sync)
+  // Library store
   const updateBookPageInfo = useUserBookLibraryStore((s) => s.updateBookPageInfo);
   const saveBookReadingPosition = useUserBookLibraryStore((s) => s.saveBookReadingPosition);
 
-  // Local state — initialize from saved reading data so footer shows correct progress immediately
+  // Initialize from saved data
   const savedData = getReadingData(bookId);
   const [totalPages, setTotalPages] = useState(savedData.totalPages || 0);
   const [currentPage, setCurrentPage] = useState(savedData.currentPage || 0);
@@ -65,16 +65,17 @@ function ReaderContent({ bookId, fileUri, book }) {
   const [localLoading, setLocalLoading] = useState(true);
   const [tocData, setTocData] = useState([]);
 
-  // Reading time tracking + mount time for initial load guard
   const readerOpenTime = useRef(Date.now());
   const mountTime = useRef(Date.now());
 
-  // Active theme (with chrome colors for UI)
+  // Active theme
   const theme = READER_THEMES[settings.theme] || READER_THEMES.light;
+
+  // Show loading overlay during initial load
+  const showLoadingOverlay = localLoading;
 
   // ─── Effects ────────────────────────────────────────────────────────
 
-  // Track reader open/close + save reading time on unmount
   useEffect(() => {
     readerOpenTime.current = Date.now();
     trackReaderOpen(bookId, book?.title);
@@ -82,58 +83,38 @@ function ReaderContent({ bookId, fileUri, book }) {
       const durationMs = Date.now() - readerOpenTime.current;
       const durationSecs = Math.round(durationMs / 1000);
       trackReaderClose(bookId, durationMs, displayProgress);
-      // Persist cumulative reading time
-      if (durationSecs > 0) {
-        addReadingTime(bookId, durationSecs);
-      }
+      if (durationSecs > 0) addReadingTime(bookId, durationSecs);
     };
   }, [bookId]);
 
-  // Dismiss loading when epub.js is ready
   useEffect(() => {
     if (!isLoading) setLocalLoading(false);
   }, [isLoading]);
 
-  // Safety timeout for loading indicator
   useEffect(() => {
     const t = setTimeout(() => setLocalLoading(false), 4000);
     return () => clearTimeout(t);
   }, []);
-
-  // Position restore is handled by Reader's initialLocation prop.
 
   // ─── Handlers ───────────────────────────────────────────────────────
 
   const handleLocationChange = useCallback((total, loc) => {
     if (!loc?.start?.cfi) return;
 
-    // loc.start.index is the 0-based spine item index — most reliable incrementing value
     const spineIndex = (typeof loc.start.index === 'number') ? loc.start.index : 0;
-
-    // Use the book's actual page count from metadata for total, or track max spine index
     const bookPageCount = book?.pageCount || 0;
     const knownTotal = bookPageCount || totalPages || 0;
-
-    // Calculate percentage from spine index vs book page count
     const pct = knownTotal > 0 ? Math.min(100, Math.round((spineIndex / knownTotal) * 100)) : 0;
 
-    // During first 3 seconds, skip 0-progress saves if user had real saved progress
+    // Guard: skip 0-progress during initial load if user had real saved progress
     if (spineIndex === 0 && (Date.now() - mountTime.current < 3000) && savedData.progress > 0) return;
 
-    // Save to reader store (syncs to Supabase)
     saveLocation(bookId, loc.start.cfi, pct);
-
-    // Update local display
     setDisplayProgress(pct);
     setCurrentPage(spineIndex);
-    if (knownTotal > 0 && knownTotal !== totalPages) {
-      setTotalPages(knownTotal);
-    }
-
-    // Update page info in reader store
+    if (knownTotal > 0 && knownTotal !== totalPages) setTotalPages(knownTotal);
     updatePageInfo(bookId, spineIndex, knownTotal);
 
-    // Sync to library store (for book card progress display)
     if (Math.abs(pct - lastSavedProgress.current) >= 1) {
       updateBookPageInfo(bookId, spineIndex, knownTotal);
       saveBookReadingPosition(bookId, spineIndex);
@@ -181,16 +162,21 @@ function ReaderContent({ bookId, fileUri, book }) {
 
   const handleChangeTheme = useCallback((t) => {
     const prevTheme = settings.theme;
-    // Save current position before theme change (epub.js re-renders)
     const savedCfi = currentLocation?.start?.cfi;
+
+    // Close settings modal before switching
+    setShowSettings(false);
+
     updateSettings({ theme: t.key });
     changeTheme(t.css);
-    // Restore position after epub.js finishes re-rendering
+
+    // Restore position after epub.js re-renders
     if (savedCfi) {
-      setTimeout(() => goToLocation(savedCfi), 300);
+      setTimeout(() => goToLocation(savedCfi), 500);
     }
+
     trackThemeChange(bookId, t.key, prevTheme);
-  }, [settings.theme, bookId]);
+  }, [settings.theme, bookId, currentLocation]);
 
   const handleSearch = useCallback(() => {
     if (searchQuery.trim()) search(searchQuery);
@@ -219,7 +205,7 @@ function ReaderContent({ bookId, fileUri, book }) {
         onSettings={() => setShowSettings(true)}
       />
 
-      <View style={{ width: SCREEN_WIDTH, height: readerH }}>
+      <View style={{ width: SCREEN_WIDTH, height: readerH, backgroundColor: theme.bg }}>
         <Reader
           src={fileUri}
           fileSystem={useFileSystem}
@@ -232,6 +218,12 @@ function ReaderContent({ bookId, fileUri, book }) {
           flow={settings.flow || 'paginated'}
           initialLocation={savedData.location || undefined}
           initialAnnotations={annotations}
+          renderOpeningBookComponent={() => (
+            <View style={{ flex: 1, backgroundColor: theme.bg, justifyContent: 'center', alignItems: 'center', gap: 12 }}>
+              <ActivityIndicator size="large" color={theme.chrome.accent} />
+              <Text style={{ fontFamily: 'SpaceMono-Bold', fontSize: 14, color: theme.chrome.text }}>Opening book...</Text>
+            </View>
+          )}
           onLocationChange={handleLocationChange}
           onPress={() => setShowUI((v) => !v)}
           onReady={() => setLocalLoading(false)}
@@ -254,16 +246,16 @@ function ReaderContent({ bookId, fileUri, book }) {
         onBookmarks={() => setShowBookmarks(true)}
       />
 
-      {/* Loading overlay — retro style */}
-      {localLoading && (
-        <View style={styles.loadingOverlay}>
-          <View style={styles.loadingWindow}>
-            <View style={styles.loadingTitleBar}>
-              <Text style={styles.loadingTitleText}>loading.exe</Text>
+      {/* Loading overlay — covers white flash during initial load AND theme switch */}
+      {showLoadingOverlay && (
+        <View style={[styles.loadingOverlay, { backgroundColor: theme.bg }]}>
+          <View style={[styles.loadingWindow, { backgroundColor: theme.chrome.bg, borderColor: theme.chrome.border }]}>
+            <View style={[styles.loadingTitleBar, { borderBottomColor: theme.chrome.border }]}>
+              <Text style={[styles.loadingTitleText, { color: theme.chrome.text }]}>loading.exe</Text>
             </View>
-            <View style={styles.loadingContent}>
-              <ActivityIndicator size="large" color={homeColors.accent} />
-              <Text style={styles.loadingText}>Opening book...</Text>
+            <View style={[styles.loadingContent, { backgroundColor: theme.chrome.contentBg }]}>
+              <ActivityIndicator size="large" color={theme.chrome.accent} />
+              <Text style={[styles.loadingText, { color: theme.chrome.text }]}>Opening book...</Text>
             </View>
           </View>
         </View>
@@ -308,7 +300,7 @@ function ReaderContent({ bookId, fileUri, book }) {
   );
 }
 
-// ─── Reader Screen (outer, handles file check + provider) ────────────────────
+// ─── Reader Screen (outer) ───────────────────────────────────────────────────
 
 export default function ReaderScreen() {
   const route = useRoute();
@@ -322,11 +314,9 @@ export default function ReaderScreen() {
   const book = getBook(bookId);
   const fileInfo = getUploadedFile(bookId);
 
-  // No file — retro empty state
   if (!fileInfo?.uri) {
     return (
       <View style={[styles.screen, styles.emptyScreen, { paddingTop: insets.top }]}>
-        {/* NeuShadow-style manual shadow */}
         <View style={styles.emptyWindowShadow} />
         <View style={styles.emptyWindow}>
           <View style={styles.emptyTitleBar}>
@@ -345,9 +335,7 @@ export default function ReaderScreen() {
               <MaterialCommunityIcons name="book-off-outline" size={28} color="#000000" />
             </View>
             <Text style={styles.emptyTitle}>No E-Book File</Text>
-            <Text style={styles.emptyMsg}>
-              Import an EPUB from the book detail page first.
-            </Text>
+            <Text style={styles.emptyMsg}>Import an EPUB from the book detail page first.</Text>
             <TouchableOpacity
               style={styles.emptyBackBtn}
               onPress={() => navigation.goBack()}
@@ -373,48 +361,40 @@ export default function ReaderScreen() {
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
+  screen: { flex: 1 },
 
-  // ─── Loading overlay (retro window) ─────────────────────────────────
+  // Loading overlay — fully opaque, theme.bg covers everything
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.xl,
+    zIndex: 10,
   },
   loadingWindow: {
     borderWidth: borderWidth.pixel,
-    borderColor: '#000000',
-    backgroundColor: homeColors.bgCard,
     minWidth: 220,
   },
   loadingTitleBar: {
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderBottomWidth: borderWidth.normal,
-    borderBottomColor: '#000000',
   },
   loadingTitleText: {
     fontFamily: 'SpaceMono',
     fontSize: textSizes.xxs,
-    color: '#000000',
   },
   loadingContent: {
     padding: spacing.xl,
-    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     gap: spacing.md,
   },
   loadingText: {
     fontFamily: 'SpaceMono-Bold',
     fontSize: textSizes.sm,
-    color: '#000000',
   },
 
-  // ─── Empty state (no file) ──────────────────────────────────────────
+  // Empty state
   emptyScreen: {
     backgroundColor: homeColors.bgMain,
     justifyContent: 'center',

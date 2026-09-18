@@ -19,7 +19,6 @@ import { TagsModal } from './book-detail/TagsModal';
 import { BookDetailSkeleton } from './book-detail/BookDetailSkeleton';
 import {
   TagsSection,
-  ReadingProgressSection,
   DescriptionSection,
   CategoriesSection,
   PublicationDetails,
@@ -237,17 +236,6 @@ export default function BookDetailScreen() {
           </>
         )}
 
-        {shelf && hasEpub && (
-          <>
-            <DetailDivider />
-            <ReadingProgressSection
-              progress={stored?.progress ?? 0}
-              currentPage={stored?.currentPage}
-              totalPages={stored?.totalPages}
-            />
-          </>
-        )}
-
         <DetailDivider />
         <DescriptionSection description={rawDesc.length > 0 ? rawDesc : null} />
         <DetailDivider />
@@ -264,6 +252,9 @@ export default function BookDetailScreen() {
           onImport={handleImportEpub}
           onReadNow={() => navigation.navigate('Reader', { bookId })}
           onRemoveFile={handleRemoveFile}
+          progress={stored?.progress ?? 0}
+          currentPage={stored?.currentPage}
+          totalPages={stored?.totalPages}
         />
         </>
         )}

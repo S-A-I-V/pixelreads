@@ -3,12 +3,23 @@ import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'rea
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { NeuShadow } from '../../components/ui/NeuShadow';
+import { RetroProgressBar } from '../../components/ui/RetroProgressBar';
 import { SkeletonShimmer } from '../../components/home/SkeletonShimmer';
 import { homeColors, spacing, borderWidth, textSizes, fonts } from '../../theme';
 
 const BTN_HEIGHT = 40;
 
-export function EbookSection({ uploadedFile, importing, onImport, onReadNow, onRemoveFile, loading }) {
+export function EbookSection({
+  uploadedFile,
+  importing,
+  onImport,
+  onReadNow,
+  onRemoveFile,
+  loading,
+  progress = 0,
+  currentPage,
+  totalPages,
+}) {
   const handleImport = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onImport?.();
@@ -27,6 +38,8 @@ export function EbookSection({ uploadedFile, importing, onImport, onReadNow, onR
   if (loading) {
     return <EbookSectionSkeleton />;
   }
+
+  const hasProgress = !!uploadedFile;
 
   return (
     <NeuShadow offset={3}>
@@ -57,6 +70,18 @@ export function EbookSection({ uploadedFile, importing, onImport, onReadNow, onR
                 </View>
               </View>
 
+              {hasProgress && (
+                <>
+                  <View style={styles.divider} />
+                  <View style={styles.progressSection}>
+                    <RetroProgressBar progress={progress} />
+                    {currentPage > 0 && totalPages > 0 && (
+                      <Text style={styles.pageText}>p.{currentPage}/{totalPages}</Text>
+                    )}
+                  </View>
+                </>
+              )}
+
               <View style={styles.divider} />
 
               <View style={styles.actionsRow}>
@@ -68,7 +93,7 @@ export function EbookSection({ uploadedFile, importing, onImport, onReadNow, onR
                   accessibilityLabel="Read this e-book now"
                 >
                   <MaterialCommunityIcons name="book-open-page-variant" size={16} color="#000000" />
-                  <Text style={styles.readNowText}>Read Now</Text>
+                  <Text style={styles.readNowText}>{hasProgress ? 'Continue' : 'Read Now'}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -219,6 +244,15 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: homeColors.border,
     opacity: 0.15,
+  },
+  progressSection: {
+    gap: spacing.xs,
+  },
+  pageText: {
+    fontFamily: fonts.body,
+    fontSize: textSizes.xxs,
+    color: homeColors.textCaption,
+    textAlign: 'right',
   },
   actionsRow: {
     flexDirection: 'row',

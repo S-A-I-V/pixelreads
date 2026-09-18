@@ -8,3 +8,4 @@ export { EmptyState } from './EmptyState';
 export { MetaRow } from './MetaRow';
 export { StarRating } from './StarRating';
 export { NeuShadow } from './NeuShadow';
+export { RetroProgressBar } from './RetroProgressBar';

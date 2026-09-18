@@ -58,6 +58,24 @@ export const useAuthUserSessionStore = create<AuthUserSessionStoreType>()(
           });
 
           analytics.trackLogin('email');
+
+          // Hydrate reader store from Supabase after successful login
+          try {
+            const { pullAllDataFromSupabase } = require('../../../lib/supabaseSync');
+            const { useEpubReaderStore } = require('../../reader/store/epubReaderStore');
+            const pulledData = await pullAllDataFromSupabase();
+            if (pulledData) {
+              useEpubReaderStore.getState().hydrateFromSupabase({
+                readerPreferences: pulledData.readerPreferences,
+                readingProgress: pulledData.readingProgress,
+                bookmarks: pulledData.bookmarks,
+                annotations: pulledData.annotations,
+              });
+            }
+          } catch (hydrationErr: any) {
+            console.warn('[Auth] Reader hydration after login failed:', hydrationErr?.message);
+          }
+
           return true;
         } catch (e: any) {
           set({ isLoading: false, error: e.message || 'Login failed' });

@@ -153,6 +153,198 @@ export async function removeShelfFromSupabase(shelfId) {
   } catch (e) { logError('DELETE', `shelf:${shelfId}`, e); }
 }
 
+// ─── Reader Preferences (user-level settings) ────────────────────────────
+
+export async function syncReaderPreferencesToSupabase(preferences) {
+  const userId = getUserId();
+  if (!userId) return;
+
+  logSync('UPSERT', 'reader-prefs', { theme: preferences.theme, fontSize: preferences.fontSize });
+  try {
+    const { error } = await supabase.from('user_reader_preferences').upsert(
+      {
+        user_id: userId,
+        theme: preferences.theme || 'light',
+        font_size: preferences.fontSize || 100,
+        font_family: preferences.fontFamily || 'default',
+        line_height: preferences.lineHeight || 1.5,
+        flow: preferences.flow || 'paginated',
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id' }
+    );
+    if (error) logError('UPSERT', 'reader-prefs', error);
+    else logSync('UPSERT ✓', 'reader-prefs', { theme: preferences.theme });
+  } catch (e) { logError('UPSERT', 'reader-prefs', e); }
+}
+
+// ─── Reading Progress (per-book position & time) ─────────────────────────
+
+export async function syncReadingProgressToSupabase(bookId, progressData) {
+  const userId = getUserId();
+  if (!userId) return;
+
+  logSync('UPSERT', 'reading-progress', { bookId, progress: progressData.progressPercent });
+  try {
+    const { error } = await supabase.from('user_reading_progress').upsert(
+      {
+        user_id: userId,
+        book_id: bookId,
+        cfi_location: progressData.cfiLocation || null,
+        progress_percent: progressData.progressPercent || 0,
+        current_page: progressData.currentPage || 0,
+        total_pages: progressData.totalPages || 0,
+        total_reading_time_secs: progressData.totalReadingTimeSecs || 0,
+        last_read_at: progressData.lastReadAt || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,book_id' }
+    );
+    if (error) logError('UPSERT', `reading-progress:${bookId}`, error);
+    else logSync('UPSERT ✓', 'reading-progress', { bookId });
+  } catch (e) { logError('UPSERT', `reading-progress:${bookId}`, e); }
+}
+
+export async function removeReadingProgressFromSupabase(bookId) {
+  const userId = getUserId();
+  if (!userId) return;
+
+  logSync('DELETE', 'reading-progress', { bookId });
+  try {
+    const { error } = await supabase.from('user_reading_progress')
+      .delete().eq('user_id', userId).eq('book_id', bookId);
+    if (error) logError('DELETE', `reading-progress:${bookId}`, error);
+    else logSync('DELETE ✓', 'reading-progress', { bookId });
+  } catch (e) { logError('DELETE', `reading-progress:${bookId}`, e); }
+}
+
+// ─── Bookmarks (per-book, many per book) ─────────────────────────────────
+
+export async function syncBookmarkToSupabase(bookId, bookmark) {
+  const userId = getUserId();
+  if (!userId) return;
+
+  // Skip if not a valid UUID (legacy local-only bookmarks)
+  if (!bookmark.id || !String(bookmark.id).match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+    logSync('SKIP', 'bookmark-sync', { bookId, reason: 'non-UUID ID' });
+    return;
+  }
+
+  logSync('UPSERT', 'bookmark', { bookId, chapter: bookmark.chapter });
+  try {
+    const { error } = await supabase.from('user_bookmarks').upsert(
+      {
+        id: bookmark.id,
+        user_id: userId,
+        book_id: bookId,
+        cfi_location: bookmark.location,
+        chapter_label: bookmark.chapter || '',
+        created_at: bookmark.createdAt || new Date().toISOString(),
+      },
+      { onConflict: 'user_id,book_id,cfi_location' }
+    );
+    if (error) logError('UPSERT', `bookmark:${bookId}`, error);
+    else logSync('UPSERT ✓', 'bookmark', { bookId, chapter: bookmark.chapter });
+  } catch (e) { logError('UPSERT', `bookmark:${bookId}`, e); }
+}
+
+export async function removeBookmarkFromSupabase(bookmarkId) {
+  const userId = getUserId();
+  if (!userId) return;
+
+  // Skip if not a valid UUID (legacy local-only bookmarks)
+  if (!bookmarkId || !String(bookmarkId).match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+    logSync('SKIP', 'bookmark-delete', { bookmarkId, reason: 'non-UUID ID' });
+    return;
+  }
+
+  logSync('DELETE', 'bookmark', { bookmarkId });
+  try {
+    const { error } = await supabase.from('user_bookmarks')
+      .delete().eq('user_id', userId).eq('id', bookmarkId);
+    if (error) logError('DELETE', `bookmark:${bookmarkId}`, error);
+    else logSync('DELETE ✓', 'bookmark', { bookmarkId });
+  } catch (e) { logError('DELETE', `bookmark:${bookmarkId}`, e); }
+}
+
+export async function removeAllBookmarksForBookFromSupabase(bookId) {
+  const userId = getUserId();
+  if (!userId) return;
+
+  logSync('DELETE_ALL', 'bookmarks', { bookId });
+  try {
+    const { error } = await supabase.from('user_bookmarks')
+      .delete().eq('user_id', userId).eq('book_id', bookId);
+    if (error) logError('DELETE_ALL', `bookmarks:${bookId}`, error);
+    else logSync('DELETE_ALL ✓', 'bookmarks', { bookId });
+  } catch (e) { logError('DELETE_ALL', `bookmarks:${bookId}`, e); }
+}
+
+// ─── Annotations (per-book, many per book) ───────────────────────────────
+
+export async function syncAnnotationToSupabase(bookId, annotation) {
+  const userId = getUserId();
+  if (!userId) return;
+
+  // Skip if not a valid UUID (legacy local-only annotations)
+  if (!annotation.id || !String(annotation.id).match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+    logSync('SKIP', 'annotation-sync', { bookId, reason: 'non-UUID ID' });
+    return;
+  }
+
+  logSync('UPSERT', 'annotation', { bookId, type: annotation.type, color: annotation.color });
+  try {
+    const { error } = await supabase.from('user_annotations').upsert(
+      {
+        id: annotation.id,
+        user_id: userId,
+        book_id: bookId,
+        cfi_range: annotation.cfiRange,
+        selected_text: annotation.text || '',
+        color: annotation.color || '#ffeb3b',
+        annotation_type: annotation.type || 'highlight',
+        note_text: annotation.note || null,
+        created_at: annotation.createdAt || new Date().toISOString(),
+      },
+      { onConflict: 'user_id,book_id,cfi_range' }
+    );
+    if (error) logError('UPSERT', `annotation:${bookId}`, error);
+    else logSync('UPSERT ✓', 'annotation', { bookId, type: annotation.type });
+  } catch (e) { logError('UPSERT', `annotation:${bookId}`, e); }
+}
+
+export async function removeAnnotationFromSupabase(annotationId) {
+  const userId = getUserId();
+  if (!userId) return;
+
+  // Skip if not a valid UUID (legacy local-only annotations)
+  if (!annotationId || !String(annotationId).match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+    logSync('SKIP', 'annotation-delete', { annotationId, reason: 'non-UUID ID' });
+    return;
+  }
+
+  logSync('DELETE', 'annotation', { annotationId });
+  try {
+    const { error } = await supabase.from('user_annotations')
+      .delete().eq('user_id', userId).eq('id', annotationId);
+    if (error) logError('DELETE', `annotation:${annotationId}`, error);
+    else logSync('DELETE ✓', 'annotation', { annotationId });
+  } catch (e) { logError('DELETE', `annotation:${annotationId}`, e); }
+}
+
+export async function removeAllAnnotationsForBookFromSupabase(bookId) {
+  const userId = getUserId();
+  if (!userId) return;
+
+  logSync('DELETE_ALL', 'annotations', { bookId });
+  try {
+    const { error } = await supabase.from('user_annotations')
+      .delete().eq('user_id', userId).eq('book_id', bookId);
+    if (error) logError('DELETE_ALL', `annotations:${bookId}`, error);
+    else logSync('DELETE_ALL ✓', 'annotations', { bookId });
+  } catch (e) { logError('DELETE_ALL', `annotations:${bookId}`, e); }
+}
+
 // ─── Full Pull (hydration on login) ──────────────────────────────────────
 
 export async function pullAllDataFromSupabase() {
@@ -161,26 +353,50 @@ export async function pullAllDataFromSupabase() {
 
   logSync('PULL', 'all', { userId });
   try {
-    const [booksRes, tagsRes, shelvesRes, epubsRes] = await Promise.all([
+    const [
+      booksRes, tagsRes, shelvesRes, epubsRes,
+      readerPrefsRes, readingProgressRes, bookmarksRes, annotationsRes,
+    ] = await Promise.all([
       supabase.from('user_books').select('*').eq('user_id', userId),
       supabase.from('user_tags').select('*').eq('user_id', userId),
       supabase.from('custom_shelves').select('*').eq('user_id', userId),
       supabase.from('user_epub_files').select('book_id, storage_path, file_name, file_size, imported_at').eq('user_id', userId),
+      supabase.from('user_reader_preferences').select('*').eq('user_id', userId).maybeSingle(),
+      supabase.from('user_reading_progress').select('*').eq('user_id', userId),
+      supabase.from('user_bookmarks').select('*').eq('user_id', userId),
+      supabase.from('user_annotations').select('*').eq('user_id', userId),
     ]);
 
     if (booksRes.error) logError('PULL', 'books', booksRes.error);
     if (tagsRes.error) logError('PULL', 'tags', tagsRes.error);
     if (shelvesRes.error) logError('PULL', 'shelves', shelvesRes.error);
     if (epubsRes.error) logError('PULL', 'epubs', epubsRes.error);
+    if (readerPrefsRes.error) logError('PULL', 'reader-prefs', readerPrefsRes.error);
+    if (readingProgressRes.error) logError('PULL', 'reading-progress', readingProgressRes.error);
+    if (bookmarksRes.error) logError('PULL', 'bookmarks', bookmarksRes.error);
+    if (annotationsRes.error) logError('PULL', 'annotations', annotationsRes.error);
 
     const result = {
       books: booksRes.data || [],
       tags: tagsRes.data || [],
       customShelves: shelvesRes.data || [],
       epubFiles: epubsRes.data || [],
+      readerPreferences: readerPrefsRes.data || null,
+      readingProgress: readingProgressRes.data || [],
+      bookmarks: bookmarksRes.data || [],
+      annotations: annotationsRes.data || [],
     };
 
-    logSync('PULL ✓', 'all', { books: result.books.length, tags: result.tags.length, shelves: result.customShelves.length, epubs: result.epubFiles.length });
+    logSync('PULL ✓', 'all', {
+      books: result.books.length,
+      tags: result.tags.length,
+      shelves: result.customShelves.length,
+      epubs: result.epubFiles.length,
+      readerPrefs: result.readerPreferences ? 'yes' : 'no',
+      progress: result.readingProgress.length,
+      bookmarks: result.bookmarks.length,
+      annotations: result.annotations.length,
+    });
     return result;
   } catch (e) {
     logError('PULL', 'all', e);

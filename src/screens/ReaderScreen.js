@@ -9,41 +9,51 @@ import { useEpubReaderStore } from '../features/reader/store/epubReaderStore';
 import { useUserBookLibraryStore } from '../features/library/store/userBookLibraryStore';
 import {
   trackReaderOpen, trackReaderClose, trackPageTurn, trackBookmark,
-  trackHighlight, trackThemeChange, track, EventType, EventCategory,
+  trackThemeChange, track, EventType, EventCategory,
 } from '../utils/analytics';
-import { colors } from '../theme';
+import { homeColors, spacing, borderWidth, textSizes } from '../theme';
 
 import { READER_THEMES, FONT_SIZE_STEPS } from './reader/readerConstants';
 import { ReaderHeader } from './reader/ReaderHeader';
 import { ReaderFooter } from './reader/ReaderFooter';
-import { HighlightMenu } from './reader/HighlightMenu';
 import { TOCModal, SettingsModal, BookmarksModal, SearchModal } from './reader/ReaderModals';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// ─── Reader Content (inner, uses useReader hook) ─────────────────────────────
 
 function ReaderContent({ bookId, fileUri, book }) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
+  // epub.js hook
   const {
     changeFontSize, changeTheme, goToLocation, currentLocation,
-    progress, isLoading, section, addAnnotation, annotations,
-    addBookmark, removeBookmark, bookmarks, isBookmarked, search, clearSearchResults, toc,
+    isLoading, section, annotations,
+    addBookmark, removeBookmark, bookmarks, isBookmarked,
+    search, clearSearchResults, toc,
   } = useReader();
 
+  // Reader store (settings are user-level, reading data is per-book)
   const settings = useEpubReaderStore((s) => s.settings);
   const updateSettings = useEpubReaderStore((s) => s.updateSettings);
   const saveLocation = useEpubReaderStore((s) => s.saveLocation);
   const getReadingData = useEpubReaderStore((s) => s.getReadingData);
+  const addReadingTime = useEpubReaderStore((s) => s.addReadingTime);
+  const updatePageInfo = useEpubReaderStore((s) => s.updatePageInfo);
   const storeAddBookmark = useEpubReaderStore((s) => s.addBookmark);
   const storeRemoveBookmark = useEpubReaderStore((s) => s.removeBookmark);
-  const storeAddAnnotation = useEpubReaderStore((s) => s.addAnnotation);
+
+  // Library store (for page info sync)
   const updateBookPageInfo = useUserBookLibraryStore((s) => s.updateBookPageInfo);
   const saveBookReadingPosition = useUserBookLibraryStore((s) => s.saveBookReadingPosition);
 
-  const [totalPages, setTotalPages] = useState(0);
-  const [currentPage, setCurrentPage] = useState(0);
-  const lastSavedProgress = useRef(0);
+  // Local state — initialize from saved reading data so footer shows correct progress immediately
+  const savedData = getReadingData(bookId);
+  const [totalPages, setTotalPages] = useState(savedData.totalPages || 0);
+  const [currentPage, setCurrentPage] = useState(savedData.currentPage || 0);
+  const [displayProgress, setDisplayProgress] = useState(savedData.progress || 0);
+  const lastSavedProgress = useRef(savedData.progress || 0);
 
   const [showUI, setShowUI] = useState(true);
   const [showTOC, setShowTOC] = useState(false);
@@ -52,61 +62,96 @@ function ReaderContent({ bookId, fileUri, book }) {
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [selectedText, setSelectedText] = useState(null);
   const [localLoading, setLocalLoading] = useState(true);
   const [tocData, setTocData] = useState([]);
-  const readerOpenTime = useRef(Date.now());
 
+  // Reading time tracking + mount time for initial load guard
+  const readerOpenTime = useRef(Date.now());
+  const mountTime = useRef(Date.now());
+
+  // Active theme (with chrome colors for UI)
   const theme = READER_THEMES[settings.theme] || READER_THEMES.light;
 
+  // ─── Effects ────────────────────────────────────────────────────────
+
+  // Track reader open/close + save reading time on unmount
   useEffect(() => {
     readerOpenTime.current = Date.now();
     trackReaderOpen(bookId, book?.title);
     return () => {
-      const duration = Date.now() - readerOpenTime.current;
-      trackReaderClose(bookId, duration, Math.round(progress));
+      const durationMs = Date.now() - readerOpenTime.current;
+      const durationSecs = Math.round(durationMs / 1000);
+      trackReaderClose(bookId, durationMs, displayProgress);
+      // Persist cumulative reading time
+      if (durationSecs > 0) {
+        addReadingTime(bookId, durationSecs);
+      }
     };
   }, [bookId]);
 
-  useEffect(() => { if (!isLoading) setLocalLoading(false); }, [isLoading]);
-  useEffect(() => { const t = setTimeout(() => setLocalLoading(false), 4000); return () => clearTimeout(t); }, []);
-
+  // Dismiss loading when epub.js is ready
   useEffect(() => {
-    const data = getReadingData(bookId);
-    if (data?.location) { const t = setTimeout(() => goToLocation(data.location), 1500); return () => clearTimeout(t); }
-  }, [bookId]);
+    if (!isLoading) setLocalLoading(false);
+  }, [isLoading]);
+
+  // Safety timeout for loading indicator
+  useEffect(() => {
+    const t = setTimeout(() => setLocalLoading(false), 4000);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Position restore is handled by Reader's initialLocation prop.
+
+  // ─── Handlers ───────────────────────────────────────────────────────
 
   const handleLocationChange = useCallback((total, loc) => {
     if (!loc?.start?.cfi) return;
-    const pct = Math.round(progress);
+
+    // loc.start.index is the 0-based spine item index — most reliable incrementing value
+    const spineIndex = (typeof loc.start.index === 'number') ? loc.start.index : 0;
+
+    // Use the book's actual page count from metadata for total, or track max spine index
+    const bookPageCount = book?.pageCount || 0;
+    const knownTotal = bookPageCount || totalPages || 0;
+
+    // Calculate percentage from spine index vs book page count
+    const pct = knownTotal > 0 ? Math.min(100, Math.round((spineIndex / knownTotal) * 100)) : 0;
+
+    // During first 3 seconds, skip 0-progress saves if user had real saved progress
+    if (spineIndex === 0 && (Date.now() - mountTime.current < 3000) && savedData.progress > 0) return;
+
+    // Save to reader store (syncs to Supabase)
     saveLocation(bookId, loc.start.cfi, pct);
 
-    const estimatedCurrentPage = total?.start?.displayed?.page || Math.ceil((pct / 100) * (totalPages || 100));
-    const estimatedTotalPages = total?.start?.displayed?.total || totalPages || 100;
-    if (estimatedTotalPages !== totalPages) setTotalPages(estimatedTotalPages);
-    setCurrentPage(estimatedCurrentPage);
+    // Update local display
+    setDisplayProgress(pct);
+    setCurrentPage(spineIndex);
+    if (knownTotal > 0 && knownTotal !== totalPages) {
+      setTotalPages(knownTotal);
+    }
 
+    // Update page info in reader store
+    updatePageInfo(bookId, spineIndex, knownTotal);
+
+    // Sync to library store (for book card progress display)
     if (Math.abs(pct - lastSavedProgress.current) >= 1) {
-      updateBookPageInfo(bookId, estimatedCurrentPage, estimatedTotalPages);
-      saveBookReadingPosition(bookId, estimatedCurrentPage);
+      updateBookPageInfo(bookId, spineIndex, knownTotal);
+      saveBookReadingPosition(bookId, spineIndex);
       lastSavedProgress.current = pct;
     }
-    trackPageTurn(bookId, pct, 'forward');
-  }, [bookId, progress, totalPages]);
 
-  const handleHighlight = useCallback((color) => {
-    if (!selectedText) return;
-    addAnnotation('highlight', selectedText.cfiRange, { color }, { color });
-    storeAddAnnotation(bookId, { ...selectedText, color, type: 'highlight' });
-    trackHighlight(bookId, color, selectedText.text?.length || 0);
-    setSelectedText(null);
-  }, [selectedText, bookId]);
+    trackPageTurn(bookId, pct, 'forward');
+  }, [bookId, totalPages, book?.pageCount]);
 
   const handleToggleBookmark = useCallback(() => {
     if (!currentLocation?.start?.cfi) return;
     if (isBookmarked) {
       const bm = bookmarks?.find((b) => b.location?.start?.cfi === currentLocation.start.cfi);
-      if (bm) { removeBookmark(bm); storeRemoveBookmark(bookId, bm.id); trackBookmark(bookId, 'remove', currentLocation.start.cfi); }
+      if (bm) {
+        removeBookmark(bm);
+        storeRemoveBookmark(bookId, bm.id);
+        trackBookmark(bookId, 'remove', currentLocation.start.cfi);
+      }
     } else {
       addBookmark(currentLocation);
       storeAddBookmark(bookId, { location: currentLocation.start.cfi, chapter: section?.label || '' });
@@ -116,26 +161,48 @@ function ReaderContent({ bookId, fileUri, book }) {
 
   const handleDecreaseFontSize = useCallback(() => {
     const idx = FONT_SIZE_STEPS.indexOf(settings.fontSize);
-    if (idx > 0) { const s = FONT_SIZE_STEPS[idx - 1]; updateSettings({ fontSize: s }); changeFontSize(`${s}%`); track(EventType.READER_FONT_SIZE_CHANGE, EventCategory.READER, { bookId, fontSize: s }); }
+    if (idx > 0) {
+      const s = FONT_SIZE_STEPS[idx - 1];
+      updateSettings({ fontSize: s });
+      changeFontSize(`${s}%`);
+      track(EventType.READER_FONT_SIZE_CHANGE, EventCategory.READER, { bookId, fontSize: s });
+    }
   }, [settings.fontSize, bookId]);
 
   const handleIncreaseFontSize = useCallback(() => {
     const idx = FONT_SIZE_STEPS.indexOf(settings.fontSize);
-    if (idx < FONT_SIZE_STEPS.length - 1) { const s = FONT_SIZE_STEPS[idx + 1]; updateSettings({ fontSize: s }); changeFontSize(`${s}%`); track(EventType.READER_FONT_SIZE_CHANGE, EventCategory.READER, { bookId, fontSize: s }); }
+    if (idx < FONT_SIZE_STEPS.length - 1) {
+      const s = FONT_SIZE_STEPS[idx + 1];
+      updateSettings({ fontSize: s });
+      changeFontSize(`${s}%`);
+      track(EventType.READER_FONT_SIZE_CHANGE, EventCategory.READER, { bookId, fontSize: s });
+    }
   }, [settings.fontSize, bookId]);
 
   const handleChangeTheme = useCallback((t) => {
     const prevTheme = settings.theme;
+    // Save current position before theme change (epub.js re-renders)
+    const savedCfi = currentLocation?.start?.cfi;
     updateSettings({ theme: t.key });
     changeTheme(t.css);
+    // Restore position after epub.js finishes re-rendering
+    if (savedCfi) {
+      setTimeout(() => goToLocation(savedCfi), 300);
+    }
     trackThemeChange(bookId, t.key, prevTheme);
   }, [settings.theme, bookId]);
 
-  const handleSearch = useCallback(() => { if (searchQuery.trim()) search(searchQuery); }, [searchQuery]);
+  const handleSearch = useCallback(() => {
+    if (searchQuery.trim()) search(searchQuery);
+  }, [searchQuery]);
 
-  const headerH = insets.top + 52;
-  const footerH = insets.bottom + 52;
+  // ─── Layout ─────────────────────────────────────────────────────────
+
+  const headerH = insets.top + 48;
+  const footerH = insets.bottom + 48;
   const readerH = SCREEN_HEIGHT - headerH - footerH;
+
+  // ─── Render ─────────────────────────────────────────────────────────
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.bg }]}>
@@ -163,9 +230,9 @@ function ReaderContent({ bookId, fileUri, book }) {
           allowScriptedContent
           defaultTheme={theme.css}
           flow={settings.flow || 'paginated'}
+          initialLocation={savedData.location || undefined}
           initialAnnotations={annotations}
           onLocationChange={handleLocationChange}
-          onSelected={(cfiRange, text) => text && setSelectedText({ cfiRange, text })}
           onPress={() => setShowUI((v) => !v)}
           onReady={() => setLocalLoading(false)}
           onDisplayError={() => setLocalLoading(false)}
@@ -180,29 +247,68 @@ function ReaderContent({ bookId, fileUri, book }) {
         insetBottom={insets.bottom}
         height={footerH}
         chapterLabel={section?.label}
-        progress={progress}
+        progress={displayProgress}
         currentPage={currentPage}
         totalPages={totalPages}
         onTOC={() => setShowTOC(true)}
         onBookmarks={() => setShowBookmarks(true)}
       />
 
+      {/* Loading overlay — retro style */}
       {localLoading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={colors.accent} />
-          <Text style={styles.loadingText}>Opening book…</Text>
+          <View style={styles.loadingWindow}>
+            <View style={styles.loadingTitleBar}>
+              <Text style={styles.loadingTitleText}>loading.exe</Text>
+            </View>
+            <View style={styles.loadingContent}>
+              <ActivityIndicator size="large" color={homeColors.accent} />
+              <Text style={styles.loadingText}>Opening book...</Text>
+            </View>
+          </View>
         </View>
       )}
 
-      <HighlightMenu selectedText={selectedText} onHighlight={handleHighlight} onDismiss={() => setSelectedText(null)} />
-
-      <TOCModal visible={showTOC} onClose={() => setShowTOC(false)} theme={theme} tocData={tocData} toc={toc} onGoTo={goToLocation} />
-      <SettingsModal visible={showSettings} onClose={() => setShowSettings(false)} theme={theme} settings={settings} onDecreaseFontSize={handleDecreaseFontSize} onIncreaseFontSize={handleIncreaseFontSize} onChangeTheme={handleChangeTheme} />
-      <BookmarksModal visible={showBookmarks} onClose={() => setShowBookmarks(false)} theme={theme} bookmarks={bookmarks} onGoTo={goToLocation} />
-      <SearchModal visible={showSearch} onClose={() => setShowSearch(false)} theme={theme} searchQuery={searchQuery} searchResults={searchResults} onQueryChange={setSearchQuery} onSearch={handleSearch} onGoTo={goToLocation} onClear={() => { clearSearchResults(); setSearchResults([]); }} />
+      <TOCModal
+        visible={showTOC}
+        onClose={() => setShowTOC(false)}
+        theme={theme}
+        tocData={tocData}
+        toc={toc}
+        onGoTo={goToLocation}
+      />
+      <SettingsModal
+        visible={showSettings}
+        onClose={() => setShowSettings(false)}
+        theme={theme}
+        settings={settings}
+        onDecreaseFontSize={handleDecreaseFontSize}
+        onIncreaseFontSize={handleIncreaseFontSize}
+        onChangeTheme={handleChangeTheme}
+      />
+      <BookmarksModal
+        visible={showBookmarks}
+        onClose={() => setShowBookmarks(false)}
+        theme={theme}
+        bookmarks={bookmarks}
+        onGoTo={goToLocation}
+      />
+      <SearchModal
+        visible={showSearch}
+        onClose={() => setShowSearch(false)}
+        theme={theme}
+        searchQuery={searchQuery}
+        searchResults={searchResults}
+        onQueryChange={setSearchQuery}
+        onSearch={handleSearch}
+        onGoTo={goToLocation}
+        onClear={() => { clearSearchResults(); setSearchResults([]); }}
+      />
     </View>
   );
 }
+
+// ─── Reader Screen (outer, handles file check + provider) ────────────────────
 
 export default function ReaderScreen() {
   const route = useRoute();
@@ -216,15 +322,43 @@ export default function ReaderScreen() {
   const book = getBook(bookId);
   const fileInfo = getUploadedFile(bookId);
 
+  // No file — retro empty state
   if (!fileInfo?.uri) {
     return (
-      <View style={[styles.screen, styles.centered, { paddingTop: insets.top, backgroundColor: colors.bgPrimary }]}>
-        <MaterialCommunityIcons name="book-off-outline" size={64} color="#555" />
-        <Text style={styles.noFileTitle}>No E-Book File</Text>
-        <Text style={styles.noFileMsg}>Import an EPUB from the book detail page first.</Text>
-        <TouchableOpacity style={styles.goBackBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.goBackText}>Go Back</Text>
-        </TouchableOpacity>
+      <View style={[styles.screen, styles.emptyScreen, { paddingTop: insets.top }]}>
+        {/* NeuShadow-style manual shadow */}
+        <View style={styles.emptyWindowShadow} />
+        <View style={styles.emptyWindow}>
+          <View style={styles.emptyTitleBar}>
+            <Text style={styles.emptyTitleText}>error.exe</Text>
+            <TouchableOpacity
+              style={styles.emptyCloseBtn}
+              onPress={() => navigation.goBack()}
+              accessibilityLabel="Go back"
+              accessibilityRole="button"
+            >
+              <Text style={styles.emptyCloseBtnText}>x</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.emptyContent}>
+            <View style={styles.emptyIconBox}>
+              <MaterialCommunityIcons name="book-off-outline" size={28} color="#000000" />
+            </View>
+            <Text style={styles.emptyTitle}>No E-Book File</Text>
+            <Text style={styles.emptyMsg}>
+              Import an EPUB from the book detail page first.
+            </Text>
+            <TouchableOpacity
+              style={styles.emptyBackBtn}
+              onPress={() => navigation.goBack()}
+              accessibilityLabel="Go back"
+              accessibilityRole="button"
+            >
+              <MaterialCommunityIcons name="arrow-left" size={14} color="#000000" />
+              <Text style={styles.emptyBackText}>Go Back</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
     );
   }
@@ -236,13 +370,148 @@ export default function ReaderScreen() {
   );
 }
 
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 16 },
-  loadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', gap: 14 },
-  loadingText: { color: '#fff', fontSize: 16 },
-  noFileTitle: { fontSize: 20, fontWeight: 'bold', color: '#fff' },
-  noFileMsg: { fontSize: 14, color: '#888', textAlign: 'center', lineHeight: 22 },
-  goBackBtn: { backgroundColor: colors.accent, paddingHorizontal: 28, paddingVertical: 13, borderRadius: 8, marginTop: 8 },
-  goBackText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  screen: {
+    flex: 1,
+  },
+
+  // ─── Loading overlay (retro window) ─────────────────────────────────
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  loadingWindow: {
+    borderWidth: borderWidth.pixel,
+    borderColor: '#000000',
+    backgroundColor: homeColors.bgCard,
+    minWidth: 220,
+  },
+  loadingTitleBar: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderBottomWidth: borderWidth.normal,
+    borderBottomColor: '#000000',
+  },
+  loadingTitleText: {
+    fontFamily: 'SpaceMono',
+    fontSize: textSizes.xxs,
+    color: '#000000',
+  },
+  loadingContent: {
+    padding: spacing.xl,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  loadingText: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.sm,
+    color: '#000000',
+  },
+
+  // ─── Empty state (no file) ──────────────────────────────────────────
+  emptyScreen: {
+    backgroundColor: homeColors.bgMain,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  emptyWindowShadow: {
+    position: 'absolute',
+    width: 260,
+    height: 260,
+    backgroundColor: '#000000',
+    top: '50%',
+    left: '50%',
+    marginTop: -127,
+    marginLeft: -127,
+  },
+  emptyWindow: {
+    borderWidth: borderWidth.pixel,
+    borderColor: '#000000',
+    backgroundColor: homeColors.bgCard,
+    width: 260,
+    zIndex: 1,
+  },
+  emptyTitleBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderBottomWidth: borderWidth.normal,
+    borderBottomColor: '#000000',
+  },
+  emptyTitleText: {
+    fontFamily: 'SpaceMono',
+    fontSize: textSizes.xxs,
+    color: '#000000',
+  },
+  emptyCloseBtn: {
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#000000',
+    backgroundColor: '#EF4444',
+  },
+  emptyCloseBtnText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 8,
+    color: '#000000',
+    lineHeight: 10,
+  },
+  emptyContent: {
+    padding: spacing.lg,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  emptyIconBox: {
+    width: 52,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#000000',
+    backgroundColor: '#FBCA1F',
+    marginBottom: spacing.xs,
+  },
+  emptyTitle: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.md,
+    color: '#000000',
+    textAlign: 'center',
+  },
+  emptyMsg: {
+    fontFamily: 'SpaceMono',
+    fontSize: textSizes.xs,
+    color: homeColors.textCaption,
+    textAlign: 'center',
+    lineHeight: textSizes.xs * 1.6,
+  },
+  emptyBackBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: '#FBCA1F',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRightWidth: 4,
+    borderBottomWidth: 4,
+    marginTop: spacing.sm,
+  },
+  emptyBackText: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.xs,
+    color: '#000000',
+  },
 });

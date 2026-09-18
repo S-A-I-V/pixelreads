@@ -1,167 +1,486 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, TextInput, Modal, ScrollView, StyleSheet } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, TouchableOpacity, TextInput, Pressable, ScrollView, Animated, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { READER_THEMES, FONT_SIZE_STEPS } from './readerConstants';
-import { colors } from '../../theme';
+import { spacing, borderWidth, textSizes, fonts } from '../../theme';
 
-// ─── Shared sheet wrapper ────────────────────────────────────────────────────
-function SheetWrapper({ visible, onClose, title, theme, children }) {
+// ─── Shared inline overlay wrapper ──────────────────────────────────────────
+
+function RetroOverlay({ visible, onClose, windowTitle, chrome, children, maxHeight = '60%' }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(-8)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+        Animated.timing(translateY, { toValue: 0, duration: 200, useNativeDriver: true }),
+      ]).start();
+    } else {
+      opacity.setValue(0);
+      translateY.setValue(-8);
+    }
+  }, [visible]);
+
+  if (!visible) return null;
+
   return (
-    <Modal visible={visible} animationType="slide" transparent statusBarTranslucent onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={[styles.sheet, { backgroundColor: theme.bg }]}>
-          <View style={styles.sheetHeader}>
-            <Text style={[styles.sheetTitle, { color: theme.text }]}>{title}</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <MaterialCommunityIcons name="close" size={24} color={theme.text} />
+    <>
+      <Pressable style={styles.backdrop} onPress={onClose} />
+      <Animated.View style={[styles.container, { opacity, transform: [{ translateY }], maxHeight }]}>
+        {/* Shadow layer */}
+        <View style={[styles.shadowLayer, { backgroundColor: chrome.shadow }]} />
+        {/* Window frame */}
+        <View style={[styles.windowFrame, { backgroundColor: chrome.bg, borderColor: chrome.border }]}>
+          {/* Title bar */}
+          <View style={[styles.titleBar, { borderBottomColor: chrome.border }]}>
+            <Text style={[styles.titleBarText, { color: chrome.text }]}>{windowTitle}</Text>
+            <TouchableOpacity
+              onPress={onClose}
+              style={[styles.closeBtn, { borderColor: chrome.border }]}
+              accessibilityLabel={`Close ${windowTitle}`}
+              accessibilityRole="button"
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Text style={styles.closeBtnText}>x</Text>
             </TouchableOpacity>
           </View>
-          {children}
+
+          {/* Content area */}
+          <ScrollView
+            style={styles.scroll}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={[styles.contentArea, { backgroundColor: chrome.contentBg }]}
+          >
+            {children}
+          </ScrollView>
         </View>
-      </View>
-    </Modal>
+      </Animated.View>
+    </>
   );
 }
 
 // ─── TOC Modal ───────────────────────────────────────────────────────────────
+
 export function TOCModal({ visible, onClose, theme, tocData, toc, onGoTo }) {
   const items = tocData?.length > 0 ? tocData : (toc || []);
+  const c = theme.chrome;
 
   return (
-    <SheetWrapper visible={visible} onClose={onClose} title="Table of Contents" theme={theme}>
-      <ScrollView>
-        {items.length === 0 ? (
-          <Text style={[styles.emptyMsg, { color: theme.text }]}>No table of contents available.</Text>
-        ) : (
-          items.map((item, i) => (
-            <TouchableOpacity key={i} style={styles.listRow} onPress={() => { onGoTo(item.href); onClose(); }}>
-              <MaterialCommunityIcons name="book-open-page-variant" size={16} color={colors.accent} />
-              <Text style={[styles.listLabel, { color: theme.text }]}>{item.label}</Text>
-            </TouchableOpacity>
-          ))
-        )}
-      </ScrollView>
-    </SheetWrapper>
+    <RetroOverlay visible={visible} onClose={onClose} windowTitle="contents.exe" chrome={c}>
+      {items.length === 0 ? (
+        <Text style={[styles.emptyMsg, { color: c.dimText }]}>
+          No table of contents available.
+        </Text>
+      ) : (
+        items.map((item, i) => (
+          <TouchableOpacity
+            key={i}
+            style={[styles.listRow, { borderBottomColor: c.border + '22' }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onGoTo(item.href);
+              onClose();
+            }}
+            accessibilityRole="button"
+          >
+            <View style={[styles.listIcon, { backgroundColor: c.accent, borderColor: c.border }]}>
+              <MaterialCommunityIcons name="book-open-page-variant" size={12} color={c.accentText} />
+            </View>
+            <Text style={[styles.listLabel, { color: c.text }]} numberOfLines={2}>
+              {item.label}
+            </Text>
+            <MaterialCommunityIcons name="chevron-right" size={14} color={c.dimText} />
+          </TouchableOpacity>
+        ))
+      )}
+    </RetroOverlay>
   );
 }
 
 // ─── Settings Modal ──────────────────────────────────────────────────────────
-export function SettingsModal({ visible, onClose, theme, settings, onDecreaseFontSize, onIncreaseFontSize, onChangeTheme }) {
+
+export function SettingsModal({
+  visible, onClose, theme, settings,
+  onDecreaseFontSize, onIncreaseFontSize, onChangeTheme,
+}) {
+  const c = theme.chrome;
+
   return (
-    <SheetWrapper visible={visible} onClose={onClose} title="Reading Settings" theme={theme}>
-      <Text style={[styles.settingGroup, { color: theme.text }]}>Font Size</Text>
+    <RetroOverlay visible={visible} onClose={onClose} windowTitle="settings.ini" chrome={c} maxHeight="50%">
+      {/* Font Size */}
+      <Text style={[styles.settingLabel, { color: c.dimText }]}>FONT SIZE</Text>
       <View style={styles.fontRow}>
-        <TouchableOpacity style={styles.fontBtn} onPress={onDecreaseFontSize}>
-          <Text style={styles.fontBtnText}>A−</Text>
+        <TouchableOpacity
+          style={[styles.fontBtn, { borderColor: c.border }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onDecreaseFontSize();
+          }}
+          accessibilityLabel="Decrease font size"
+          accessibilityRole="button"
+        >
+          <Text style={styles.fontBtnText}>A-</Text>
         </TouchableOpacity>
-        <Text style={[styles.fontValue, { color: theme.text }]}>{settings.fontSize}%</Text>
-        <TouchableOpacity style={styles.fontBtn} onPress={onIncreaseFontSize}>
+
+        <View style={[styles.fontValueBox, { borderColor: c.border, backgroundColor: c.btnBg }]}>
+          <Text style={[styles.fontValue, { color: c.text }]}>{settings.fontSize}%</Text>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.fontBtn, { borderColor: c.border }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onIncreaseFontSize();
+          }}
+          accessibilityLabel="Increase font size"
+          accessibilityRole="button"
+        >
           <Text style={styles.fontBtnText}>A+</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={[styles.settingGroup, { color: theme.text }]}>Theme</Text>
+      <View style={[styles.settingDivider, { backgroundColor: c.border + '22' }]} />
+
+      {/* Theme */}
+      <Text style={[styles.settingLabel, { color: c.dimText }]}>THEME</Text>
       <View style={styles.themeRow}>
-        {Object.values(READER_THEMES).map((t) => (
-          <TouchableOpacity
-            key={t.key}
-            style={[styles.themeChip, { backgroundColor: t.bg, borderColor: t.text }, settings.theme === t.key && styles.themeChipActive]}
-            onPress={() => onChangeTheme(t)}
-          >
-            <MaterialCommunityIcons name={t.icon} size={18} color={t.text} />
-            <Text style={[styles.themeLabel, { color: t.text }]}>{t.label}</Text>
-          </TouchableOpacity>
-        ))}
+        {Object.values(READER_THEMES).map((t) => {
+          const isActive = settings.theme === t.key;
+          return (
+            <TouchableOpacity
+              key={t.key}
+              style={[
+                styles.themeChip,
+                { backgroundColor: t.bg, borderColor: c.border },
+                isActive && { borderColor: c.accent, borderWidth: 3 },
+              ]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onChangeTheme(t);
+              }}
+              accessibilityLabel={`${t.label} theme`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isActive }}
+            >
+              <MaterialCommunityIcons name={t.icon} size={16} color={t.text} />
+              <Text style={[styles.themeChipLabel, { color: t.text }]}>{t.label}</Text>
+              {isActive && (
+                <View style={[styles.activeIndicator, { backgroundColor: c.accent }]} />
+              )}
+            </TouchableOpacity>
+          );
+        })}
       </View>
-    </SheetWrapper>
+    </RetroOverlay>
   );
 }
 
 // ─── Bookmarks Modal ─────────────────────────────────────────────────────────
+
 export function BookmarksModal({ visible, onClose, theme, bookmarks, onGoTo }) {
+  const c = theme.chrome;
+
   return (
-    <SheetWrapper visible={visible} onClose={onClose} title="Bookmarks" theme={theme}>
-      <ScrollView>
-        {(!bookmarks || bookmarks.length === 0) ? (
-          <Text style={[styles.emptyMsg, { color: theme.text }]}>
-            No bookmarks yet.{'\n'}Tap the bookmark icon while reading to add one.
-          </Text>
-        ) : (
-          bookmarks.map((bm, i) => (
-            <TouchableOpacity key={i} style={styles.listRow} onPress={() => { onGoTo(bm.location?.start?.cfi ?? bm.location); onClose(); }}>
-              <MaterialCommunityIcons name="bookmark" size={16} color={colors.accent} />
-              <Text style={[styles.listLabel, { color: theme.text }]}>{bm.chapter || `Bookmark ${i + 1}`}</Text>
-            </TouchableOpacity>
-          ))
-        )}
-      </ScrollView>
-    </SheetWrapper>
+    <RetroOverlay visible={visible} onClose={onClose} windowTitle="bookmarks.dat" chrome={c}>
+      {(!bookmarks || bookmarks.length === 0) ? (
+        <Text style={[styles.emptyMsg, { color: c.dimText }]}>
+          No bookmarks yet.{'\n'}Tap the bookmark icon while reading to add one.
+        </Text>
+      ) : (
+        bookmarks.map((bm, i) => (
+          <TouchableOpacity
+            key={i}
+            style={[styles.listRow, { borderBottomColor: c.border + '22' }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onGoTo(bm.location?.start?.cfi ?? bm.location);
+              onClose();
+            }}
+            accessibilityRole="button"
+          >
+            <View style={[styles.listIcon, { backgroundColor: c.bookmarkBtnBg || '#F15BB5', borderColor: c.border }]}>
+              <MaterialCommunityIcons name="bookmark" size={12} color={c.bookmarkBtnIcon || '#FFFFFF'} />
+            </View>
+            <Text style={[styles.listLabel, { color: c.text }]} numberOfLines={2}>
+              {bm.chapter || `Bookmark ${i + 1}`}
+            </Text>
+            <MaterialCommunityIcons name="chevron-right" size={14} color={c.dimText} />
+          </TouchableOpacity>
+        ))
+      )}
+    </RetroOverlay>
   );
 }
 
 // ─── Search Modal ────────────────────────────────────────────────────────────
-export function SearchModal({ visible, onClose, theme, searchQuery, searchResults, onQueryChange, onSearch, onGoTo, onClear }) {
+
+export function SearchModal({
+  visible, onClose, theme,
+  searchQuery, searchResults,
+  onQueryChange, onSearch, onGoTo, onClear,
+}) {
+  const c = theme.chrome;
+
   return (
-    <SheetWrapper visible={visible} onClose={() => { onClose(); onClear(); }} title="Search in Book" theme={theme}>
+    <RetroOverlay
+      visible={visible}
+      onClose={() => { onClose(); onClear(); }}
+      windowTitle="search.exe"
+      chrome={c}
+      maxHeight="65%"
+    >
       <View style={styles.searchBar}>
-        <TextInput
-          style={[styles.searchInput, { color: theme.text, borderColor: theme.text + '44' }]}
-          placeholder="Search…"
-          placeholderTextColor="#888"
-          value={searchQuery}
-          onChangeText={onQueryChange}
-          onSubmitEditing={onSearch}
-          returnKeyType="search"
-          autoFocus
-        />
-        <TouchableOpacity style={styles.searchGoBtn} onPress={onSearch}>
-          <MaterialCommunityIcons name="magnify" size={22} color="#fff" />
+        <View style={[styles.searchInputWrap, { borderColor: c.border, backgroundColor: c.btnBg }]}>
+          <TextInput
+            style={[styles.searchInput, { color: c.text }]}
+            placeholder="Search..."
+            placeholderTextColor={c.dimText}
+            value={searchQuery}
+            onChangeText={onQueryChange}
+            onSubmitEditing={onSearch}
+            returnKeyType="search"
+            autoFocus
+          />
+        </View>
+        <TouchableOpacity
+          style={[styles.searchGoBtn, { borderColor: c.border }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onSearch();
+          }}
+          accessibilityLabel="Search"
+          accessibilityRole="button"
+        >
+          <MaterialCommunityIcons name="magnify" size={18} color={c.accentText} />
         </TouchableOpacity>
       </View>
 
-      <ScrollView keyboardShouldPersistTaps="handled">
-        {searchResults.length === 0 ? (
-          <Text style={[styles.emptyMsg, { color: theme.text }]}>
-            {searchQuery ? 'No results found.' : 'Type something to search.'}
+      {searchResults.length === 0 ? (
+        <Text style={[styles.emptyMsg, { color: c.dimText }]}>
+          {searchQuery ? 'No results found.' : 'Type something to search.'}
+        </Text>
+      ) : (
+        <>
+          <Text style={[styles.resultCount, { color: c.dimText }]}>
+            {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} found
           </Text>
-        ) : (
-          searchResults.map((r, i) => (
-            <TouchableOpacity key={i} style={styles.searchResult} onPress={() => { onGoTo(r.cfi); onClose(); }}>
-              <Text style={[styles.searchExcerpt, { color: theme.text }]} numberOfLines={3}>{r.excerpt}</Text>
+          {searchResults.map((r, i) => (
+            <TouchableOpacity
+              key={i}
+              style={[styles.searchResult, { borderBottomColor: c.border + '22' }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onGoTo(r.cfi);
+                onClose();
+              }}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.searchExcerpt, { color: c.text }]} numberOfLines={3}>
+                {r.excerpt}
+              </Text>
             </TouchableOpacity>
-          ))
-        )}
-      </ScrollView>
-    </SheetWrapper>
+          ))}
+        </>
+      )}
+    </RetroOverlay>
   );
 }
 
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  sheet: { maxHeight: '75%', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 32 },
-  sheetHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  sheetTitle: { fontSize: 18, fontWeight: 'bold' },
-  emptyMsg: { textAlign: 'center', marginTop: 32, fontSize: 14, opacity: 0.6, lineHeight: 22 },
-
-  // List rows (TOC / Bookmarks)
-  listRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 13, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(128,128,128,0.2)' },
-  listLabel: { flex: 1, fontSize: 14 },
-
-  // Settings
-  settingGroup: { fontSize: 13, fontWeight: '600', marginBottom: 12, marginTop: 4, opacity: 0.7, textTransform: 'uppercase', letterSpacing: 0.5 },
-  fontRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24, marginBottom: 24 },
-  fontBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent, justifyContent: 'center', alignItems: 'center' },
-  fontBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  fontValue: { fontSize: 18, fontWeight: '600', minWidth: 56, textAlign: 'center' },
-  themeRow: { flexDirection: 'row', gap: 10, marginBottom: 8 },
-  themeChip: { flex: 1, paddingVertical: 12, borderRadius: 10, borderWidth: 1.5, alignItems: 'center', gap: 6 },
-  themeChipActive: { borderColor: colors.accent, borderWidth: 2.5 },
-  themeLabel: { fontSize: 11, fontWeight: '600' },
-
-  // Search
-  searchBar: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  searchInput: { flex: 1, borderWidth: 1, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15 },
-  searchGoBtn: { width: 48, height: 48, borderRadius: 8, backgroundColor: colors.accent, justifyContent: 'center', alignItems: 'center' },
-  searchResult: { paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(128,128,128,0.2)' },
-  searchExcerpt: { fontSize: 13, lineHeight: 20 },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 99,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  container: {
+    position: 'absolute',
+    top: '12%',
+    left: spacing.lg,
+    right: spacing.lg,
+    zIndex: 100,
+  },
+  shadowLayer: {
+    position: 'absolute',
+    top: 3,
+    left: 3,
+    right: -3,
+    bottom: -3,
+    zIndex: 0,
+  },
+  windowFrame: {
+    borderWidth: borderWidth.pixel,
+    position: 'relative',
+    zIndex: 1,
+  },
+  titleBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+    borderBottomWidth: borderWidth.normal,
+  },
+  titleBarText: {
+    fontFamily: fonts.body,
+    fontSize: textSizes.xxs,
+  },
+  closeBtn: {
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    backgroundColor: '#EF4444',
+  },
+  closeBtnText: {
+    fontFamily: fonts.body,
+    fontSize: 10,
+    color: '#FFFFFF',
+    lineHeight: 12,
+  },
+  scroll: {
+    flexGrow: 0,
+  },
+  contentArea: {
+    padding: spacing.md,
+  },
+  emptyMsg: {
+    textAlign: 'center',
+    marginTop: spacing.xl,
+    marginBottom: spacing.xl,
+    fontFamily: 'SpaceMono',
+    fontSize: textSizes.xs,
+    lineHeight: textSizes.xs * 1.6,
+  },
+  listRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+  },
+  listIcon: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+  },
+  listLabel: {
+    flex: 1,
+    fontFamily: 'SpaceMono',
+    fontSize: textSizes.sm,
+  },
+  settingLabel: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.xxs,
+    letterSpacing: 1.5,
+    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  fontRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.md,
+  },
+  fontBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FBCA1F',
+    borderWidth: 2,
+    borderRightWidth: 4,
+    borderBottomWidth: 4,
+  },
+  fontBtnText: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.sm,
+    color: '#000000',
+  },
+  fontValueBox: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs,
+    borderWidth: 2,
+    minWidth: 70,
+    alignItems: 'center',
+  },
+  fontValue: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.md,
+  },
+  settingDivider: {
+    height: 1,
+    marginVertical: spacing.md,
+  },
+  themeRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  themeChip: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    borderWidth: 2,
+    borderRightWidth: 3,
+    borderBottomWidth: 3,
+    alignItems: 'center',
+    gap: spacing.xxs,
+  },
+  themeChipLabel: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.xxs,
+  },
+  activeIndicator: {
+    width: 8,
+    height: 8,
+    marginTop: spacing.xxs,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  searchInputWrap: {
+    flex: 1,
+    borderWidth: 2,
+    paddingHorizontal: spacing.sm,
+  },
+  searchInput: {
+    fontFamily: 'SpaceMono',
+    fontSize: textSizes.sm,
+    paddingVertical: spacing.xs,
+  },
+  searchGoBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FBCA1F',
+    borderWidth: 2,
+    borderRightWidth: 4,
+    borderBottomWidth: 4,
+  },
+  resultCount: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.xxs,
+    marginBottom: spacing.sm,
+  },
+  searchResult: {
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+  },
+  searchExcerpt: {
+    fontFamily: 'SpaceMono',
+    fontSize: textSizes.xs,
+    lineHeight: textSizes.xs * 1.6,
+  },
 });

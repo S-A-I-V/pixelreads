@@ -21,6 +21,8 @@ import { StatusBar } from 'expo-status-bar';
 
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { useAuthUserSessionStore } from './src/features/auth/store/authUserSessionStore';
+import { useEpubReaderStore } from './src/features/reader/store/epubReaderStore';
+import { pullAllDataFromSupabase } from './src/lib/supabaseSync';
 import { colors } from './src/theme';
 
 // Keep splash screen visible while fonts load
@@ -58,6 +60,22 @@ export default function PixelReadsAppRoot(): React.JSX.Element | null {
         setAreFontsLoaded(true);
         // Restore Supabase session
         await useAuthUserSessionStore.getState().restoreSession();
+        // Hydrate reader store from Supabase if authenticated
+        if (useAuthUserSessionStore.getState().isAuthenticated) {
+          try {
+            const data = await pullAllDataFromSupabase();
+            if (data) {
+              useEpubReaderStore.getState().hydrateFromSupabase({
+                readerPreferences: data.readerPreferences,
+                readingProgress: data.readingProgress,
+                bookmarks: data.bookmarks,
+                annotations: data.annotations,
+              });
+            }
+          } catch (e) {
+            console.warn('[App] Reader hydration failed:', (e as Error).message);
+          }
+        }
         await SplashScreen.hideAsync();
       }
     }

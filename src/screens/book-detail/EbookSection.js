@@ -89,7 +89,7 @@ export function EbookSection({
                 <ConfettiBanner />
               ) : (
                 <View style={styles.progressSection}>
-                  <RetroProgressBar progress={progress} />
+                  <RetroProgressBar progress={progress} gradient />
                   {currentPage > 0 && totalPages > 0 && (
                     <Text style={styles.pageText}>p.{currentPage}/{totalPages}</Text>
                   )}

@@ -1,8 +1,17 @@
 /**
- * Reader constants: themes, highlight colors, and font size steps.
+ * Reader constants: themes, highlight colors, font size steps, and retro UI config.
+ *
+ * READER_THEMES provide both the epub.js CSS injection AND the UI chrome colors.
+ * The `chrome` property defines colors for the header/footer/modals around the reader.
+ *
+ * All three themes must pass 4.5:1 contrast on text and be visually complete
+ * so no hardcoded #FFFFFF/#000000 is needed in components.
  */
 
-/** CSS-compatible theme objects for epub.js changeTheme() */
+import { homeColors } from '../../theme';
+
+// ─── Reader Themes ────────────────────────────────────────────────────────────
+
 export const READER_THEMES = {
   light: {
     key: 'light',
@@ -14,6 +23,23 @@ export const READER_THEMES = {
       body: { background: '#ffffff', color: '#1a1a1a' },
       p:    { color: '#1a1a1a' },
       '*':  { color: '#1a1a1a' },
+    },
+    chrome: {
+      bg: homeColors.bgCard,           // #C8B6FF lavender
+      text: '#000000',
+      border: '#000000',
+      accent: '#FBCA1F',
+      accentText: '#000000',
+      contentBg: '#FFFFFF',
+      btnBg: '#FFFFFF',                // button background
+      dimText: '#4A4A4A',
+      shadow: '#000000',
+      searchBtnBg: '#3B82F6',
+      searchBtnIcon: '#FFFFFF',
+      bookmarkBtnBg: '#F15BB5',
+      bookmarkBtnIcon: '#FFFFFF',
+      settingsBtnBg: '#FBCA1F',
+      settingsBtnIcon: '#000000',
     },
   },
   dark: {
@@ -27,6 +53,23 @@ export const READER_THEMES = {
       p:    { color: '#e0e0e0 !important' },
       '*':  { color: '#e0e0e0 !important', background: 'transparent !important' },
     },
+    chrome: {
+      bg: '#1E1E3A',                   // deep navy chrome
+      text: '#E8E8F0',                 // bright text for contrast
+      border: '#4A4A6A',               // visible but not harsh border
+      accent: '#FBCA1F',
+      accentText: '#000000',
+      contentBg: '#2A2A4A',            // modal/dropdown content bg
+      btnBg: '#2E2E50',               // button bg — lifted off the chrome bg
+      dimText: '#9999BB',
+      shadow: '#000000',
+      searchBtnBg: '#3B82F6',
+      searchBtnIcon: '#FFFFFF',
+      bookmarkBtnBg: '#D946A8',        // slightly muted pink for dark
+      bookmarkBtnIcon: '#FFFFFF',
+      settingsBtnBg: '#FBCA1F',
+      settingsBtnIcon: '#000000',
+    },
   },
   sepia: {
     key: 'sepia',
@@ -39,16 +82,36 @@ export const READER_THEMES = {
       p:    { color: '#5c4b37' },
       '*':  { color: '#5c4b37' },
     },
+    chrome: {
+      bg: '#D4C4A0',                   // warm tan chrome
+      text: '#2C2010',                 // dark brown for contrast
+      border: '#5C4B37',               // warm dark brown border
+      accent: '#FBCA1F',
+      accentText: '#000000',
+      contentBg: '#F4ECD8',            // warm cream content
+      btnBg: '#EDE0C8',               // warm off-white button
+      dimText: '#7A6B55',
+      shadow: '#3A2F20',
+      searchBtnBg: '#3B82F6',
+      searchBtnIcon: '#FFFFFF',
+      bookmarkBtnBg: '#D946A8',
+      bookmarkBtnIcon: '#FFFFFF',
+      settingsBtnBg: '#FBCA1F',
+      settingsBtnIcon: '#000000',
+    },
   },
 };
 
+// ─── Highlight Colors ─────────────────────────────────────────────────────────
+
 export const HIGHLIGHT_COLORS = [
-  { color: '#ffeb3b', label: 'Yellow' },
-  { color: '#4caf50', label: 'Green' },
-  { color: '#2196f3', label: 'Blue' },
-  { color: '#e91e63', label: 'Pink' },
-  { color: '#ff9800', label: 'Orange' },
+  { color: '#FBCA1F', label: 'Yellow' },
+  { color: '#10B981', label: 'Green'  },
+  { color: '#3B82F6', label: 'Blue'   },
+  { color: '#F15BB5', label: 'Pink'   },
+  { color: '#FF9F1C', label: 'Orange' },
 ];
 
-/** Font size percentage steps */
+// ─── Font Size Steps ──────────────────────────────────────────────────────────
+
 export const FONT_SIZE_STEPS = [80, 90, 100, 110, 120, 130, 140, 150];

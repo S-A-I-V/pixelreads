@@ -1,40 +1,69 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { colors } from '../../theme';
+import { spacing, borderWidth, textSizes } from '../../theme';
 
 /**
- * Reader bottom footer bar: TOC button, progress track, bookmarks button.
+ * Interpolate between yellow (#FBCA1F) and green (#10B981) based on progress.
  */
-export function ReaderFooter({ theme, insetBottom, height, chapterLabel, progress, currentPage, totalPages, onTOC, onBookmarks }) {
+function getProgressColor(pct) {
+  const t = Math.min(100, Math.max(0, pct)) / 100;
+  const r = Math.round(251 + (16 - 251) * t);
+  const g = Math.round(202 + (185 - 202) * t);
+  const b = Math.round(31 + (129 - 31) * t);
+  return `rgb(${r},${g},${b})`;
+}
+
+/**
+ * Compact retro OS-style reader footer bar.
+ * All colors driven by theme.chrome — no hardcoded values.
+ */
+export function ReaderFooter({
+  theme, insetBottom, height,
+  chapterLabel, progress, currentPage, totalPages,
+  onTOC, onBookmarks,
+}) {
+  const c = theme.chrome;
+  const pct = Math.min(100, Math.max(0, Math.round(progress)));
+  const fillColor = getProgressColor(pct);
+
   return (
-    <View style={[styles.footer, { paddingBottom: insetBottom, height }]}>
-      <TouchableOpacity onPress={onTOC} style={styles.tocBtn} hitSlop={8} accessibilityLabel="Table of contents">
-        <MaterialCommunityIcons name="format-list-bulleted" size={18} color={theme.text} />
-        <Text style={[styles.chapterLabel, { color: theme.text }]} numberOfLines={1}>
+    <View style={[styles.footer, { paddingBottom: insetBottom, height, backgroundColor: c.bg, borderTopColor: c.border }]}>
+      {/* TOC button */}
+      <TouchableOpacity
+        onPress={onTOC}
+        style={[styles.tocBtn, { borderColor: c.border, backgroundColor: c.btnBg }]}
+        accessibilityLabel="Table of contents"
+        accessibilityRole="button"
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <MaterialCommunityIcons name="format-list-bulleted" size={14} color={c.text} />
+        <Text style={[styles.tocLabel, { color: c.text }]} numberOfLines={1}>
           {chapterLabel || 'Contents'}
         </Text>
       </TouchableOpacity>
 
-      <View style={styles.progressRow}>
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${Math.round(progress)}%` }]} />
-        </View>
-        <View style={styles.progressInfo}>
-          {currentPage > 0 && totalPages > 0 ? (
-            <Text style={[styles.progressPct, { color: theme.text }]}>
-              {currentPage}/{totalPages}
-            </Text>
-          ) : (
-            <Text style={[styles.progressPct, { color: theme.text }]}>
-              {Math.round(progress)}%
-            </Text>
-          )}
-        </View>
+      <View style={styles.spacer} />
+
+      {/* Compact gradient progress bar */}
+      <View style={[styles.miniBar, { borderColor: c.border, backgroundColor: c.contentBg }]}>
+        <View style={[styles.miniFill, { width: `${pct}%`, backgroundColor: fillColor }]} />
       </View>
 
-      <TouchableOpacity onPress={onBookmarks} style={styles.iconBtn} hitSlop={8} accessibilityLabel="Bookmarks list">
-        <MaterialCommunityIcons name="bookmark-multiple-outline" size={20} color={theme.text} />
+      {/* Percentage + page count */}
+      <Text style={[styles.progressText, { color: c.text }]}>
+        {pct}%{currentPage > 0 && totalPages > 0 ? ` · ${currentPage}/${totalPages}` : ''}
+      </Text>
+
+      {/* Bookmarks button */}
+      <TouchableOpacity
+        onPress={onBookmarks}
+        style={[styles.iconBtn, { borderColor: c.border, backgroundColor: c.btnBg }]}
+        accessibilityLabel="Bookmarks list"
+        accessibilityRole="button"
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <MaterialCommunityIcons name="bookmark-multiple-outline" size={14} color={c.text} />
       </TouchableOpacity>
     </View>
   );
@@ -44,22 +73,53 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    gap: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(128,128,128,0.3)',
+    paddingHorizontal: spacing.sm,
+    borderTopWidth: borderWidth.pixel,
+    gap: spacing.sm,
   },
   tocBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    maxWidth: '35%',
+    gap: spacing.xs,
+    height: 30,
+    paddingHorizontal: spacing.sm,
+    borderWidth: 2,
+    borderRightWidth: 3,
+    borderBottomWidth: 3,
   },
-  chapterLabel: { fontSize: 11 },
-  progressRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
-  progressTrack: { flex: 1, height: 3, backgroundColor: 'rgba(128,128,128,0.3)', borderRadius: 2 },
-  progressFill: { height: '100%', backgroundColor: colors.accent, borderRadius: 2 },
-  progressInfo: { alignItems: 'flex-end' },
-  progressPct: { fontSize: 11, minWidth: 40, textAlign: 'right' },
-  iconBtn: { padding: 10, minWidth: 44, minHeight: 44, justifyContent: 'center', alignItems: 'center' },
+  tocLabel: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.xxs,
+    maxWidth: 100,
+  },
+  spacer: {
+    flex: 1,
+  },
+  miniBar: {
+    width: 60,
+    height: 30,
+    borderWidth: 2,
+    overflow: 'hidden',
+    justifyContent: 'center',
+  },
+  miniFill: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+  },
+  progressText: {
+    fontFamily: 'SpaceMono-Bold',
+    fontSize: textSizes.xxs,
+    minWidth: 28,
+  },
+  iconBtn: {
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderRightWidth: 3,
+    borderBottomWidth: 3,
+  },
 });

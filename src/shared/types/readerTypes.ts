@@ -143,6 +143,15 @@ export interface EpubBookReadingSessionData {
   /** ISO timestamp of last read */
   lastReadAt: string | null;
   
+  /** Cumulative reading time in seconds */
+  totalReadingTimeSecs: number;
+  
+  /** Current page estimate */
+  currentPage: number;
+  
+  /** Total pages estimate */
+  totalPages: number;
+  
   /** Saved bookmarks */
   bookmarks: EpubBookmarkEntry[];
   

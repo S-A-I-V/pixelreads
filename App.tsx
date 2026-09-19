@@ -90,7 +90,7 @@ export default function PixelReadsAppRoot(): React.JSX.Element | null {
   return (
     <GestureHandlerRootView style={appRootStyles.gestureHandlerContainer}>
       <SafeAreaProvider>
-        <StatusBar style="light" backgroundColor={colors.bgPrimary} />
+        <StatusBar style="light" />
         <RootNavigator />
       </SafeAreaProvider>
     </GestureHandlerRootView>

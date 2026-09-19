@@ -32,6 +32,7 @@ const RootStack = createNativeStackNavigator<RootStackNavigatorParamList>();
 
 /**
  * Navigation theme configuration
+ * React Navigation v7 requires a `fonts` property in the theme.
  */
 const navigationThemeConfiguration = {
   dark: false,
@@ -42,6 +43,12 @@ const navigationThemeConfiguration = {
     text: '#000000',
     border: 'transparent',
     notification: '#F15BB5',
+  },
+  fonts: {
+    regular: { fontFamily: 'System', fontWeight: '400' as const },
+    medium: { fontFamily: 'System', fontWeight: '500' as const },
+    bold: { fontFamily: 'System', fontWeight: '700' as const },
+    heavy: { fontFamily: 'System', fontWeight: '800' as const },
   },
 };
 

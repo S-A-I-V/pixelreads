@@ -191,7 +191,7 @@ function ReaderContent({ bookId, fileUri, book }) {
   // ─── Render ─────────────────────────────────────────────────────────
 
   return (
-    <View style={[styles.screen, { backgroundColor: theme.bg }]}>
+    <View style={[styles.screen, { backgroundColor: theme.chrome.bg }]}>
       <ReaderHeader
         title={book?.title}
         theme={theme}
@@ -205,7 +205,7 @@ function ReaderContent({ bookId, fileUri, book }) {
         onSettings={() => setShowSettings(true)}
       />
 
-      <View style={{ width: SCREEN_WIDTH, height: readerH, backgroundColor: theme.bg }}>
+      <View style={{ flex: 1, backgroundColor: theme.bg }}>
         <Reader
           src={fileUri}
           fileSystem={useFileSystem}

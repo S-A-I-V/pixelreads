@@ -3,8 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Linking } 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system/legacy';
+import { File, Directory, Paths } from 'expo-file-system';
 import { useUserBookLibraryStore } from '../features/library/store/userBookLibraryStore';
 import { useEpubReaderStore } from '../features/reader/store/epubReaderStore';
 import { trackScreenView, trackEpubImport, track, EventType, EventCategory } from '../utils/analytics';
@@ -128,38 +127,40 @@ export default function BookDetailScreen() {
     try {
       setImporting(true);
       track(EventType.EPUB_IMPORT_START, EventCategory.LIBRARY, { bookId, bookTitle: book.title });
-      const result = await DocumentPicker.getDocumentAsync({ type: 'application/epub+zip', copyToCacheDirectory: true, multiple: false });
-      if (result.canceled) { setImporting(false); return; }
 
-      const file = result.assets?.[0] || result;
-      if (!file?.uri) { setImporting(false); return; }
+      // Use the new File.pickFileAsync() which returns a File the native
+      // module owns — no scoped storage permission issues.
+      const pickResult = await File.pickFileAsync({
+        mimeTypes: ['application/epub+zip'],
+      });
 
-      const ext = file.name?.split('.').pop()?.toLowerCase();
-      if (ext !== 'epub') {
-        Alert.alert('Invalid File', 'Please select an EPUB (.epub) file.');
-        setImporting(false);
-        return;
-      }
+      if (pickResult.canceled || !pickResult.result) { setImporting(false); return; }
 
-      const booksDir = FileSystem.documentDirectory + 'books/';
-      const dirInfo = await FileSystem.getInfoAsync(booksDir);
-      if (!dirInfo.exists) await FileSystem.makeDirectoryAsync(booksDir, { intermediates: true });
+      const pickedFile = pickResult.result;
+      const fileName = pickedFile.name || `${bookId}.epub`;
 
-      const destPath = booksDir + bookId + '.epub';
-      await FileSystem.copyAsync({ from: file.uri, to: destPath });
+      // Ensure books directory exists
+      const booksDir = new Directory(Paths.document, 'books');
+      if (!booksDir.exists) booksDir.create();
 
-      const fileInfo = { uri: destPath, fileName: file.name, fileSize: file.size || 0 };
+      // Copy — both source and dest are native File objects, no permission issues
+      const destFile = new File(booksDir, bookId + '.epub');
+      await pickedFile.copy(destFile);
+
+      const fileSize = destFile.size || 0;
+      const fileInfo = { uri: destFile.uri, fileName, fileSize };
       saveUploadedFile(bookId, fileInfo);
       saveBookUploadedFile(bookId, fileInfo);
       if (!shelf) addToShelf(book, 'reading');
 
-      uploadEpubToSupabase(bookId, destPath, file.name, file.size || 0).catch((e) =>
+      uploadEpubToSupabase(bookId, destFile.uri, fileName, fileSize).catch((e) =>
         console.log('[Epub] Background upload failed:', e?.message)
       );
 
-      trackEpubImport(bookId, true, file.size || 0);
+      trackEpubImport(bookId, true, fileSize);
       Alert.alert('Success', 'EPUB imported! Tap "Read Now" to start reading.');
     } catch (error) {
+      console.error('[Epub] Import error:', error);
       trackEpubImport(bookId, false, 0, error);
       Alert.alert('Error', `Failed to import: ${error.message}`);
     } finally {
@@ -173,8 +174,8 @@ export default function BookDetailScreen() {
       { text: 'Remove', style: 'destructive', onPress: async () => {
           try {
             if (uploadedFile?.uri) {
-              const info = await FileSystem.getInfoAsync(uploadedFile.uri);
-              if (info.exists) await FileSystem.deleteAsync(uploadedFile.uri, { idempotent: true });
+              const epubFile = new File(uploadedFile.uri);
+              if (epubFile.exists) epubFile.delete();
             }
             removeUploadedFile(bookId);
             removeBookUploadedFile(bookId);

@@ -416,18 +416,32 @@ export async function uploadEpubToSupabase(bookId, localUri, fileName, fileSize)
   logSync('UPLOAD', 'epub', { bookId, fileName, storagePath });
 
   try {
-    const response = await fetch(localUri);
-    const blob = await response.blob();
+    // Use the new expo-file-system File class which implements Blob.
+    // Pass it directly to FormData — expo/fetch streams it natively
+    // without loading the entire file into JS memory.
+    const { File: FSFile } = require('expo-file-system');
+    const epubFile = new FSFile(localUri);
 
-    const { error: uploadError } = await supabase.storage
-      .from(EPUB_BUCKET)
-      .upload(storagePath, blob, {
-        contentType: 'application/epub+zip',
-        upsert: true,
-      });
+    const formData = new FormData();
+    formData.append('', epubFile, `${bookId}.epub`);
 
-    if (uploadError) {
-      logError('UPLOAD', `epub:${bookId}`, uploadError);
+    const session = (await supabase.auth.getSession()).data.session;
+    const supabaseUrl = supabase.supabaseUrl || supabase.restUrl?.replace('/rest/v1', '') || '';
+    const uploadResponse = await fetch(
+      `${supabaseUrl}/storage/v1/object/${EPUB_BUCKET}/${storagePath}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+          'x-upsert': 'true',
+        },
+        body: formData,
+      }
+    );
+
+    if (!uploadResponse.ok) {
+      const errBody = await uploadResponse.text().catch(() => '');
+      logError('UPLOAD', `epub:${bookId}`, { message: `HTTP ${uploadResponse.status}: ${errBody}` });
       return null;
     }
 
@@ -496,16 +510,17 @@ export async function downloadEpubFromSupabase(storagePath, localDestUri) {
       return false;
     }
 
-    const FileSystem = require('expo-file-system/legacy');
+    const { File } = require('expo-file-system');
     const reader = new FileReader();
 
     await new Promise((resolve, reject) => {
       reader.onload = async () => {
         try {
           const base64 = reader.result.split(',')[1];
-          await FileSystem.writeAsStringAsync(localDestUri, base64, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
+          const destFile = new File(localDestUri);
+          const parentDir = destFile.parentDirectory;
+          if (!parentDir.exists) parentDir.create();
+          destFile.write(base64, { encoding: 'base64' });
           resolve();
         } catch (writeErr) {
           reject(writeErr);

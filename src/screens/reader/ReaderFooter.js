@@ -17,6 +17,10 @@ function getProgressColor(pct) {
 /**
  * Compact retro OS-style reader footer bar.
  * All colors driven by theme.chrome — no hardcoded values.
+ *
+ * Uses the same wrapper + inset-padding pattern as FloatingTabBar
+ * so the area below the bar is filled with the theme background
+ * instead of showing a white strip on Android.
  */
 export function ReaderFooter({
   theme, insetBottom, height,
@@ -28,52 +32,59 @@ export function ReaderFooter({
   const fillColor = getProgressColor(pct);
 
   return (
-    <View style={[styles.footer, { paddingBottom: insetBottom, height, backgroundColor: c.bg, borderTopColor: c.border }]}>
-      {/* TOC button */}
-      <TouchableOpacity
-        onPress={onTOC}
-        style={[styles.tocBtn, { borderColor: c.border, backgroundColor: c.btnBg }]}
-        accessibilityLabel="Table of contents"
-        accessibilityRole="button"
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <MaterialCommunityIcons name="format-list-bulleted" size={14} color={c.text} />
-        <Text style={[styles.tocLabel, { color: c.text }]} numberOfLines={1}>
-          {chapterLabel || 'Contents'}
+    <View style={[styles.wrapper, { paddingBottom: insetBottom, backgroundColor: c.bg }]}>
+      <View style={[styles.footer, { backgroundColor: c.bg, borderTopColor: c.border }]}>
+        {/* TOC button */}
+        <TouchableOpacity
+          onPress={onTOC}
+          style={[styles.tocBtn, { borderColor: c.border, backgroundColor: c.btnBg }]}
+          accessibilityLabel="Table of contents"
+          accessibilityRole="button"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <MaterialCommunityIcons name="format-list-bulleted" size={14} color={c.text} />
+          <Text style={[styles.tocLabel, { color: c.text }]} numberOfLines={1}>
+            {chapterLabel || 'Contents'}
+          </Text>
+        </TouchableOpacity>
+
+        <View style={styles.spacer} />
+
+        {/* Compact gradient progress bar */}
+        <View style={[styles.miniBar, { borderColor: c.border, backgroundColor: c.contentBg }]}>
+          <View style={[styles.miniFill, { width: `${pct}%`, backgroundColor: fillColor }]} />
+        </View>
+
+        {/* Percentage + page count */}
+        <Text style={[styles.progressText, { color: c.text }]}>
+          {pct}%{currentPage > 0 && totalPages > 0 ? ` · ${currentPage}/${totalPages}` : ''}
         </Text>
-      </TouchableOpacity>
 
-      <View style={styles.spacer} />
-
-      {/* Compact gradient progress bar */}
-      <View style={[styles.miniBar, { borderColor: c.border, backgroundColor: c.contentBg }]}>
-        <View style={[styles.miniFill, { width: `${pct}%`, backgroundColor: fillColor }]} />
+        {/* Bookmarks button */}
+        <TouchableOpacity
+          onPress={onBookmarks}
+          style={[styles.iconBtn, { borderColor: c.border, backgroundColor: c.btnBg }]}
+          accessibilityLabel="Bookmarks list"
+          accessibilityRole="button"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <MaterialCommunityIcons name="bookmark-multiple-outline" size={14} color={c.text} />
+        </TouchableOpacity>
       </View>
-
-      {/* Percentage + page count */}
-      <Text style={[styles.progressText, { color: c.text }]}>
-        {pct}%{currentPage > 0 && totalPages > 0 ? ` · ${currentPage}/${totalPages}` : ''}
-      </Text>
-
-      {/* Bookmarks button */}
-      <TouchableOpacity
-        onPress={onBookmarks}
-        style={[styles.iconBtn, { borderColor: c.border, backgroundColor: c.btnBg }]}
-        accessibilityLabel="Bookmarks list"
-        accessibilityRole="button"
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <MaterialCommunityIcons name="bookmark-multiple-outline" size={14} color={c.text} />
-      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    // Fills the bottom safe area with the theme background color,
+    // same pattern as FloatingTabBar
+  },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     borderTopWidth: borderWidth.pixel,
     gap: spacing.sm,
   },

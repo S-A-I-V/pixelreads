@@ -31,7 +31,8 @@ function ReaderContent({ bookId, fileUri, book }) {
     changeFontSize, changeTheme, goToLocation, currentLocation,
     isLoading, section, annotations,
     addBookmark, removeBookmark, bookmarks, isBookmarked,
-    search, clearSearchResults, toc,
+    search, clearSearchResults, toc, injectJavascript,
+    goNext, goPrevious,
   } = useReader();
 
   // Reader store
@@ -126,19 +127,44 @@ function ReaderContent({ bookId, fileUri, book }) {
 
   const handleToggleBookmark = useCallback(() => {
     if (!currentLocation?.start?.cfi) return;
-    if (isBookmarked) {
-      const bm = bookmarks?.find((b) => b.location?.start?.cfi === currentLocation.start.cfi);
-      if (bm) {
-        removeBookmark(bm);
-        storeRemoveBookmark(bookId, bm.id);
-        trackBookmark(bookId, 'remove', currentLocation.start.cfi);
-      }
+
+    const cfi = currentLocation.start.cfi;
+    const storeBookmarks = useEpubReaderStore.getState().getBookmarks(bookId);
+    const existingBm = storeBookmarks.find((b) => b.location === cfi);
+
+    if (existingBm) {
+      // Remove from library's WebView state
+      try { removeBookmark({ id: existingBm.id, location: currentLocation }); } catch {}
+      // Remove from our store (also deletes from Supabase)
+      storeRemoveBookmark(bookId, existingBm.id);
+      trackBookmark(bookId, 'remove', cfi);
     } else {
-      addBookmark(currentLocation);
-      storeAddBookmark(bookId, { location: currentLocation.start.cfi, chapter: section?.label || '' });
-      trackBookmark(bookId, 'add', currentLocation.start.cfi);
+      // Add to our store (saves locally + syncs to Supabase)
+      const chapterLabel = section?.label || '';
+      const bmId = storeAddBookmark(bookId, { location: cfi, chapter: chapterLabel });
+
+      // Notify the library's WebView so the isBookmarked icon updates,
+      // bypassing the broken addBookmark that crashes on getRange/getElementById.
+      injectJavascript(`
+        (function() {
+          var rn = window.ReactNativeWebView || window;
+          rn.postMessage(JSON.stringify({
+            type: "onAddBookmark",
+            bookmark: {
+              id: ${JSON.stringify(bmId || Date.now())},
+              chapter: ${JSON.stringify(chapterLabel)},
+              location: ${JSON.stringify(currentLocation)},
+              text: "",
+              data: null
+            }
+          }));
+        })();
+        true;
+      `);
+
+      trackBookmark(bookId, 'add', cfi);
     }
-  }, [currentLocation, isBookmarked, bookmarks, section, bookId]);
+  }, [currentLocation, bookId, section, injectJavascript]);
 
   const handleDecreaseFontSize = useCallback(() => {
     const idx = FONT_SIZE_STEPS.indexOf(settings.fontSize);
@@ -182,6 +208,26 @@ function ReaderContent({ bookId, fileUri, book }) {
     if (searchQuery.trim()) search(searchQuery);
   }, [searchQuery]);
 
+  // Safe chapter/location navigation — uses goToLocation for CFI strings
+  // and falls back to direct rendition.display() for TOC hrefs.
+  const handleGoToLocation = useCallback((target) => {
+    if (!target) return;
+    // CFI strings start with "epubcfi(" — use the library's goToLocation
+    if (target.startsWith('epubcfi(')) {
+      goToLocation(target);
+    } else {
+      // TOC hrefs — use rendition.display() directly with proper escaping
+      const escaped = target.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      injectJavascript(`
+        rendition.display('${escaped}').then(function() {
+          // Force a relocation event after navigation
+          rendition.reportLocation();
+        }).catch(function(e) { console.log('nav error:', e); });
+        true;
+      `);
+    }
+  }, [goToLocation, injectJavascript]);
+
   // ─── Layout ─────────────────────────────────────────────────────────
 
   const headerH = insets.top + 48;
@@ -212,7 +258,7 @@ function ReaderContent({ bookId, fileUri, book }) {
           width={SCREEN_WIDTH}
           height={readerH}
           enableSwipe
-          enableSelection
+          enableSelection={false}
           allowScriptedContent
           defaultTheme={theme.css}
           flow={settings.flow || 'paginated'}
@@ -225,7 +271,9 @@ function ReaderContent({ bookId, fileUri, book }) {
             </View>
           )}
           onLocationChange={handleLocationChange}
-          onPress={() => setShowUI((v) => !v)}
+          onSingleTap={() => {
+            goNext();
+          }}
           onReady={() => setLocalLoading(false)}
           onDisplayError={() => setLocalLoading(false)}
           onRendered={() => setLocalLoading(false)}
@@ -267,7 +315,7 @@ function ReaderContent({ bookId, fileUri, book }) {
         theme={theme}
         tocData={tocData}
         toc={toc}
-        onGoTo={goToLocation}
+        onGoTo={handleGoToLocation}
       />
       <SettingsModal
         visible={showSettings}
@@ -283,7 +331,7 @@ function ReaderContent({ bookId, fileUri, book }) {
         onClose={() => setShowBookmarks(false)}
         theme={theme}
         bookmarks={bookmarks}
-        onGoTo={goToLocation}
+        onGoTo={handleGoToLocation}
       />
       <SearchModal
         visible={showSearch}
@@ -293,7 +341,7 @@ function ReaderContent({ bookId, fileUri, book }) {
         searchResults={searchResults}
         onQueryChange={setSearchQuery}
         onSearch={handleSearch}
-        onGoTo={goToLocation}
+        onGoTo={handleGoToLocation}
         onClear={() => { clearSearchResults(); setSearchResults([]); }}
       />
     </View>

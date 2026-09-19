@@ -52,7 +52,7 @@ export function FloatingTabBar({ state, descriptors, navigation }) {
               accessibilityLabel={options.tabBarAccessibilityLabel || route.name}
             >
               <IconComponent size={ICON_SIZE} color={iconColor} />
-              <Text style={[styles.tabLabel, isFocused && styles.tabLabelActive]}>
+              <Text style={[styles.tabLabel, isFocused && styles.tabLabelActive]} numberOfLines={1}>
                 {route.name}
               </Text>
             </TouchableOpacity>
@@ -79,7 +79,8 @@ const styles = StyleSheet.create({
   tabButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 48,
+    minWidth: 56,
+    paddingHorizontal: 4,
     height: 44,
     borderWidth: borderWidth.normal,
     borderColor: 'transparent',

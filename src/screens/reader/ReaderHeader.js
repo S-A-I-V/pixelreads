@@ -28,8 +28,8 @@ export function ReaderHeader({
       </TouchableOpacity>
 
       {/* Title */}
-      <Text style={[styles.title, { color: c.text }]} numberOfLines={1}>
-        {title ? `${title.slice(0, 28)}` : 'reader.exe'}
+      <Text style={[styles.title, { color: c.text }]} numberOfLines={1} ellipsizeMode="tail">
+        {title || 'reader.exe'}
       </Text>
 
       {/* Action buttons */}

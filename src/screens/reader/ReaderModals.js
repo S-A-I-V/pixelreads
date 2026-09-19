@@ -82,8 +82,10 @@ export function TOCModal({ visible, onClose, theme, tocData, toc, onGoTo }) {
             style={[styles.listRow, { borderBottomColor: c.border + '22' }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onGoTo(item.href);
-              onClose();
+              if (item.href) {
+                onGoTo(item.href);
+              }
+              setTimeout(() => onClose(), 100);
             }}
             accessibilityRole="button"
           >
